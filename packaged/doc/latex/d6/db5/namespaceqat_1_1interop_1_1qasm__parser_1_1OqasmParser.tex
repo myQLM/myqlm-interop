@@ -1,0 +1,149 @@
+\hypertarget{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser}{\section{qat.\-interop.\-qasm\-\_\-parser.\-Oqasm\-Parser Namespace Reference}
+\label{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser}\index{qat.\-interop.\-qasm\-\_\-parser.\-Oqasm\-Parser@{qat.\-interop.\-qasm\-\_\-parser.\-Oqasm\-Parser}}
+}
+
+
+O\-P\-E\-N\-Q\-A\-S\-M Parser.  
+
+
+\subsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1build__routine}{build\-\_\-routine}
+\begin{DoxyCompactList}\small\item\em \begin{DoxyVerb}Apply routine on function call
+\end{DoxyVerb}
+ Args\-: routine's name to apply routine's arguments (bit list) routine's parameters \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1is__reserved}{is\-\_\-reserved}
+\begin{DoxyCompactList}\small\item\em \begin{DoxyVerb}Verifies whether input name is reserved
+\end{DoxyVerb}
+ Args \-: name to check \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1is__routine}{is\-\_\-routine}
+\begin{DoxyCompactList}\small\item\em \begin{DoxyVerb}Checks whether input routine name already exists
+\end{DoxyVerb}
+ Args\-: name that needs checking \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__barrier}{p\-\_\-barrier}
+\begin{DoxyCompactList}\small\item\em barrier \-: B\-A\-R\-R\-I\-E\-R primary\-\_\-list \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__bit__list__0}{p\-\_\-bit\-\_\-list\-\_\-0}
+\begin{DoxyCompactList}\small\item\em bit\-\_\-list \-: I\-D \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__bit__list__1}{p\-\_\-bit\-\_\-list\-\_\-1}
+\begin{DoxyCompactList}\small\item\em bit\-\_\-list \-: bit\-\_\-list ',' I\-D \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__creg__decl}{p\-\_\-creg\-\_\-decl}
+\begin{DoxyCompactList}\small\item\em creg\-\_\-decl \-: C\-R\-E\-G indexed\-\_\-\-I\-D \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__creg__decl__e}{p\-\_\-creg\-\_\-decl\-\_\-e}
+\begin{DoxyCompactList}\small\item\em creg\-\_\-decl \-: C\-R\-E\-G error \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__decl}{p\-\_\-decl}
+\begin{DoxyCompactList}\small\item\em decl \-: qreg\-\_\-decl ';' $|$ creg\-\_\-decl ';' $|$ qreg\-\_\-decl error $|$ creg\-\_\-decl error $|$ gate\-\_\-decl \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__exp__list__0}{p\-\_\-exp\-\_\-list\-\_\-0}
+\begin{DoxyCompactList}\small\item\em exp\-\_\-list \-: expression \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__exp__list__1}{p\-\_\-exp\-\_\-list\-\_\-1}
+\begin{DoxyCompactList}\small\item\em exp\-\_\-list \-: exp\-\_\-list ',' expression \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__expression__0}{p\-\_\-expression\-\_\-0}
+\begin{DoxyCompactList}\small\item\em expression \-: expression '$\ast$' expression $|$ expression '/' expression $|$ expression '+' expression $|$ expression '-\/' expression $|$ expression '$^\wedge$' expression \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__expression__1}{p\-\_\-expression\-\_\-1}
+\begin{DoxyCompactList}\small\item\em expression \-: '-\/' expression prec negative $|$ '+' expression prec positive \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__expression__2}{p\-\_\-expression\-\_\-2}
+\begin{DoxyCompactList}\small\item\em expression \-: unary \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__body__0}{p\-\_\-gate\-\_\-body\-\_\-0}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-body \-: '\{' '\}' \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__body__1}{p\-\_\-gate\-\_\-body\-\_\-1}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-body \-: '\{' gate\-\_\-op\-\_\-list '\}' \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__decl}{p\-\_\-gate\-\_\-decl}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-decl \-: G\-A\-T\-E I\-D gate\-\_\-scope bit\-\_\-list gate\-\_\-body $|$ G\-A\-T\-E I\-D gate\-\_\-scope '(' ')' bit\-\_\-list gate\-\_\-body $|$ G\-A\-T\-E I\-D gate\-\_\-scope '(' gate\-\_\-id\-\_\-list ')' bit\-\_\-list gate\-\_\-body \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__decl__e}{p\-\_\-gate\-\_\-decl\-\_\-e}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-decl \-: G\-A\-T\-E I\-D gate\-\_\-scope bit\-\_\-list error $|$ G\-A\-T\-E I\-D gate\-\_\-scope '(' ')' bit\-\_\-list error $|$ G\-A\-T\-E I\-D gate\-\_\-scope '(' gate\-\_\-id\-\_\-list ')' bit\-\_\-list error \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__id__list__0}{p\-\_\-gate\-\_\-id\-\_\-list\-\_\-0}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-id\-\_\-list \-: I\-D \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__id__list__1}{p\-\_\-gate\-\_\-id\-\_\-list\-\_\-1}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-id\-\_\-list \-: gate\-\_\-id\-\_\-list ',' I\-D \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__op__0}{p\-\_\-gate\-\_\-op\-\_\-0}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-op \-: U '(' exp\-\_\-list ')' I\-D ';' \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__op__0e1}{p\-\_\-gate\-\_\-op\-\_\-0e1}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-op \-: U '(' exp\-\_\-list ')' error \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__op__0e2}{p\-\_\-gate\-\_\-op\-\_\-0e2}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-op \-: U '(' exp\-\_\-list error \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__op__1}{p\-\_\-gate\-\_\-op\-\_\-1}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-op \-: C\-X I\-D ',' I\-D ';' \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__op__1e1}{p\-\_\-gate\-\_\-op\-\_\-1e1}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-op \-: C\-X error \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__op__1e2}{p\-\_\-gate\-\_\-op\-\_\-1e2}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-op \-: C\-X I\-D ',' error \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__op__2}{p\-\_\-gate\-\_\-op\-\_\-2}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-op \-: I\-D id\-\_\-list ';' $|$ I\-D '(' ')' id\-\_\-list ';' $|$ I\-D '(' exp\-\_\-list ')' id\-\_\-list ';' \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__op__2e0}{p\-\_\-gate\-\_\-op\-\_\-2e0}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-op \-: I\-D id\-\_\-list error $|$ I\-D '(' ')' error $|$ I\-D '(' error \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__op__5}{p\-\_\-gate\-\_\-op\-\_\-5}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-op \-: B\-A\-R\-R\-I\-E\-R id\-\_\-list ';' \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__op__5e}{p\-\_\-gate\-\_\-op\-\_\-5e}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-op \-: B\-A\-R\-R\-I\-E\-R error \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__op__list__0}{p\-\_\-gate\-\_\-op\-\_\-list\-\_\-0}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-op\-\_\-list \-: gate\-\_\-op \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__op__list__1}{p\-\_\-gate\-\_\-op\-\_\-list\-\_\-1}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-op\-\_\-list \-: gate\-\_\-op\-\_\-list gate\-\_\-op \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__gate__scope}{p\-\_\-gate\-\_\-scope}
+\begin{DoxyCompactList}\small\item\em gate\-\_\-scope \-: \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__id__list__0}{p\-\_\-id\-\_\-list\-\_\-0}
+\begin{DoxyCompactList}\small\item\em id\-\_\-list \-: I\-D \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__id__list__1}{p\-\_\-id\-\_\-list\-\_\-1}
+\begin{DoxyCompactList}\small\item\em id\-\_\-list \-: id\-\_\-list ',' I\-D \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__if}{p\-\_\-if}
+\begin{DoxyCompactList}\small\item\em if \-: I\-F '(' I\-D M\-A\-T\-C\-H\-E\-S N\-N\-I\-N\-T\-E\-G\-E\-R ')' unitary\-\_\-op $|$ I\-F '(' I\-D M\-A\-T\-C\-H\-E\-S N\-N\-I\-N\-T\-E\-G\-E\-R ')' measure $|$ I\-F '(' I\-D M\-A\-T\-C\-H\-E\-S N\-N\-I\-N\-T\-E\-G\-E\-R ')' opaque $|$ I\-F '(' I\-D M\-A\-T\-C\-H\-E\-S N\-N\-I\-N\-T\-E\-G\-E\-R ')' barrier $|$ I\-F '(' I\-D M\-A\-T\-C\-H\-E\-S N\-N\-I\-N\-T\-E\-G\-E\-R ')' reset $|$ I\-F '(' I\-D error $|$ I\-F '(' I\-D M\-A\-T\-C\-H\-E\-S error $|$ I\-F '(' I\-D M\-A\-T\-C\-H\-E\-S N\-N\-I\-N\-T\-E\-G\-E\-R error $|$ I\-F error \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__indexed__id}{p\-\_\-indexed\-\_\-id}
+\begin{DoxyCompactList}\small\item\em indexed\-\_\-\-I\-D \-: I\-D '\mbox{[}' N\-N\-I\-N\-T\-E\-G\-E\-R '\mbox{]}' $|$ I\-D '\mbox{[}' N\-N\-I\-N\-T\-E\-G\-E\-R error $|$ I\-D '\mbox{[}' error \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__main}{p\-\_\-main}
+\begin{DoxyCompactList}\small\item\em main \-: F\-O\-R\-M\-A\-T ';' program \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__measure}{p\-\_\-measure}
+\begin{DoxyCompactList}\small\item\em measure \-: M\-E\-A\-S\-U\-R\-E primary A\-S\-S\-I\-G\-N primary \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__measure__e}{p\-\_\-measure\-\_\-e}
+\begin{DoxyCompactList}\small\item\em measure \-: M\-E\-A\-S\-U\-R\-E primary error \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__opaque__0}{p\-\_\-opaque\-\_\-0}
+\begin{DoxyCompactList}\small\item\em opaque \-: O\-P\-A\-Q\-U\-E I\-D gate\-\_\-scope bit\-\_\-list \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__opaque__1}{p\-\_\-opaque\-\_\-1}
+\begin{DoxyCompactList}\small\item\em opaque \-: O\-P\-A\-Q\-U\-E I\-D gate\-\_\-scope '(' ')' bit\-\_\-list \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__opaque__1e}{p\-\_\-opaque\-\_\-1e}
+\begin{DoxyCompactList}\small\item\em opaque \-: O\-P\-A\-Q\-U\-E I\-D gate\-\_\-scope '(' error \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__opaque__2}{p\-\_\-opaque\-\_\-2}
+\begin{DoxyCompactList}\small\item\em opaque \-: O\-P\-A\-Q\-U\-E I\-D gate\-\_\-scope '(' gate\-\_\-id\-\_\-list ')' bit\-\_\-list \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__primary}{p\-\_\-primary}
+\begin{DoxyCompactList}\small\item\em primary \-: I\-D $|$ indexed\-\_\-\-I\-D \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__primary__list__0}{p\-\_\-primary\-\_\-list\-\_\-0}
+\begin{DoxyCompactList}\small\item\em primary\-\_\-list \-: primary \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__primary__list__1}{p\-\_\-primary\-\_\-list\-\_\-1}
+\begin{DoxyCompactList}\small\item\em primary\-\_\-list \-: primary\-\_\-list ',' primary \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__program}{p\-\_\-program}
+\begin{DoxyCompactList}\small\item\em program \-: statement $|$ program statement \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__qreg__decl}{p\-\_\-qreg\-\_\-decl}
+\begin{DoxyCompactList}\small\item\em qreg\-\_\-decl \-: Q\-R\-E\-G indexed\-\_\-\-I\-D \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__qreg__decl__e}{p\-\_\-qreg\-\_\-decl\-\_\-e}
+\begin{DoxyCompactList}\small\item\em qreg\-\_\-decl \-: Q\-R\-E\-G error \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__quantum__op}{p\-\_\-quantum\-\_\-op}
+\begin{DoxyCompactList}\small\item\em quantum\-\_\-op \-: unitary\-\_\-op $|$ opaque $|$ measure $|$ barrier $|$ reset $|$ if \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__reset}{p\-\_\-reset}
+\begin{DoxyCompactList}\small\item\em reset \-: R\-E\-S\-E\-T primary \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__statement__0}{p\-\_\-statement\-\_\-0}
+\begin{DoxyCompactList}\small\item\em statement \-: quantum\-\_\-op ';' \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__statement__1}{p\-\_\-statement\-\_\-1}
+\begin{DoxyCompactList}\small\item\em statement \-: decl $|$ I\-G\-N\-O\-R\-E $|$ quantum\-\_\-op error $|$ F\-O\-R\-M\-A\-T error \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__unary__0}{p\-\_\-unary\-\_\-0}
+\begin{DoxyCompactList}\small\item\em unary \-: N\-N\-I\-N\-T\-E\-G\-E\-R \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__unary__1}{p\-\_\-unary\-\_\-1}
+\begin{DoxyCompactList}\small\item\em unary \-: R\-E\-A\-L \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__unary__2}{p\-\_\-unary\-\_\-2}
+\begin{DoxyCompactList}\small\item\em unary \-: P\-I \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__unary__3}{p\-\_\-unary\-\_\-3}
+\begin{DoxyCompactList}\small\item\em unary \-: I\-D \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__unary__4}{p\-\_\-unary\-\_\-4}
+\begin{DoxyCompactList}\small\item\em unary \-: '(' expression ')' \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__unary__6}{p\-\_\-unary\-\_\-6}
+\begin{DoxyCompactList}\small\item\em unary \-: I\-D '(' expression ')' \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__unitary__op__1}{p\-\_\-unitary\-\_\-op\-\_\-1}
+\begin{DoxyCompactList}\small\item\em unitary\-\_\-op \-: C\-X primary ',' primary \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__unitary__op__2}{p\-\_\-unitary\-\_\-op\-\_\-2}
+\begin{DoxyCompactList}\small\item\em unitary\-\_\-op \-: U '(' exp\-\_\-list ')' primary \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1p__unitary__op__3}{p\-\_\-unitary\-\_\-op\-\_\-3}
+\begin{DoxyCompactList}\small\item\em unitary\-\_\-op \-: I\-D primary\-\_\-list $|$ I\-D '(' ')' primary\-\_\-list $|$ I\-D '(' exp\-\_\-list ')' primary\-\_\-list \end{DoxyCompactList}\item 
+\hyperlink{namespaceqat_1_1interop_1_1qasm__parser_1_1OqasmParser_1_1run}{run}
+\begin{DoxyCompactList}\small\item\em Helper Functions \#. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+O\-P\-E\-N\-Q\-A\-S\-M Parser. 
