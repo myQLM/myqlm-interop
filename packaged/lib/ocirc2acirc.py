@@ -48,7 +48,6 @@ ocirc = QuantumCircuit(qreg1, qreg2, creg1)
 
 ocirc.sdg(qreg1[0])
 ocirc.ch(qreg1[0], qreg1[1])
-ocirc.u0(pi, qreg1[0])
 ocirc.u_base(pi, pi, pi, qreg1[0])
 ocirc.iden(qreg1[0])
 ocirc.u0(pi, qreg1[0])
