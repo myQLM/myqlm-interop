@@ -1,13 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 """
-@cond INTERN
+@brief 
 
-
-@copyright 2017  Bull S.A.S.  -  All rights reserved.
+@namespace ...
+@authors Reda Drissi <mohamed-reda.drissi@atos.net>
+@copyright 2019  Bull S.A.S.  -  All rights reserved.
            This is not Free or Open Source software.
            Please contact Bull SAS for details about its license.
            Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
+
+
+Description converts a projectq circuit into a qlm circuit,
+            this one is tricky, since projectq handles gates dynamically
+            we created a new class inheriting from their MainEngine,
+            so you should use this engine instead, then code as you would 
+            code your projectq circuit : Example :
+            aq = AqasmPrinter(MainEngine)
+            eng = AqasmEngine(aq, engine_list=[aq])
+            q = eng.allocate_qureg(2)
+            X | q[0]
+            H | q[0]
+            CNOT | (q[0], q[1])
+            # then recover your generated qlm circuit with
+            circ=eng.to_qlm_circ()
+
+Overview
+=========
 
 
 """
@@ -107,8 +127,6 @@ class AqasmPrinter(MainEngine):
                 isinstance(cmd.gate, DeallocateQubitGate) or\
                 isinstance(cmd.gate, AllocateDirtyQubitGate):
             return
-        res_s = ""
-
         if isinstance(cmd.gate, MeasureGate):
             inp_qb = []
             for reg in cmd.qubits:
@@ -117,17 +135,12 @@ class AqasmPrinter(MainEngine):
             self.prog.measure(inp_qb, inp_qb)
 
         elif isinstance(cmd.gate, BasicGate):
-            #res_s += str(_gate_to_string(cmd.gate))
             controls = cmd.all_qubits[0]
             targets = cmd.all_qubits[1]
-            res_s = 'CTRL(' * len(controls) + res_s + ')' * len(controls) + " "
-            print(cmd.all_qubits)
-            print(cmd.gate)
-            pprint(vars(cmd))
-            for qbit in controls + targets:
-                res_s += 'q['+str(qbit)+'],'
-            res_s = res_s[:-1]
             inp_qb = []
+            #pprint(vars(cmd))
+            #pprint(cmd.all_qubits[2])
+            #pprint(vars(cmd.all_qubits[2][0]))
             for reg in cmd.all_qubits:
                 for qbit in reg:
                     inp_qb.append(self.qb[int(str(qbit))])
@@ -155,19 +168,16 @@ if __name__=="__main__":
     aq = AqasmPrinter(MainEngine)
     eng = AqasmEngine(aq, engine_list=[aq])
     q = eng.allocate_qureg(2)
-    p = eng.allocate_qubit()
-    c = eng.allocate_qubit()
+    p = eng.allocate_qureg(1)
+    c = eng.allocate_qureg(2)
+    ops.Swap | (c[0], q[1])
+    ops.CX | (c[0], q[1])
     #ops.X | p
-    Toffoli | (q[0], q[1], p)
-    ops.ControlledGate(R(3.14), n=2) | (q[0], p, c)
-    ops.Sdag | q[0]
-    ops.QFT | (p, c)
-    ops.All(ops.Measure) | q
-    print("--------------------------------------------------------------")
+    #Toffoli | (q[0], q[1], p)
+    #ops.ControlledGate(R(3.14), n=2) | (q[0], p, c)
+    #ops.Sdag | q[0]
+    #ops.QFT | (p, c)
+    #ops.All(ops.Measure) | q
+    #print("--------------------------------------------------------------")
     acirc = eng.to_qlm_circ()
-    int(q[0])
-    task = Task(acirc, get_qpu_server())
-    outp = task.execute()
-    print(outp.probability, outp.state)
-    for res in task.states():
-        print(res.state, res.amplitude)
+    #int(q[0])

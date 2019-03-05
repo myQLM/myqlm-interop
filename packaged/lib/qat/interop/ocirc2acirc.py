@@ -11,7 +11,10 @@
            Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
 
 
-Description ...
+Description Converts qiskit circuit into a qlm circuit object,
+            you can use : qlm_circuit = to_qlm_circ(your_qiskit_circuit) 
+            This is a placeholder, names and packaging might change to 
+            keep consistency
 
 Overview
 =========
@@ -24,6 +27,7 @@ from qat.lang.AQASM import *
 from math import pi
 from pprint import pprint
 import numpy as np
+
 def get_qindex(circ, name, index):
     ret = 0
     for reg in circ.qregs:
@@ -38,24 +42,6 @@ def get_cindex(circ, name, index):
             ret += reg.size
         else:
             return ret + index
-# Example oqasm circuit #
-
-qreg1 = QuantumRegister(2)
-qreg2 = QuantumRegister(3)
-creg1 = ClassicalRegister(2)
-
-ocirc = QuantumCircuit(qreg1, qreg2, creg1)
-
-ocirc.sdg(qreg1[0])
-ocirc.ch(qreg1[0], qreg1[1])
-ocirc.u0(pi, qreg1[0])
-ocirc.u_base(pi, pi, pi, qreg1[0])
-ocirc.iden(qreg1[0])
-ocirc.u0(pi, qreg1[0])
-ocirc.ccx(qreg1[0], qreg1[1], qreg2[0])
-ocirc.rzz(pi, qreg1[0], qreg1[1])
-ocirc.measure(qreg1, creg1)
-
 # Let's add the U gate, u1/2/3 would be dealt with through setting
 # the appropriate params to 0
 def gen_U(theta, phi, lamda):
@@ -134,15 +120,4 @@ def to_qlm_circ(qiskit_circuit):
             prog.apply(get_gate(op.name, prms), qb)
 
     return prog.to_circ()
-#print(ocirc)
-#acirc = to_qlm_circ(ocirc)
-# Simulation #
-#from qat.mps import get_qpu_server
-#from qat.core.task import Task
-
-#task = Task(acirc, get_qpu_server())
-#outp = task.execute()
-#print(outp.probability, outp.state)
-#for res in task.states():
-#    print(res.state, res.amplitude)
 

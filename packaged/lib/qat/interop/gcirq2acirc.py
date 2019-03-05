@@ -11,7 +11,14 @@
            Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
 
 
-Description ...
+Description converts a Google cirq circuit object into a qlm circuit
+            object, you can directly use :
+            Gcirc2acirc(your_google_cirq).to_qlm_circ()
+            This is a placeholder, names and packaging might change
+            to keep consistency
+            WARNING: when mixing LineQubit and GridQubit, all grid
+            qubits will be allocated first, then all line qubits.
+            The order will follow coordinates.
 
 Overview
 =========
@@ -102,7 +109,8 @@ def process_ISWAP(exp):
     else:
         raise ValueError("ISWAP gate doesn't support arbitrary powers\n"
                          +"Only -1, 0, 1 values are supported")
-
+def process_CX(exp):
+    return process_X(exp).ctrl()
 
 gate_dic = {common_gates.HPowGate: process_H,
             common_gates.XPowGate: process_X,
@@ -111,7 +119,8 @@ gate_dic = {common_gates.HPowGate: process_H,
             common_gates.S: process_S,
             common_gates.T: process_T,
             common_gates.SwapPowGate: process_SWAP,
-            common_gates.ISwapPowGate: process_ISWAP}
+            common_gates.ISwapPowGate: process_ISWAP,
+            common_gates.CNotPowGate: process_CX}
 
 def _get_gate(gate):
     if controlled_gate.ControlledGate == type(gate):
@@ -154,25 +163,24 @@ class Gcirc2acirc:
             if ops.MeasurementGate.is_measurement(
                 cast(ops.GateOperation, op)):
                 self.prog.measure(qbs, qbs)
-            gate= _get_gate(op.gate)
-            if gate == "none":
+            elif _get_gate(op.gate) == "none":
                 continue
             else:
-                self.prog.apply(gate, qbs)
-        self.prog.to_circ()
+                self.prog.apply(_get_gate(op.gate), qbs)
+        return self.prog.to_circ()
 
 
-if __name__=="__main__":
+#if __name__=="__main__":
 
-    q = cirq.GridQubit(3, 4)
-    q2 = cirq.GridQubit(2, 1)
-    circuit = cirq.Circuit.from_ops(
-        cirq.ControlledGate(common_gates.X)(q, q2)**-1,
-        common_gates.SWAP(q, q2)**0.5,
-        common_gates.ISWAP(q, q2)**-1.0,
-        common_gates.T(q)**-1.0,
-        common_gates.Rz(pi*2)(q)**0.0,
-        common_gates.SWAP(q, q2)**-1.0
-        )
-    circ = Gcirc2acirc(circuit)
-    circ.to_qlm_circ()
+    #q = cirq.GridQubit(3, 4)
+    #q2 = cirq.GridQubit(2, 1)
+    #circuit = cirq.Circuit.from_ops(
+    #    cirq.ControlledGate(common_gates.X)(q, q2)**-1,
+    #    common_gates.SWAP(q, q2)**0.5,
+    #    common_gates.ISWAP(q, q2)**-1.0,
+    #    common_gates.T(q)**-1.0,
+    #    common_gates.Rz(pi*2)(q)**0.0,
+    #    common_gates.SWAP(q, q2)**-1.0
+    #    )
+    #circ = Gcirc2acirc(circuit)
+    #circ.to_qlm_circ()
