@@ -1,7 +1,0 @@
-/mnt/raid6/wip/reda/bsm/openqlm-interop/packaged/lib/qat/interop/gcirq2acirc.py:23: warning: missing argument after \namespace.
-/mnt/raid6/wip/reda/bsm/openqlm-interop/packaged/lib/qat/interop/ocirc2acirc.py:23: warning: missing argument after \namespace.
-/mnt/raid6/wip/reda/bsm/openqlm-interop/packaged/lib/qat/interop/projectq2acirc.py:4: warning: Conditional section with label INTERN does not have a corresponding \endcond command within this file.
-/mnt/raid6/wip/reda/bsm/openqlm-interop/packaged/lib/qat/interop/qasm_lexer.py:14: warning: the name `qat/lang/lexer/qasm_lexer.py' supplied as the second argument in the \file statement is not an input file
-/mnt/raid6/wip/reda/bsm/openqlm-interop/packaged/lib/qat/interop/qasm_parser.py:13: warning: the name `qat/lang/parser/qasm_parser.py' supplied as the second argument in the \file statement is not an input file
-<build>:1: warning: parameters of member qasm_parser.OqasmParser.build are not (all) documented
-<build>:1: warning: return type of member qasm_parser.OqasmParser.build is not documented
