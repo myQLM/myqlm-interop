@@ -52,28 +52,16 @@ def main():
     output = args.output
     if output is None:
         output = os.path.splitext(fname)[0] + ".circ"
-    lib_list = args.L
     aq_parser = OqasmParser()
-    aq_parser.build(debug=True, errorlog=_LOGGER)
-
-    # Loading the external "libraries" (i.e python modules)
-    modules = []
-    for mod_namespace in lib_list:
-        try:
-            modules.append(importlib.import_module(mod_namespace))
-        except ImportError:
-            raise UnknownModule(mod_namespace)
-
-    # Generating the external gate set from the external modules
-    external_gate_set = generate_gate_set(*modules)
+    aq_parser.build(debug=False, errorlog=_LOGGER)
 
     # Parsing the file and running the compiler
     #print(extract_inc(fname))
-    res = aq_parser.parse(extract_inc(fname), debug=True)
+    res = aq_parser.parse(extract_inc(fname), debug=False)
     if res == 1:
         # Generating the circuit from the compiler
         circ = aq_parser.compiler.gen_circuit()
-        global_gate_set = external_gate_set.union(aq_parser.compiler.gate_set)
+        global_gate_set = aq_parser.compiler.gate_set
 
         # Inlining the various lib calls
         instantiator = GenericInstantiator()

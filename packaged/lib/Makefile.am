@@ -1,51 +1,49 @@
-#
-##
-#
-if HAVE_PYTHON
+$(abs_top_builddir)/packaged/lib/qat:
+	mkdir -p $@
 
-$(abs_builddir)/skel:
-	mkdir $@
+$(abs_top_builddir)/packaged/lib/qat/interop: $(abs_top_builddir)/packaged/lib/qat
+	mkdir -p $@
 
-$(abs_builddir)/skel/__init__.py: $(abs_builddir)/skel
+$(abs_builddir)/qat/__init__.py: $(abs_top_builddir)/packaged/lib/qat
 	touch  $@
 
+$(abs_top_builddir)/packaged/lib/qat/interop/__init__.py:$(abs_top_builddir)/packaged/lib/qat/interop $(abs_top_builddir)/packaged/lib/qat/__init__.py
+	touch  $@
 
 
 # For installation
 nobase_nodist_python_PYTHON=\
-		  skel/version.py\
-		  skel/cffi_h.py
+		  qat/interop/version.py
 
 nobase_python_PYTHON=\
-		  skel/ffi.py \
-		  skel/hello.py
-
-
+		  qat/interop/parser/gcirq2acirc.py\
+		  qat/interop/parser/projectq2acirc.py\
+		  qat/interop/parser/ocirc2acirc.py\
+		  qat/interop/parser/oqasm2acirc.py
 #File present inside build and source folder should be install with a special rule
-skeldir=$(pythondir)/skel
-nodist_skel_PYTHON=\
-		  $(srcdir)/skel/__init__.py
+AQASMdir=$(pythondir)/qat/interop
+nodist_AQASM_PYTHON=\
+		  $(srcdir)/qat/interop/__init__.py
 
-skel/version.py:${abs_top_builddir}/version.py $(abs_builddir)/skel
+qat/interop/version.py:${abs_top_builddir}/version.py $(abs_builddir)/qat/interop
 	cp $< $@
 
 
-BUILT_SOURCES=skel/version.py
-
+BUILT_SOURCES=qat/interop/version.py
 dist-hook:
-	cp ${nodist_skel_PYTHON} $(distdir)/skel
+	mkdir -p $(distdir)/qat/interop
+	cp ${nodist_AQASM_PYTHON} $(distdir)/qat/interop
 
 # For generation
-all-local: $(nobase_nodist_python_PYTHON) $(abs_builddir)/skel/__init__.py
+all-local: $(nobase_nodist_python_PYTHON) $(abs_builddir)/qat/interop/__init__.py
 
 clean-local:
 	if test $(srcdir) != $(builddir);\
 		then\
-		rm -f $(builddir)/skel/__init__.py;\
+		rm -f $(builddir)/qat/interop/__init__.py;\
 	fi
 
 #
 ##
 #
 CLEANFILES=${nodist_python_PYTHON}
-endif

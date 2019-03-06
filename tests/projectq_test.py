@@ -30,6 +30,8 @@ from qat.interop.projectq2acirc import AqasmPrinter, AqasmEngine
 from qat.lang.AQASM import *
 from qat.core.circ import extract_syntax
 from qat.comm.datamodel.ttypes import OpType
+from qat.lang.parser.qasm_parser import ImplementationError
+
 
 gates_1qb = [ops.X, ops.Y, ops.Z, ops.S, ops.T, ops.H,
              Sdag, Tdag, Rx(3.14), Ry(3.14), Rz(3.14), R(3.14)]
@@ -58,7 +60,6 @@ class TestProjectq2QLMConversion(unittest.TestCase):
         All(Measure) | qreg1
         All(Measure) | qreg2
         All(Measure) | qreg3
-
         # Generating qlm circuit
         result= eng.to_qlm_circ()
 
@@ -98,6 +99,15 @@ class TestProjectq2QLMConversion(unittest.TestCase):
             self.assertEqual(expected_gate_name, result_gate_name)
             self.assertEqual(expected_gate_params, result_gate_params)
             self.assertEqual(exp_op.qbits, res_op.qbits)
-    #def test_invalid_gate(self):
+    def test_dynamic_measures(self):
+        aq = AqasmPrinter(MainEngine)
+        eng = AqasmEngine(aq, engine_list=[aq])
+        qreg = eng.allocate_qureg(2)
+        ops.Swap | (qreg[0], qreg[1])
+        All(Measure) | qreg
+        try:
+            int(qreg[0])
+        except ImplementationError:
+            pass
 if __name__ == '__main__':
     unittest.main(argv=['first-arg-is-ignored'], exit=False)

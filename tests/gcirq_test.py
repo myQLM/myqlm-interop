@@ -24,8 +24,7 @@ import unittest
 import cirq.ops
 from cirq import ControlledGate
 import cirq.ops.common_gates as g_ops
-import qat.interop.gcirq2acirc as src_gcirc2acirc
-Gcirc2acirc = src_gcirc2acirc.Gcirc2acirc
+from qat.interop.gcirq2acirc import to_qlm_circ
 from qat.lang.AQASM import *
 from qat.core.circ import extract_syntax
 from qat.comm.datamodel.ttypes import OpType
@@ -57,7 +56,7 @@ class TestGcirq2QLMConversion(unittest.TestCase):
         for qbit in qreg1 + qreg2 + qreg3:
             gcirq.append(cirq.measure(qbit))
         # Generating qlm circuit
-        result= Gcirc2acirc(gcirq).to_qlm_circ()
+        result= to_qlm_circ(gcirq)
 
         # Generating equivalent qlm circuit
         prog = Program()
@@ -104,7 +103,8 @@ class TestGcirq2QLMConversion(unittest.TestCase):
         gcirq.append(g_ops.T(qreg[0])**-pi)
         gcirq.append(g_ops.SWAP(qreg[0], qreg[1])**-0.5)
         gcirq.append(g_ops.ISWAP(qreg[0], qreg[1])**0.)
-        result = Gcirc2acirc(gcirq).to_qlm_circ()
+
+        result = to_qlm_circ(gcirq)
         for i, op in enumerate(result.ops):
             name, params = extract_syntax(result.gateDic[op.gate],
                                           result.gateDic)

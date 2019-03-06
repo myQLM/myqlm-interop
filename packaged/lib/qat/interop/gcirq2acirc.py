@@ -13,7 +13,7 @@
 
 Description converts a Google cirq circuit object into a qlm circuit
             object, you can directly use :
-            Gcirc2acirc(your_google_cirq).to_qlm_circ()
+            qlm_circ=to_qlm_circ(your_google_circ)
             This is a placeholder, names and packaging might change
             to keep consistency
             WARNING: when mixing LineQubit and GridQubit, all grid
@@ -130,44 +130,29 @@ def _get_gate(gate):
     else:
         return gate_dic[type(gate)](gate.exponent)
 
-class Gcirc2acirc:
-    """ Convert Google circuit into qlm circuit"""
+def to_qlm_circ(gcirc):
 
-    def __init__(self, gcirc, qubit_order=ops.QubitOrder.DEFAULT):
-        # pyaqasm
-        self.prog = Program()
-        self.qreg = self.prog.qalloc(0)
-        # extracting qbits from google circuit
-        self.qubits = ops.QubitOrder.as_qubit_order(
-            qubit_order).order_for(gcirc.all_qubits())
-        # mapping Gcirq qubits coords into qlm qbit register
-        self.qmap = { qbit:i for i, qbit in enumerate(self.qubits)}
-        self.qreg.qbits.extend(self.prog.qalloc(len(self.qubits)))
-        # extracting operations
-        self.operations = tuple(ops.flatten_op_tree(
-            gcirc.all_operations()))
-        # getting measurements
-        self.measurements = tuple(
-            cast(ops.GateOperation, op)
-            for op in self.operations
-                if ops.MeasurementGate.is_measurement(
-                    cast(ops.GateOperation, op)))
+    qubits = ops.QubitOrder.as_qubit_order(
+        ops.QubitOrder.DEFAULT).order_for(gcirc.all_qubits())
+    qmap = { qbit:i for i, qbit in enumerate(qubits)}
 
-
-    def to_qlm_circ(self):
-        for op in self.operations:
-            #print(type(op.gate))
-            qbs = []
-            for qb in op.qubits:
-                qbs.append(self.qreg[self.qmap[qb]])
-            if ops.MeasurementGate.is_measurement(
-                cast(ops.GateOperation, op)):
-                self.prog.measure(qbs, qbs)
-            elif _get_gate(op.gate) == "none":
-                continue
-            else:
-                self.prog.apply(_get_gate(op.gate), qbs)
-        return self.prog.to_circ()
+    operations = tuple(ops.flatten_op_tree(gcirc.all_operations()))
+    prog = Program()
+    qreg = prog.qalloc(0)
+    qreg.qbits.extend(prog.qalloc(len(qubits)))
+    for op in operations:
+        #print(type(op.gate))
+        qbs = []
+        for qb in op.qubits:
+            qbs.append(qreg[qmap[qb]])
+        if ops.MeasurementGate.is_measurement(
+            cast(ops.GateOperation, op)):
+            prog.measure(qbs, qbs)
+        elif _get_gate(op.gate) == "none":
+            continue
+        else:
+            prog.apply(_get_gate(op.gate), qbs)
+    return prog.to_circ()
 
 
 #if __name__=="__main__":

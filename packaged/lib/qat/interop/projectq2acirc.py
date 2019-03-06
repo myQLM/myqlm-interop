@@ -39,6 +39,7 @@ from projectq.ops import SGate, XGate, YGate, ZGate, TGate, HGate\
                                 , MeasureGate, FlushGate, BasicGate
 from projectq import ops
 import qat.lang.AQASM as aqsm
+from qat.lang.parser.qasm_parser import ImplementationError
 from pprint import pprint
 from math import pi
 import projectq
@@ -93,8 +94,9 @@ def _get_pyqasm_gate(gate, targets=None, controls=0):
 ## Overloading measurements ##
 
 def _newbool(self):
-    print("overwritten")
-    return "Value to compute"
+    raise ImplementationError("To measure a qubit you need to execute"
+                              +" the circuit, dynamic measures aren't "
+                              +"implemented yet")
 
 projectq.types._qubit.Qubit.__bool__ = _newbool
 class AqasmEngine(MainEngine):

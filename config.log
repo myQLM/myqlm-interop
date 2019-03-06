@@ -206,7 +206,7 @@ configure:4730: checking dependency style of gcc
 configure:4841: result: none
 configure:4857: checking for library containing curs_set
 configure:4888: gcc -o conftest  -g3 -O0   -g3 -O0  -Wall -Werror  -Wextra -Wconversion   conftest.c  >&5
-/tmp/reda/cceo6eE3.o: In function `main':
+/tmp/reda/cc91kFMb.o: In function `main':
 /home/reda/bsm/openqlm-interop/conftest.c:22: undefined reference to `curs_set'
 collect2: error: ld returned 1 exit status
 configure:4888: $? = 1
@@ -241,7 +241,7 @@ configure:4888: $? = 0
 configure:4905: result: -lcurses
 configure:4913: checking for library containing CU_register_suites
 configure:4944: gcc -o conftest  -g3 -O0   -g3 -O0  -Wall -Werror  -Wextra -Wconversion   conftest.c -lcurses  >&5
-/tmp/reda/ccQ9Vgtj.o: In function `main':
+/tmp/reda/ccPae6oy.o: In function `main':
 /home/reda/bsm/openqlm-interop/conftest.c:22: undefined reference to `CU_register_suites'
 collect2: error: ld returned 1 exit status
 configure:4944: $? = 1
@@ -708,6 +708,7 @@ config.status:898: creating packaged/lib/Makefile
 config.status:898: creating packaged/doc/Makefile
 config.status:898: creating tests/Makefile
 config.status:898: creating template_config.h
+config.status:1079: template_config.h is unchanged
 config.status:1127: executing depfiles commands
 
 ## ---------------- ##
