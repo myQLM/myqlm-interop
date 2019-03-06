@@ -1,15 +1,13 @@
 #file to be installed
-cffi_files=\
-			 skel/skel.h
 
 
 #file to be installed
 nobase_include_HEADERS = \
 						 $(cffi_files)\
-						 skel/version.h
+						 version.h
 
 if HAVE_PYTHON
-../lib/skel/cffi_h.py: $(cffi_files)
+../lib/cffi_h.py: $(cffi_files)
 	mkdir -p $$(dirname $@)
 	for i in $^; do \
 		echo "#include <$$i>";\
@@ -20,7 +18,7 @@ if HAVE_PYTHON
 	rm cffi.h
 
 
-all-local: ../lib/skel/cffi_h.py
+all-local: ../lib/cffi_h.py
 
-.PHONY: ../lib/skel/cffi_h.py
+.PHONY: ../lib/cffi_h.py
 endif
