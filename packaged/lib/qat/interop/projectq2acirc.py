@@ -31,40 +31,39 @@ Overview
 
 
 """
+from math import pi
+import projectq
 from projectq.cengines import LastEngineException, MainEngine
 from projectq.ops import AllocateQubitGate, DeallocateQubitGate, AllocateDirtyQubitGate
-#from projectq.ops._basics import *
-from projectq.ops import SGate, XGate, YGate, ZGate, TGate, HGate\
-                                , SwapGate, R, Rz, Rx, Ry, Toffoli\
-                                , MeasureGate, FlushGate, BasicGate
+from projectq.ops import SGate, XGate, YGate, ZGate, TGate, HGate,\
+                         SwapGate, R, Rz, Rx, Ry, Ph,\
+                         MeasureGate, FlushGate, BasicGate
 from projectq import ops
 import qat.lang.AQASM as aqsm
 from qat.lang.parser.qasm_parser import ImplementationError
-from pprint import pprint
-from math import pi
-import projectq
 from qat.mps import get_qpu_server
 from qat.core.task import Task
 #TODO Gates to add : SqrtX(should be Rx(pi/2)
 #TODO and SqrtSwap (not found in this version),
 #TODO Gates we have : I, ISIGN, SQRTSWAP
-gate_dic = { XGate : aqsm.X , YGate: aqsm.Y, ZGate: aqsm.Z, HGate: aqsm.H,
+gate_dic = {XGate : aqsm.X, YGate: aqsm.Y, ZGate: aqsm.Z, HGate: aqsm.H,
             TGate: aqsm.T, SGate: aqsm.S, R: aqsm.PH, Rx: aqsm.RX,
-            Ry: aqsm.RY, Rz: aqsm.RZ, SwapGate: aqsm.SWAP}
+            Ry: aqsm.RY, Rz: aqsm.RZ, SwapGate: aqsm.SWAP, Ph: aqsm.PH}
 
 def QFT(n):
     qft_routine = aqsm.QRoutine()
-    if(n == 1):
+    if n == 1:
         qft_routine.apply(aqsm.H, 0)
         return qft_routine
 
     qft_routine.apply(QFT(n-1), list(range(n-1)))
 
     for i in range(n-1):
-        qft_routine.apply(aqsm.PH(pi/pow(2.,n-i-1)).ctrl(), n-1, i)
+        qft_routine.apply(aqsm.PH(pi/pow(2., n-i-1)).ctrl(), n-1, i)
 
     qft_routine.apply(aqsm.H, n-1)
     return qft_routine
+
 
 def _get_pyqasm_gate(gate, targets=None, controls=0):
     '''
@@ -73,7 +72,7 @@ def _get_pyqasm_gate(gate, targets=None, controls=0):
     if isinstance(gate, ops.DaggeredGate):
         return _get_pyqasm_gate(gate._gate, targets, controls).dag()
     if controls > 0:
-            return _get_pyqasm_gate(gate, targets, controls-1).ctrl()
+        return _get_pyqasm_gate(gate, targets, controls-1).ctrl()
     else:
         try:
             gate._angle # the angle needs to be verified before
@@ -85,20 +84,18 @@ def _get_pyqasm_gate(gate, targets=None, controls=0):
                 return gate_dic[type(gate)]
         except KeyError:
             print("Error "+str(gate))
-    #elif isinstance(gate, ops.SqrtSwapGate):
-    #    return SSWAP
-    #elif isinstance(gate, ops.SqrtXGate):
-    #    return SqrtSWAP
 
 
-## Overloading measurements ##
+# Overloading measurements
 
 def _newbool(self):
     raise ImplementationError("To measure a qubit you need to execute"
-                              +" the circuit, dynamic measures aren't "
-                              +"implemented yet")
+                              + " the circuit, dynamic measures aren't "
+                              + "implemented yet")
 
 projectq.types._qubit.Qubit.__bool__ = _newbool
+
+
 class AqasmEngine(MainEngine):
     """
     A compiler engine which can print and export commands in AQASM format.
@@ -110,10 +107,11 @@ class AqasmEngine(MainEngine):
         self.nbqb = aq.nbqb
         self.verbose = verbose
 
-    def allocate_qubit(self):
-        self.nbqb+=1
+    def allocate_qubit(self, dirty=False):
+        self.nbqb += 1
         self.qb.qbits.extend(self.prog.qalloc(1))
-        return MainEngine.allocate_qubit(self)
+        return MainEngine.allocate_qubit(self, dirty)
+
     def to_qlm_circ(self):
         return self.prog.to_circ()
 
@@ -138,22 +136,14 @@ class AqasmPrinter(MainEngine):
 
         elif isinstance(cmd.gate, BasicGate):
             controls = cmd.all_qubits[0]
-            targets = cmd.all_qubits[1]
             inp_qb = []
-            #pprint(vars(cmd))
-            #pprint(cmd.all_qubits[2])
-            #pprint(vars(cmd.all_qubits[2][0]))
             for reg in cmd.all_qubits:
                 for qbit in reg:
                     inp_qb.append(self.qb[int(str(qbit))])
-            self.prog.apply(
-                _get_pyqasm_gate(
-                            cmd.gate,
-                            targets=len(cmd._qubits),
-                            controls=len(controls)),
-                inp_qb)
-        #if self.verbose:
-            #print(res_s)
+            self.prog.apply(_get_pyqasm_gate(cmd.gate,
+                                             targets=len(cmd._qubits),
+                                             controls=len(controls)),
+                            inp_qb)
 
     def is_available(self, cmd):
         try:
@@ -166,20 +156,3 @@ class AqasmPrinter(MainEngine):
             if not cmd.gate == FlushGate():
                 self._out_cmd(cmd)
 
-if __name__=="__main__":
-    aq = AqasmPrinter(MainEngine)
-    eng = AqasmEngine(aq, engine_list=[aq])
-    q = eng.allocate_qureg(2)
-    p = eng.allocate_qureg(1)
-    c = eng.allocate_qureg(2)
-    ops.Swap | (c[0], q[1])
-    ops.CX | (c[0], q[1])
-    #ops.X | p
-    #Toffoli | (q[0], q[1], p)
-    #ops.ControlledGate(R(3.14), n=2) | (q[0], p, c)
-    #ops.Sdag | q[0]
-    #ops.QFT | (p, c)
-    #ops.All(ops.Measure) | q
-    #print("--------------------------------------------------------------")
-    acirc = eng.to_qlm_circ()
-    #int(q[0])

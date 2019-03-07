@@ -27,10 +27,90 @@ Overview
 """
 from qat.lang.AQASM import *
 from math import pi
+from numpy import array, complex128, cos, sin
 from typing import cast
 import cirq
 ops = cirq.ops
 from cirq.ops import common_gates, controlled_gate
+
+
+# Adding parity gates
+def gen_XX():
+    return array([[ 0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j],
+        [ 0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j],
+        [ 0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j],
+        [ 1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j]], dtype=complex128)
+
+def gen_YY():
+    return array([[ 0.+0.j,  0.-0.j,  0.-0.j, -1.+0.j],
+        [ 0.+0.j,  0.+0.j,  1.-0.j,  0.-0.j],
+        [ 0.+0.j,  1.-0.j,  0.+0.j,  0.-0.j],
+        [-1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j]], dtype=complex128)
+
+def gen_ZZ():
+    return array([[ 1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j],
+        [ 0.+0.j, -1.+0.j,  0.+0.j, -0.+0.j],
+        [ 0.+0.j,  0.+0.j, -1.+0.j, -0.+0.j],
+        [ 0.+0.j, -0.+0.j, -0.+0.j,  1.-0.j]], dtype=complex128)
+
+def gen_RXX(phi):
+    return array([
+        [cos(phi/2), 0, 0, -sin(phi/2)*1.j],
+        [0, cos(phi/2), -sin(phi/2)*1.j, 0],
+        [0, -sin(phi/2)*1.j, cos(phi/2), 0],
+        [-sin(phi/2)*1.j, 0, 0, cos(phi/2)]],
+        dtype=complex128)
+
+def gen_RYY(phi):
+    return np.array([
+        [cos(phi/2), 0, 0, sin(phi/2)*1.j],
+        [0, cos(phi/2), -sin(phi/2)*1.j, 0],
+        [0, -sin(phi/2)*1.j, cos(phi/2), 0],
+        [sin(phi/2)*1.j, 0, 0, cos(phi/2)]],
+        dtype=complex128)
+
+def gen_RZZ(phi):
+    return np.array([
+        [cos(phi/2)-sin(phi/2)*1.j, 0, 0, 0],
+        [0, cos(phi/2)+sin(phi/2)*1.j, 0, 0],
+        [0, 0, cos(phi/2)+sin(phi/2)*1.j, 0],
+        [0, 0, 0, cos(phi/2)-sin(phi/2)*1.j]],
+        dtype=complex128)
+
+
+XX = AbstractGate("XX", [], arity=2, matrix_generator=gen_XX)
+YY = AbstractGate("YY", [], arity=2, matrix_generator=gen_YY)
+ZZ = AbstractGate("ZZ", [], arity=2, matrix_generator=gen_ZZ)
+
+RXX = AbstractGate("RXX", [float], arity=2, matrix_generator=gen_RXX)
+RYY = AbstractGate("RYY", [float], arity=2, matrix_generator=gen_RYY)
+RZZ = AbstractGate("RZZ", [float], arity=2, matrix_generator=gen_RZZ)
+
+# handy functions to avoid unreadable long if else blocks
+
+def process_XX(exp):
+    if exp == 1.0:
+        return XX()
+    elif exp == -1.0:
+        return XX().dag()
+    else:
+        return RXX(exp)
+
+def process_YY(exp):
+    if exp == 1.0:
+        return YY()
+    elif exp == -1.0:
+        return YY().dag()
+    else:
+        return RYY(exp)
+
+def process_ZZ(exp):
+    if exp == 1.0:
+        return ZZ()
+    elif exp == -1.0:
+        return ZZ().dag()
+    else:
+        return RZZ(exp)
 
 def process_H(exp):
     if abs(exp) == 1.0:
@@ -55,6 +135,7 @@ def process_Y(exp):
 
 def process_Z(exp):
     if abs(exp) == 1.0:
+        print("perfect")
         return Z
     elif abs(exp) == 0.5:
         return process_S(exp*2)
@@ -112,6 +193,19 @@ def process_ISWAP(exp):
 def process_CX(exp):
     return process_X(exp).ctrl()
 
+def process_CCX(exp):
+    return process_X(exp).ctrl().ctrl()
+
+def process_CZ(exp):
+    return process_Z(exp).ctrl()
+
+def process_CZZ(exp):
+    return process_Z(exp).ctrl().ctrl()
+
+def process_CSWAP(exp):
+    return process_SWAP(exp).ctrl()
+
+# dictionary linking gcirq gate types and corresponding pyaqasm gates
 gate_dic = {common_gates.HPowGate: process_H,
             common_gates.XPowGate: process_X,
             common_gates.YPowGate: process_Y,
@@ -120,28 +214,47 @@ gate_dic = {common_gates.HPowGate: process_H,
             common_gates.T: process_T,
             common_gates.SwapPowGate: process_SWAP,
             common_gates.ISwapPowGate: process_ISWAP,
-            common_gates.CNotPowGate: process_CX}
+            common_gates.CNotPowGate: process_CX,
+            common_gates.CZPowGate: process_CZ,
+            cirq.ops.three_qubit_gates.CSwapGate: process_CSWAP,
+            cirq.ops.three_qubit_gates.CCXPowGate: process_CCX,
+            cirq.ops.three_qubit_gates.CCZPowGate: process_CZZ,
+            cirq.ops.parity_gates.XXPowGate: process_XX,
+            cirq.ops.parity_gates.YYPowGate: process_YY,
+            cirq.ops.parity_gates.ZZPowGate: process_ZZ}
 
+# gets a gcirq gate object and outputs corresponding pyaqasm gate
 def _get_gate(gate):
-    if controlled_gate.ControlledGate == type(gate):
-        return _get_gate(gate.sub_gate).ctrl()
-    elif gate.exponent == 0.0:
-        return "none"
-    else:
-        return gate_dic[type(gate)](gate.exponent)
+    vars(gate)
+    try:
+        if controlled_gate.ControlledGate == type(gate):
+            print("sub is {}".format(gate.sub_gate))
+            return _get_gate(gate.sub_gate).ctrl()
+        elif gate.exponent == 0.0:
+            return "none"
+        else:
+            return gate_dic[type(gate)](gate.exponent)
+    except AttributeError:
+        return gate_dic[type(gate)](1.0)
 
+# master function converting gcirq object to pyaqasm circuit object
 def to_qlm_circ(gcirc):
 
+    # building a qubit map to use correct qubits
     qubits = ops.QubitOrder.as_qubit_order(
         ops.QubitOrder.DEFAULT).order_for(gcirc.all_qubits())
     qmap = { qbit:i for i, qbit in enumerate(qubits)}
 
+    # extracting operations
     operations = tuple(ops.flatten_op_tree(gcirc.all_operations()))
+
+    # pyaqasm initialization
     prog = Program()
     qreg = prog.qalloc(0)
     qreg.qbits.extend(prog.qalloc(len(qubits)))
+
+    # building operations
     for op in operations:
-        #print(type(op.gate))
         qbs = []
         for qb in op.qubits:
             qbs.append(qreg[qmap[qb]])
@@ -153,19 +266,3 @@ def to_qlm_circ(gcirc):
         else:
             prog.apply(_get_gate(op.gate), qbs)
     return prog.to_circ()
-
-
-#if __name__=="__main__":
-
-    #q = cirq.GridQubit(3, 4)
-    #q2 = cirq.GridQubit(2, 1)
-    #circuit = cirq.Circuit.from_ops(
-    #    cirq.ControlledGate(common_gates.X)(q, q2)**-1,
-    #    common_gates.SWAP(q, q2)**0.5,
-    #    common_gates.ISWAP(q, q2)**-1.0,
-    #    common_gates.T(q)**-1.0,
-    #    common_gates.Rz(pi*2)(q)**0.0,
-    #    common_gates.SWAP(q, q2)**-1.0
-    #    )
-    #circ = Gcirc2acirc(circuit)
-    #circ.to_qlm_circ()

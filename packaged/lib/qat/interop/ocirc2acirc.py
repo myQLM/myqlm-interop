@@ -24,10 +24,9 @@ Overview
 
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, Aer
 from qat.lang.AQASM import *
-from math import pi
-from pprint import pprint
 import numpy as np
 
+# find the qubit
 def get_qindex(circ, name, index):
     ret = 0
     for reg in circ.qregs:
@@ -35,6 +34,8 @@ def get_qindex(circ, name, index):
             ret += reg.size
         else:
             return ret + index
+
+# find the cbit
 def get_cindex(circ, name, index):
     ret = 0
     for reg in circ.cregs:
@@ -72,7 +73,7 @@ gate_dic={'h': H, 'x': X, 'y': Y, 'z': Z, 'xbase': X, 'swap': SWAP,
           'u2': process_U2, 'u3': process_U, 'U': process_U}
 
 def get_gate(gate, params):
-    """ generates pyAQASM corresponding object """
+    """ generates pyAQASM corresponding gate """
     if gate =="u0":
         return I
     elif gate[0] == 'c':

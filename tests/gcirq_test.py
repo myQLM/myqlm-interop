@@ -28,14 +28,70 @@ from qat.interop.gcirq2acirc import to_qlm_circ
 from qat.lang.AQASM import *
 from qat.core.circ import extract_syntax
 from qat.comm.datamodel.ttypes import OpType
-from math import pi
+from numpy import array, cos, sin, complex128, pi
+# Adding parity gates and their rotations:
+def gen_XX():
+    return array([[ 0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j],
+        [ 0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j],
+        [ 0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j],
+        [ 1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j]], dtype=complex128)
+
+def gen_YY():
+    return array([[ 0.+0.j,  0.-0.j,  0.-0.j, -1.+0.j],
+        [ 0.+0.j,  0.+0.j,  1.-0.j,  0.-0.j],
+        [ 0.+0.j,  1.-0.j,  0.+0.j,  0.-0.j],
+        [-1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j]], dtype=complex128)
+
+def gen_ZZ():
+    return array([[ 1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j],
+        [ 0.+0.j, -1.+0.j,  0.+0.j, -0.+0.j],
+        [ 0.+0.j,  0.+0.j, -1.+0.j, -0.+0.j],
+        [ 0.+0.j, -0.+0.j, -0.+0.j,  1.-0.j]], dtype=complex128)
+
+def gen_RXX(phi):
+    return array([
+        [cos(phi/2), 0, 0, -sin(phi/2)*1.j],
+        [0, cos(phi/2), -sin(phi/2)*1.j, 0],
+        [0, -sin(phi/2)*1.j, cos(phi/2), 0],
+        [-sin(phi/2)*1.j, 0, 0, cos(phi/2)]],
+        dtype=complex128)
+
+def gen_RYY(phi):
+    return np.array([
+        [cos(phi/2), 0, 0, sin(phi/2)*1.j],
+        [0, cos(phi/2), -sin(phi/2)*1.j, 0],
+        [0, -sin(phi/2)*1.j, cos(phi/2), 0],
+        [sin(phi/2)*1.j, 0, 0, cos(phi/2)]],
+        dtype=complex128)
+
+def gen_RZZ(phi):
+    return np.array([
+        [cos(phi/2)-sin(phi/2)*1.j, 0, 0, 0],
+        [0, cos(phi/2)+sin(phi/2)*1.j, 0, 0],
+        [0, 0, cos(phi/2)+sin(phi/2)*1.j, 0],
+        [0, 0, 0, cos(phi/2)-sin(phi/2)*1.j]],
+        dtype=complex128)
+
+
+XX = AbstractGate("XX", [], arity=2, matrix_generator=gen_XX)
+YY = AbstractGate("YY", [], arity=2, matrix_generator=gen_YY)
+ZZ = AbstractGate("ZZ", [], arity=2, matrix_generator=gen_ZZ)
+
+RXX = AbstractGate("RXX", [float], arity=2, matrix_generator=gen_RXX)
+RYY = AbstractGate("RYY", [float], arity=2, matrix_generator=gen_RYY)
+RZZ = AbstractGate("RZZ", [float], arity=2, matrix_generator=gen_RZZ)
+
+
+
 gates_1qb = [g_ops.X, g_ops.Y, g_ops.Z, g_ops.S, g_ops.T, g_ops.H,
              g_ops.Rx(3.14), g_ops.Ry(3.14), g_ops.Rz(3.14)]
-gates_2qb = [ControlledGate(g_ops.H), g_ops.CNOT, ControlledGate(g_ops.Rz(3.14)),
-             g_ops.SWAP, g_ops.ISWAP]
+gates_2qb = [ControlledGate(g_ops.H), g_ops.CNOT,
+             ControlledGate(g_ops.Rz(3.14)),g_ops.SWAP, g_ops.ISWAP,
+             cirq.XX, cirq.YY, cirq.ZZ, cirq.CZ]
 
 pygates_1qb = [X, Y, Z, S, T, H, RX(3.14), RY(3.14), RZ(3.14)]
-pygates_2qb = [H.ctrl(), CNOT, RZ(3.14).ctrl(), SWAP, ISWAP]
+pygates_2qb = [H.ctrl(), CNOT, RZ(3.14).ctrl(), SWAP, ISWAP,
+               XX(), YY(), ZZ(), Z.ctrl()]
 class TestGcirq2QLMConversion(unittest.TestCase):
     """ Tests the function converting google cirq circuit
         to qlm circuit"""
@@ -50,8 +106,9 @@ class TestGcirq2QLMConversion(unittest.TestCase):
         for op in gates_2qb:
             gcirq.append(op(qreg3[0], qreg1[1])**-1.0)
         
-        gcirq.append(ControlledGate(ControlledGate(g_ops.X))(qreg1[0], qreg3[1], qreg2[0]))
-        #ControlledGate(ops.Swap, n=1) | (qreg3[1], qreg1[0], qreg2[0])
+        gcirq.append(cirq.CCX(qreg1[0], qreg3[1], qreg2[0]))
+        gcirq.append(cirq.CSWAP(qreg1[0], qreg3[1], qreg2[0]))
+        gcirq.append(cirq.CCZ(qreg1[0], qreg3[1], qreg2[0]))
         #Toffoli | (qreg3[1], qreg1[0], qreg2[0])
         for qbit in qreg1 + qreg2 + qreg3:
             gcirq.append(cirq.measure(qbit))
@@ -62,11 +119,18 @@ class TestGcirq2QLMConversion(unittest.TestCase):
         prog = Program()
         qubits = prog.qalloc(5)
         cbits = prog.calloc(5)
+
         for op in pygates_1qb:
             prog.apply(op.dag(), qubits[2])
+
         for op in pygates_2qb:
             prog.apply(op.dag(), qubits[3], qubits[1])
+
+
         prog.apply(CCNOT, qubits[0], qubits[4], qubits[2])
+        prog.apply(SWAP.ctrl(), qubits[0], qubits[4], qubits[2])
+        prog.apply(Z.ctrl().ctrl(), qubits[0], qubits[4], qubits[2])
+
         for i in range(5):
             prog.measure(qubits[i], cbits[i])
         expected = prog.to_circ()
@@ -92,6 +156,7 @@ class TestGcirq2QLMConversion(unittest.TestCase):
             self.assertEqual(expected_gate_name, result_gate_name)
             self.assertEqual(expected_gate_params, result_gate_params)
             #self.assertEqual(exp_op.qbits, res_op.qbits)
+
     def test_valid_powers(self):
         gcirq = cirq.Circuit()
         qreg = [cirq.LineQubit(i) for i in range(5)]
@@ -119,6 +184,7 @@ class TestGcirq2QLMConversion(unittest.TestCase):
     def test_invalid_powers(self):
         gcirq = cirq.Circuit()
         qreg = [cirq.LineQubit(i) for i in range(5)]
+        to_qlm_circ(gcirq)
         try:
             gcirq.append(g_ops.H(qreg[0])**pi)
         except ValueError:
