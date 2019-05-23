@@ -48,51 +48,76 @@ def get_cindex(circ, name, index):
             ret += reg.size
         else:
             return ret + index
+
+
 # Let's add the U gate, u1/2/3 would be dealt with through setting
 # the appropriate params to 0
 def gen_U(theta, phi, lamda):
     """ generate the U gate matrix """
-    m11 = (np.e ** (1j*(phi + lamda)/2)) * np.cos(theta/2)
-    m12 = (-1) * (np.e ** (1j*(phi - lamda)/2)) * np.sin(theta/2)
-    m21 = (np.e ** (1j*(phi - lamda)/2)) * np.sin(theta/2)
-    m22 = (np.e ** (1j*(phi + lamda)/2)) * np.cos(theta/2)
-    return np.array([[m11, m12],[m21, m22]], dtype = np.complex128)
+    m11 = (np.e ** (1j * (phi + lamda) / 2)) * np.cos(theta / 2)
+    m12 = (-1) * (np.e ** (1j * (phi - lamda) / 2)) * np.sin(theta / 2)
+    m21 = (np.e ** (1j * (phi - lamda) / 2)) * np.sin(theta / 2)
+    m22 = (np.e ** (1j * (phi + lamda) / 2)) * np.cos(theta / 2)
+    return np.array([[m11, m12], [m21, m22]], dtype=np.complex128)
+
 
 def gen_RZZ(theta):
     """ generates the RZZ gate matrix """
-    return np.diag([1, np.exp(1j*theta), np.exp(1j*theta), 1])
+    return np.diag([1, np.exp(1j * theta), np.exp(1j * theta), 1])
 
-U = AbstractGate("U", [float]*3, arity=1,
-                 matrix_generator=gen_U)
-RZZ = AbstractGate("RZZ", [float], arity=2,
-                   matrix_generator=gen_RZZ)
+
+U = AbstractGate("U", [float] * 3, arity=1, matrix_generator=gen_U)
+RZZ = AbstractGate("RZZ", [float], arity=2, matrix_generator=gen_RZZ)
 # get qbits
+
 
 def process_U(params):
     """ return corresponding U matrix"""
     return U(params[0], params[1], params[2])
 
+
 def process_U2(params):
     """ Returns the corresponding u2 matrix """
     return U(0, params[0], params[1])
 
-gate_dic={'h': H, 'x': X, 'y': Y, 'z': Z, 'xbase': X, 'swap': SWAP,
-          'id': I, 's': S, 'sdg': S.dag(), 't': T, 'tdg': T.dag(),
-          'rx': RX, 'ry': RY, 'rz': RZ, 'rzz': RZZ, 'u0': I, 'u1': RY,
-          'u2': process_U2, 'u3': process_U, 'U': process_U}
+
+gate_dic = {
+    "h": H,
+    "x": X,
+    "y": Y,
+    "z": Z,
+    "xbase": X,
+    "swap": SWAP,
+    "id": I,
+    "s": S,
+    "sdg": S.dag(),
+    "t": T,
+    "tdg": T.dag(),
+    "rx": RX,
+    "ry": RY,
+    "rz": RZ,
+    "rzz": RZZ,
+    "u0": I,
+    "u1": RY,
+    "u2": process_U2,
+    "u3": process_U,
+    "U": process_U,
+}
+
 
 def get_gate(gate, params):
     """ generates pyAQASM corresponding gate """
-    if gate =="u0":
+    if gate == "u0":
         return I
-    elif gate[0] == 'c':
+    elif gate[0] == "c":
         return get_gate(gate[1:], params).ctrl()
-    elif len(params)==0:
+    elif len(params) == 0:
         return gate_dic[gate]
-    elif len(params)==1:
+    elif len(params) == 1:
         return gate_dic[gate](params[0])
     else:
         return gate_dic[gate](params)
+
 
 def to_qlm_circ(qiskit_circuit, sep_measure=False):
     """ translates a qiskit circuit into a qlm circuit"""
@@ -108,9 +133,9 @@ def to_qlm_circ(qiskit_circuit, sep_measure=False):
         cbits_num += cbits_num + reg.size
     cbits = prog.calloc(cbits_num)
     for op in qiskit_circuit.data:
-        qb = [] # qbits arguments
-        cb = [] # cbits arguments
-        prms = [] # gate parameters
+        qb = []  # qbits arguments
+        cb = []  # cbits arguments
+        prms = []  # gate parameters
         # Get qbit arguments
         for reg in op.qargs:
             qb.append(qbits[get_qindex(qiskit_circuit, reg[0].name, reg[1])])
@@ -123,7 +148,7 @@ def to_qlm_circ(qiskit_circuit, sep_measure=False):
         for p in op.param:
             prms.append(float(p))
         # Apply measure #
-        if op.name == 'measure':
+        if op.name == "measure":
             if sep_measure:
                 to_measure.append(qb)
             else:
@@ -135,13 +160,29 @@ def to_qlm_circ(qiskit_circuit, sep_measure=False):
         return prog.to_circ(), to_measure
     else:
         return prog.to_circ()
+
+
 def qlm_circ_sep_meas(qiskit_circuit):
     return to_qlm_circ(qiskit_circuit, True)
 
+
 def gen_qiskit_gateset(qc):
-    return {H: qc.h, X: qc.x, Y: qc.y, Z: qc.z, SWAP: qc.swap,
-            I: qc.id, S: qc.s, S.dag(): qc.sdg, T: qc.t,
-            T.dag(): qc.tdg, RX: qc.rx, RY: qc.ry, RZ: qc.rz}
+    return {
+        H: qc.h,
+        X: qc.x,
+        Y: qc.y,
+        Z: qc.z,
+        SWAP: qc.swap,
+        I: qc.id,
+        S: qc.s,
+        S.dag(): qc.sdg,
+        T: qc.t,
+        T.dag(): qc.tdg,
+        RX: qc.rx,
+        RY: qc.ry,
+        RZ: qc.rz,
+    }
+
 
 def to_qiskit_circuit(qlm_circuit):
     qreg = QuantumRegister(qlm_circuit.nbqbits)
@@ -153,11 +194,17 @@ def to_qiskit_circuit(qlm_circuit):
             try:
                 dic[op.gate](op.gate.parameters + [qreg[i.index] for i in op.qbits])
             except KeyError:
-                raise ValueError("Gate {} not supported by qiskit API".format(op.gate.name))
+                raise ValueError(
+                    "Gate {} not supported by qiskit API".format(op.gate.name)
+                )
         elif op.type == 1:
             for index in range(len(op.qbits)):
                 qc.measure(op.qbits[index], op.cbits[index])
     return qc
 
+
 def job_to_qiskit_circuit(qlm_job):
+    # TODO account for type sample/observable
+    # TODO account for nbshots
+    # TODO account for
     return to_qiskit_circuit(qlm_job.circuit)

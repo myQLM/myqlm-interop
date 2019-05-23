@@ -9,6 +9,13 @@
 /template_config.h.in
 /aclocal.m4
 
+/Makefile
+/config*
+/vcsversion
+/tmp.vcsversion
+/version.py
+/tests/Makefile
+
 # /.autotools_cache/
 /.autotools_cache/ltmain.sh
 /.autotools_cache/missing
@@ -58,6 +65,7 @@
 /packaged/test-driver
 /packaged/config.h
 /packaged/Makefile
+/packaged/doc/Makefile
 /packaged/Makefile.in
 /packaged/config.guess
 /packaged/compile
