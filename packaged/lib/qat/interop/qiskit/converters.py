@@ -22,6 +22,7 @@ Overview
 
 """
 
+import qiskit
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, Aer
 from qat.lang.AQASM import *
 from qat.lang.AQASM.gates import *
@@ -119,18 +120,18 @@ def get_gate(gate, params):
         return gate_dic[gate](params)
 
 
-def to_qlm_circ(qiskit_circuit, sep_measure=False):
+def old_to_qlm_circ(qiskit_circuit, sep_measure=False):
     """ translates a qiskit circuit into a qlm circuit"""
     prog = Program()
     qbits_num = 0
     to_measure = []
     for reg in qiskit_circuit.qregs:
-        qbits_num += qbits_num + reg.size
+        qbits_num = qbits_num + reg.size
     qbits = prog.qalloc(qbits_num)
 
     cbits_num = 0
     for reg in qiskit_circuit.cregs:
-        cbits_num += cbits_num + reg.size
+        cbits_num = cbits_num + reg.size
     cbits = prog.calloc(cbits_num)
     for op in qiskit_circuit.data:
         qb = []  # qbits arguments
@@ -162,40 +163,92 @@ def to_qlm_circ(qiskit_circuit, sep_measure=False):
         return prog.to_circ()
 
 
+def new_to_qlm_circ(qiskit_circuit, sep_measure=False):
+    """ translates a qiskit circuit into a qlm circuit"""
+    prog = Program()
+    qbits_num = 0
+    to_measure = []
+    for reg in qiskit_circuit.qregs:
+        qbits_num = qbits_num + reg.size
+    qbits = prog.qalloc(qbits_num)
+
+    cbits_num = 0
+    for reg in qiskit_circuit.cregs:
+        cbits_num = cbits_num + reg.size
+    cbits = prog.calloc(cbits_num)
+    for op in qiskit_circuit.data:
+        qb = []  # qbits arguments
+        cb = []  # cbits arguments
+        prms = []  # gate parameters
+        # Get qbit arguments
+        for reg in op[1]:
+            qb.append(qbits[get_qindex(qiskit_circuit, reg[0].name, reg[1])])
+
+        # Get cbit arguments
+        for reg in op[2]:
+            cb.append(qbits[get_cindex(qiskit_circuit, reg[0].name, reg[1])])
+
+        # Get parameters
+        for p in op[0]._params:
+            prms.append(float(p))
+        # Apply measure #
+        if op[0].name == "measure":
+            if sep_measure:
+                to_measure.append(qb)
+            else:
+                prog.measure(qb, cb)
+        else:
+            # Apply gates #
+            prog.apply(get_gate(op[0].name, prms), qb)
+    if sep_measure:
+        return prog.to_circ(), to_measure
+    else:
+        return prog.to_circ()
+
+
+def to_qlm_circ(qiskit_circuit, sep_measure=False):
+    from pkg_resources import parse_version
+
+    if parse_version(qiskit.__version__) < parse_version("0.7.9"):
+        return old_to_qlm_circ(qiskit_circuit, sep_measure)
+    else:
+        return new_to_qlm_circ(qiskit_circuit, sep_measure)
+
+
 def qlm_circ_sep_meas(qiskit_circuit):
     return to_qlm_circ(qiskit_circuit, True)
 
 
 def gen_qiskit_gateset(qc):
     return {
-        H: qc.h,
-        X: qc.x,
-        Y: qc.y,
-        Z: qc.z,
-        SWAP: qc.swap,
-        I: qc.id,
-        S: qc.s,
-        S.dag(): qc.sdg,
-        T: qc.t,
-        T.dag(): qc.tdg,
-        RX: qc.rx,
-        RY: qc.ry,
-        RZ: qc.rz,
+        'H': qc.h,
+        'X': qc.x,
+        'Y': qc.y,
+        'Z': qc.z,
+        'SWAP': qc.swap,
+        'S': qc.s,
+        'D-S': qc.sdg,
+        'T': qc.t,
+        'D-T': qc.tdg,
+        'RX': qc.rx,
+        'RY': qc.ry,
+        'RZ': qc.rz,
     }
 
-
+from qat.core.util import extract_syntax
 def to_qiskit_circuit(qlm_circuit):
     qreg = QuantumRegister(qlm_circuit.nbqbits)
     creg = ClassicalRegister(qlm_circuit.nbcbits)
     qc = QuantumCircuit(qreg, creg)
     dic = gen_qiskit_gateset(qc)
     for op in qlm_circuit.ops:
+        name, params = extract_syntax(qlm_circuit.gateDic[op.gate], qlm_circuit.gateDic)
         if op.type == 0:
             try:
-                dic[op.gate](op.gate.parameters + [qreg[i.index] for i in op.qbits])
+                dic[name](params + [qreg[i] for i in op.qbits])
             except KeyError:
                 raise ValueError(
-                    "Gate {} not supported by qiskit API".format(op.gate.name)
+                    "Gate {} not supported by qiskit API".format(name)
                 )
         elif op.type == 1:
             for index in range(len(op.qbits)):
