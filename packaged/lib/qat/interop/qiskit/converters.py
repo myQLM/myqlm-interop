@@ -226,6 +226,7 @@ def gen_qiskit_gateset(qc):
         'Y': qc.y,
         'Z': qc.z,
         'SWAP': qc.swap,
+        'I': qc.iden,
         'S': qc.s,
         'D-S': qc.sdg,
         'T': qc.t,
@@ -233,19 +234,36 @@ def gen_qiskit_gateset(qc):
         'RX': qc.rx,
         'RY': qc.ry,
         'RZ': qc.rz,
+        'C-H': qc.ch,
+        'CNOT': qc.cx,
+        'C-Y': qc.cy,
+        'CSIGN': qc.cz,
+        'C-RZ': qc.crz,
+        'CCNOT': qc.ccx,
+        'C-SWAP': qc.cswap
     }
 
 from qat.core.util import extract_syntax
+
+supported_ctrls = ["CNOT", "CCNOT", "C-Y", "CSIGN", "C-H", "C-SWAP", "C-RZ"]
 def to_qiskit_circuit(qlm_circuit):
     qreg = QuantumRegister(qlm_circuit.nbqbits)
     creg = ClassicalRegister(qlm_circuit.nbcbits)
     qc = QuantumCircuit(qreg, creg)
     dic = gen_qiskit_gateset(qc)
     for op in qlm_circuit.ops:
-        name, params = extract_syntax(qlm_circuit.gateDic[op.gate], qlm_circuit.gateDic)
         if op.type == 0:
+            name, params = extract_syntax(qlm_circuit.gateDic[op.gate], qlm_circuit.gateDic)
+            print(name)
+            if (qlm_circuit.gateDic[op.gate].nbctrls is not None and
+                qlm_circuit.gateDic[op.gate].nbctrls > 0 and
+                name not in supported_ctrls):
+                    raise ValueError(
+                        "Controlled gates aren't supported by qiskit"
+                    )
             try:
-                dic[name](params + [qreg[i] for i in op.qbits])
+                print(op.qbits)
+                dic[name](* params + [qreg[i] for i in op.qbits])
             except KeyError:
                 raise ValueError(
                     "Gate {} not supported by qiskit API".format(name)

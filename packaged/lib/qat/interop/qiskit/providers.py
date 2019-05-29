@@ -10,10 +10,14 @@ from qiskit.validation.base import Obj
 from qiskit import execute
 
 # QLM imports
-from .converters import qlm_circ_sep_meas
-from .converters import job_to_qiskit_circuit
+from qat.interop.qiskit.converters import qlm_circ_sep_meas
+from qat.interop.qiskit.converters import job_to_qiskit_circuit
 from qat.comm.shared.ttypes import Job, Batch
+from qat.comm.shared.ttypes import Result as QlmRes
 from qat.core.qpu.qpu import QPUHandler
+from qat.async.asyncqpu.Qiskitjob import Qiskitjob
+from qat.core.wrappers.result import State
+from qat.comm.shared.ttypes import Sample as ThriftSample
 from collections import Counter
 
 
@@ -21,6 +25,24 @@ def to_string(state, nbqbits):
     st = bin(state)[2:]
     st = "0" * (nbqbits - len(st)) + st
     return st
+
+
+def generate_qlm_result(qiskit_result):
+    """
+    Generates a QLM Result from a qiskit result
+    """
+
+    nbshots = qiskit_result.results[0].shots
+    counts = [vars(result.data.counts) for result in qiskit_result.results]
+    counts = [{int(k, 16): v for k, v in count.items()} for count in counts]
+
+    ret = QlmRes()
+    ret.raw_data = []
+    for state, freq in counts[0].items():
+        ret.raw_data.append(
+            ThriftSample(state=State(state, qregs={}), probability=freq / nbshots)
+        )
+    return ret
 
 
 def generate_experiment_result(qlm_result, nbqbits, head):
@@ -203,7 +225,22 @@ class QiskitQPU(QPUHandler):
 
     def submit_job(self, qlm_job):
         qiskit_circuit = job_to_qiskit_circuit(qlm_job)
-        return execute(qiskit_circuit, self.backend).result()
+        qiskit_result = execute(qiskit_circuit, self.backend).result()
+        return generate_qlm_result(qiskit_result)
+
+
+class AsyncQiskitQPU(QPUHandler):
+    def __init__(self, backend=None, plugins=None):
+        super(QPUHandler, self).__init__(plugins)
+        self.backend = backend
+
+    def set_backend(self, backend):
+        self.backend = backend
+
+    def submit_job(self, qlm_job):
+        qiskit_circuit = job_to_qiskit_circuit(qlm_job)
+        async_job = execute(qiskit_circuit, self.backend)
+        return Qiskitjob(async_job)
 
 
 class QLMConnector:
