@@ -254,7 +254,6 @@ def to_qiskit_circuit(qlm_circuit):
     for op in qlm_circuit.ops:
         if op.type == 0:
             name, params = extract_syntax(qlm_circuit.gateDic[op.gate], qlm_circuit.gateDic)
-            print(name)
             if (qlm_circuit.gateDic[op.gate].nbctrls is not None and
                 qlm_circuit.gateDic[op.gate].nbctrls > 0 and
                 name not in supported_ctrls):
@@ -262,7 +261,6 @@ def to_qiskit_circuit(qlm_circuit):
                         "Controlled gates aren't supported by qiskit"
                     )
             try:
-                print(op.qbits)
                 dic[name](* params + [qreg[i] for i in op.qbits])
             except KeyError:
                 raise ValueError(
