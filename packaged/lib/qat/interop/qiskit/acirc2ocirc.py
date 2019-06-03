@@ -27,9 +27,22 @@ from qat.lang.AQASM.gates import H, X, Y, Z, S, T, RX, RY, RZ, I, SWAP
 
 
 def gen_qiskit_gateset(qc):
-    return {H: qc.h, X: qc.x, Y: qc.y, Z: qc.z, SWAP: qc.swap,
-            I: qc.id, S: qc.s, S.dag(): qc.sdg, T: qc.t,
-            T.dag(): qc.tdg, RX: qc.rx, RY: qc.ry, RZ: qc.rz}
+    return {
+        H: qc.h,
+        X: qc.x,
+        Y: qc.y,
+        Z: qc.z,
+        SWAP: qc.swap,
+        I: qc.id,
+        S: qc.s,
+        S.dag(): qc.sdg,
+        T: qc.t,
+        T.dag(): qc.tdg,
+        RX: qc.rx,
+        RY: qc.ry,
+        RZ: qc.rz,
+    }
+
 
 def to_qiskit_circuit(qlm_circuit):
     qreg = QuantumRegister(qlm_circuit.nbqbits)
@@ -41,11 +54,14 @@ def to_qiskit_circuit(qlm_circuit):
             try:
                 dic[op.gate](op.gate.parameters + [qreg[i.index] for i in op.qbits])
             except KeyError:
-                raise ValueError("Gate {} not supported by qiskit API".format(op.gate.name))
+                raise ValueError(
+                    "Gate {} not supported by qiskit API".format(op.gate.name)
+                )
         elif op.type == 1:
             for index in range(len(op.qbits)):
                 qc.measure(op.qbits[index], op.cbits[index])
     return qc
+
 
 def job_to_qiskit_circuit(qlm_job):
     return to_qiskit_circuit(qlm_job.circuit)
