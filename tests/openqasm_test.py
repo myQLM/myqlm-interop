@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env oython
 # -*- coding: utf-8 -*-
 
 """Tests for pyAQASM"""
@@ -6,9 +6,11 @@ import unittest
 import os
 from math import pi
 from qat.comm.datamodel.ttypes import OpType
-from qat.lang.parser.qasm_parser import OqasmParser, ImplementationError,\
+from qat.interop.openqasm.qasm_parser import OqasmParser, ImplementationError,\
         extract_inc, InvalidParameterNumber
-from qat.core.circ import extract_syntax
+from qat.core.util import extract_syntax
+
+from qat.core.gate_set import WrongArgumentsNumber as WrongParams
 
 # name, type, nb_qbits, nb_params
 GATE_DATA = [["H", OpType.GATETYPE, 1, 0],
@@ -41,7 +43,7 @@ HEADER = "OPENQASM 2.0;\nqreg q[4];\ncreg c[4];\n"
 
 class TestPyAqasmSimple(unittest.TestCase):
     """ Class for PyAQASM tests """
-    def _test_cu_bug(self):
+    def test_cu_bug(self):
         """ Trying to fix cu1 bug ignoring third parameter"""
         oq_parser = OqasmParser()
         oq_parser.build()
@@ -51,7 +53,7 @@ class TestPyAqasmSimple(unittest.TestCase):
         oq_parser.parse(HEADER + data)
         circ = oq_parser.compiler.gen_circuit()
         print(circ.ops)
-    def _test__correct_format(self):
+    def test__correct_format(self):
         """ Testing how the parser fares with bad formatting"""
         oq_parser = OqasmParser()
         oq_parser.build()
@@ -61,7 +63,7 @@ class TestPyAqasmSimple(unittest.TestCase):
         circ = oq_parser.compiler.gen_circuit()
         self.assertEqual(len(circ.ops), 1)
 
-    def _test__recursive_file_inclusion(self):
+    def test__recursive_file_inclusion(self):
         """ Testing whether includes are working correctly """
         test1 = "include \"test2\";\n4\n5\n"
         test2 = "1\ninclude \"test3\";\n3\n"
@@ -82,7 +84,7 @@ class TestPyAqasmSimple(unittest.TestCase):
         os.remove("test3")
         self.assertEqual(res, data)
 
-    def _test__standard_operations(self):
+    def test__standard_operations(self):
         """ Testing standard gates and operators work correctly """
         oq_parser = OqasmParser()
         oq_parser.build(debug=True)
@@ -110,7 +112,7 @@ class TestPyAqasmSimple(unittest.TestCase):
                   .format(gate_name, gate_params, op.qbits))
         self.assertEqual(res, 1)
 
-    def _test__non_implemented_if(self):
+    def test__non_implemented_if(self):
         """ Testing behavior with non implemented if (measure/reset)"""
         oq_parser = OqasmParser()
         oq_parser.build()
@@ -134,7 +136,7 @@ class TestPyAqasmSimple(unittest.TestCase):
         self.assertTrue(success, "The parser failed to raise an\
                         Implementation Error for measure")
 
-    def _test__implemented_if(self):
+    def test__implemented_if(self):
         """ Testing behavior with implemented if """
         oq_parser = OqasmParser()
         oq_parser.build()
@@ -157,7 +159,7 @@ class TestPyAqasmSimple(unittest.TestCase):
                 self.assertEqual(op.formula, None)
         self.assertEqual(res, 1)
 
-    def _test__empty_params_routines(self):
+    def test__empty_params_routines(self):
         """ Testing whether gates requiring params work without
             inputing any"""
         oq_parser = OqasmParser()
@@ -176,13 +178,13 @@ class TestPyAqasmSimple(unittest.TestCase):
                 oq_parser.build()
                 try:
                     oq_parser.parse(HEADER + data)
-                except InvalidParameterNumber:
+                except (InvalidParameterNumber, WrongParams) as e:
                     success = True
                 self.assertTrue(success, "The parser failed to raise " +
                                 "Invalid Parameter number for "
                                 + reverse_dic[op[0]])
 
-    def _test__normal_routines(self):
+    def test__normal_routines(self):
         """ Testing normal routines work correctly """
         oq_parser = OqasmParser()
         oq_parser.build(debug=True)
@@ -204,7 +206,7 @@ class TestPyAqasmSimple(unittest.TestCase):
                   .format(gate_name, gate_params, op.qbits))
         self.assertEqual(res, 1)
 
-    def _test__routines_of_routines(self):
+    def test__routines_of_routines(self):
         """ Testing routines using other routines """
         oq_parser = OqasmParser()
         oq_parser.build(debug=True)
@@ -286,27 +288,37 @@ class TestPyAqasmSimple(unittest.TestCase):
                 self.assertEqual(gate_params[0], -17)
             i += 1
         self.assertEqual(res, 1)
-    def _test__rec_routines_eval_params(self):
+    def test__rec_routines_eval_params(self):
         """Testing arithmetic expressions in parameters of recursive routines"""
         oq_parser = OqasmParser()
         oq_parser.build()
         reverse_dic = {v: k for k, v in oq_parser.standard_gates.items()}
-        data = "gate rp(p) a1{\n"
+        data = "gate rp(p) a1, a2{\n"
         nb_gates = 0
         for op in GATE_DATA:
             if op[3] > 0:
                 nb_gates += 1
                 if op[0] == "U" or op[0] == "u3":
                     data += "U (-p, p, 0) a1;\n"
-                elif op[0] == "u2":
+                elif op[0] == "U2":
                     data += "u2 (-p, p) a1;\n"
+                elif op[0] == "U3":
+                    data += "u3 (-p, p, p) a1;\n"
+                elif op[0] == "CU1":
+                    data += "cu1 (-p) a1, a2;\n"
+                elif op[0] == "CU2":
+                    data += "cu2 (-p, p) a1, a2;\n"
+                elif op[0] == "CU3":
+                    data += "cu3 (-p, p, p) a1, a2;\n"
+                elif op[0] == "CRZ":
+                    data += "crz (-p) a1, a2;\n"
                 else:
                     data += reverse_dic[op[0]] + "(-p) a1;\n"
-        data += "}\ngate rrp(q) a1{\nrp(3*(-q)+2) a1;\n}\n"
-        data += "rrp(-pi/2) q[1];\n"
-        data += "rrp(-3*5+4) q[2];\n"
-        data += "rrp(-3+5*4) q[3];\n"
-        data += "rrp(-3*(5+4)) q[3];\n"
+        data += "}\ngate rrp(q) a1, a2{\nrp(3*(-q)+2) a1, a2;\n}\n"
+        data += "rrp(-pi/2) q[1], q[0];\n"
+        data += "rrp(-3*5+4) q[2], q[0];\n"
+        data += "rrp(-3+5*4) q[3], q[0];\n"
+        data += "rrp(-3*(5+4)) q[3], q[0];\n"
         print(data)
         res = oq_parser.parse(HEADER+data)
         circ = oq_parser.compiler.gen_circuit()

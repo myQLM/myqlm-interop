@@ -28,15 +28,15 @@ from pyquil import gates as pg
 import numpy as np
 
 
-pygates_1qb = [X, Y, Z, I, S, T, H,
-               RX(3.14), RY(3.14), RZ(3.14), PH(3.14)]
-pygates_2qb = [SWAP, CNOT, H.ctrl(), RZ(3.14).ctrl(),
-               RY(3.14).ctrl()]
+pygates_1qb = [X, Y, Z, I, S, T, H, RX(3.14), RY(3.14), RZ(3.14), PH(3.14)]
+pygates_2qb = [SWAP, CNOT, H.ctrl(), RZ(3.14).ctrl(), RY(3.14).ctrl()]
 
 quil_1qb = [pg.X, pg.Y, pg.Z, pg.I, pg.S, pg.T, pg.H]
-quil_params   = [pg.RX, pg.RY, pg.RZ, pg.PHASE]
+quil_params = [pg.RX, pg.RY, pg.RZ, pg.PHASE]
 quil_ctrl = [pg.X, pg.H]
 quil_ctrl_prm = [pg.RZ, pg.RY]
+
+
 def extract_syntax(circuit):
     result = []
     supername = None
@@ -47,7 +47,7 @@ def extract_syntax(circuit):
         qubits = op.qbits
         i = 0
         while gate.subgate:
-            if gate.name[0] != '_' and supername is None:
+            if gate.name[0] != "_" and supername is None:
                 supername = gate.name
             gate = circuit.gateDic[gate.subgate]
             if gate.is_dag:
@@ -55,30 +55,34 @@ def extract_syntax(circuit):
 
         if ctrl is None or supername is not None:
             ctrl = 0
-        name = 'C-'*ctrl
+        name = "C-" * ctrl
 
-        if i%2 == 0:
+        if i % 2 == 0:
             if dag:
-                name += 'D-'
+                name += "D-"
         else:
             if not dag:
-                name += 'D-'
+                name += "D-"
         if supername is not None:
             name += supername
         else:
             name += gate.syntax.name
-        params = [ param.double_p for param in gate.syntax.parameters]
-        result.append({'name': name, 'params' : params, 'qubits': qubits})
+        params = [param.double_p for param in gate.syntax.parameters]
+        result.append({"name": name, "params": params, "qubits": qubits})
         supername = None
     return result
+
 
 def print_aq(circuit):
     data = extract_syntax(circuit)
     result = ""
     for entry in data:
-        result += "Gate {} with params {} on qubits {}\n".format(entry['name'], entry['params'], entry['qubits'])
+        result += "Gate {} with params {} on qubits {}\n".format(
+            entry["name"], entry["params"], entry["qubits"]
+        )
         supername = None
     print(result)
+
 
 class TestQiskit2QLMConversion(unittest.TestCase):
     """ Tests the function converting qiskit circuit
@@ -97,9 +101,9 @@ class TestQiskit2QLMConversion(unittest.TestCase):
         prog.apply(CCNOT, qreg[0], qreg[1], qreg[2])
 
         qlm_circuit = prog.to_circ()
-        #print_aq(qlm_circuit)
+        # print_aq(qlm_circuit)
         result = to_pyquil(qlm_circuit)
-        #print(result)
+        # print(result)
         expected = Prg()
         for op in quil_1qb:
             expected += op(0)
@@ -113,18 +117,28 @@ class TestQiskit2QLMConversion(unittest.TestCase):
             expected += op(3.14, 1).controlled(0)
 
         expected += pg.CNOT(1, 2).controlled(0)
-        #print(expected)
-        self.assertEqual(str(result).split('\n', 1)[1], str(expected))
+        # print(expected)
+        self.assertEqual(str(result).split("\n", 1)[1], str(expected))
 
     def test_recursive_ctrl_and_dagger(self):
         prog = Program()
         qreg = prog.qalloc(5)
-        prog.apply(Y.ctrl().ctrl().ctrl().ctrl().dag().dag().dag(), qreg[0], qreg[1], qreg[2], qreg[3], qreg[4])
+        prog.apply(
+            Y.ctrl().ctrl().ctrl().ctrl().dag().dag().dag(),
+            qreg[0],
+            qreg[1],
+            qreg[2],
+            qreg[3],
+            qreg[4],
+        )
         qlm_circuit = prog.to_circ()
         result = to_pyquil(qlm_circuit)
         expected = Prg()
-        expected = pg.Y(4).controlled(0).controlled(1).controlled(2).controlled(3).dagger()
-        self.assertEqual(str(result).split('\n', 1)[1][:-1], str(expected))
+        expected = (
+            pg.Y(4).controlled(0).controlled(1).controlled(2).controlled(3).dagger()
+        )
+        self.assertEqual(str(result).split("\n", 1)[1][:-1], str(expected))
+
     def test_measures(self):
         prog = Program()
         qreg = prog.qalloc(3)
@@ -139,7 +153,7 @@ class TestQiskit2QLMConversion(unittest.TestCase):
         result = to_pyquil(prog.to_circ())
 
         expected = Prg()
-        cbs = expected.declare('creg', 'BIT', 3)
+        cbs = expected.declare("creg", "BIT", 3)
         expected += pg.H(0)
         expected += pg.H(1)
         expected += pg.H(2)
@@ -147,8 +161,10 @@ class TestQiskit2QLMConversion(unittest.TestCase):
         expected += pg.MEASURE(1, cbs[1])
         expected += pg.MEASURE(2, cbs[2])
 
-        #print(result)
-        #print(expected)
+        # print(result)
+        # print(expected)
         self.assertEqual(result, expected)
-if __name__ == '__main__':
-    unittest.main(argv=['first-arg-is-ignored'], exit=False)
+
+
+if __name__ == "__main__":
+    unittest.main(argv=["first-arg-is-ignored"], exit=False)
