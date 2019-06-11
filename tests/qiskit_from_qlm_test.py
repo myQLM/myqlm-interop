@@ -22,7 +22,7 @@ Overview
 import unittest
 from qat.lang.AQASM.gates import *
 from qat.lang.AQASM import Program
-from qat.interop.qiskit.converters import to_qiskit_circuit
+from qat.interop.qiskit.converters import to_qiskit_circ
 from qiskit import QuantumCircuit, QuantumRegister, QuantumCircuit, ClassicalRegister
 from qat.core.util import extract_syntax
 import numpy as np
@@ -87,7 +87,7 @@ class TestQiskit2QLMConversion(unittest.TestCase):
 
 
         qlm_circuit = prog.to_circ()
-        result = to_qiskit_circuit(qlm_circuit)
+        result = to_qiskit_circ(qlm_circuit)
 
 
         qiskit_qreg = QuantumRegister(3)
@@ -119,7 +119,7 @@ class TestQiskit2QLMConversion(unittest.TestCase):
 
         prog.measure(qreg, creg)
 
-        result = to_qiskit_circuit(prog.to_circ())
+        result = to_qiskit_circ(prog.to_circ())
 
         qiskit_qreg = QuantumRegister(3)
         qiskit_creg = ClassicalRegister(3)

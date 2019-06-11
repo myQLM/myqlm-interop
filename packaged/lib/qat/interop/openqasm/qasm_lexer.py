@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 #pylint: skip-file
 """
-@file qat/lang/lexer/qasm_lexer.py
+@file qat/interop/openqasm/qasm_lexer.py
+@namespace qat.interop.openqasm.qasm_lexer
 @authors Reda Drissi <mohamed-reda.drissi@atos.net>
 @internal
 @copyright 2018  Bull S.A.S.  -  All rights reserved.

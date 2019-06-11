@@ -1,22 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#@brief
+#
+#@file qat/interop/pyquil/converters.py
+#@namespace qat.interop.pyquil.converters
+#@authors Reda Drissi <mohamed-reda.drissi@atos.net>
+#@copyright 2019  Bull S.A.S.  -  All rights reserved.
+#           This is not Free or Open Source software.
+#           Please contact Bull SAS for details about its license.
+#           Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
+
 """
-@brief
-
-@namespace ...
-@authors Reda Drissi <mohamed-reda.drissi@atos.net>
-@copyright 2019  Bull S.A.S.  -  All rights reserved.
-           This is not Free or Open Source software.
-           Please contact Bull SAS for details about its license.
-           Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
-
-
-Description ...
-
-Overview
-=========
-
-
+Circuit conversion functions for pyquil
 """
 
 import pyquil.quilatom
@@ -48,6 +43,12 @@ GATE_DIC = [
 
 
 def build_qbits(qbits):
+    """ Builds a list of pyquil atoms from a list of integers
+    Args:
+        qbits: list of integers designing qubits indexes
+    Returns:
+        list of pyquil atoms
+    """
     res = []
     for qb in qbits:
         res.append(pyquil.quilatom.Qubit(qb))
@@ -55,6 +56,15 @@ def build_qbits(qbits):
 
 
 def build_gate(dic, ident, qubits):
+    """ Builds a pyquil operation from a QLM circuit's operation
+
+    Args:
+        dic: QLM circuit's GateDictionary
+        ident: string identifying the gate used in this operation
+        qubits: qubits on which to apply
+    Returns:
+        A pyquil gate operation
+    """
     qlm_gate = dic[ident]
     if qlm_gate.nbctrls is not None and qlm_gate.nbctrls > 0:
         # build control and targets
@@ -82,7 +92,7 @@ def build_gate(dic, ident, qubits):
                     try:
                         name = dic[qlm_gate.name].syntax.name
                     except:
-                        print(dic[qlm_gate.name])
+                        pass
             else:
                 name = name.subgate
         else:
@@ -120,20 +130,34 @@ def build_gate(dic, ident, qubits):
         return pyquil.quilbase.Gate(name, params, qubits)
 
 
-def to_pyquil(qlm_circuit, nbshots=1):
+def to_pyquil_circ(qlm_circuit, nbshots=1):
+    """ Converts a QLM circuit to a pyquil circuit
+
+    Args:
+        qlm_circuit: QLM circuit to convert
+        nbshots: number of samples
+    Returns:
+        Pyquil circuit
+    """
     p = Program()
-    creg = p.declare("creg", "BIT", qlm_circuit.nbcbits)
+    creg = p.declare("ro", "BIT", qlm_circuit.nbcbits)
 
     for op in qlm_circuit.ops:
         if op.type == 0:
             qubits = build_qbits(op.qbits)
             p += build_gate(qlm_circuit.gateDic, op.gate, qubits)
         elif op.type == 1:
-            for qb in op.qbits:
-                p += pg.MEASURE(qb, creg[op.cbits[qb]])
+            for qb, cb in zip(op.qbits, op.cbits):
+                p += pg.MEASURE(qb, creg[cb])
     p.wrap_in_numshots_loop(nbshots)
     return p
 
 
 def job_to_pyquil(qlm_job):
+    """ Converts a QLM job's circuit to a pyquil circuit
+    Args:
+        qlm_job: the QLM job which circuit we want to convert
+    Returns:
+        A Pyquil circuit
+    """
     return to_pyquil(qlm_job.circuit, qlm_job.nbshots)

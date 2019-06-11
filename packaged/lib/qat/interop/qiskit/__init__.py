@@ -3,7 +3,7 @@
 """
 @brief 
 
-@namespace ...
+@namespace qat.interop.qiskit
 @authors Reda Drissi <mohamed-reda.drissi@atos.net>
 @copyright 2019  Bull S.A.S.  -  All rights reserved.
            This is not Free or Open Source software.
@@ -11,7 +11,7 @@
            Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
 
 
-Description ...
+Description Modules of interoperability with qiskit
 
 Overview
 =========

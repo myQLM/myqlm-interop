@@ -288,6 +288,12 @@ class TestPyAqasmSimple(unittest.TestCase):
                 self.assertEqual(gate_params[0], -17)
             i += 1
         self.assertEqual(res, 1)
+
+    def test_openqasm_examples(self):
+        from subprocess import call
+
+        call(["/home/reda/bsm/openqlm-interop/packaged/lib/qat/interop/openqasm/examples/compile_oqasm_examples.sh"])
+
     def test__rec_routines_eval_params(self):
         """Testing arithmetic expressions in parameters of recursive routines"""
         oq_parser = OqasmParser()

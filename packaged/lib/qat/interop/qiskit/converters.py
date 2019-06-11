@@ -1,24 +1,21 @@
 #!/usr/bin/env python3.6
 # -*- coding: utf-8 -*-
+
+#@brief
+#@file qat/interop/qiskit/converters.py
+#@namespace qat.interop.qiskit.converters
+#@authors Reda Drissi <mohamed-reda.drissi@atos.net>
+#@copyright 2019 Bull S.A.S.  -  All rights reserved.
+#                This is not Free or Open Source software.
+#                Please contact Bull SAS for details about its license.
+#                Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
+
+
 """
-@brief
-
-@namespace ...
-@authors Reda Drissi <mohamed-reda.drissi@atos.net>
-@copyright 2019  Bull S.A.S.  -  All rights reserved.
-           This is not Free or Open Source software.
-           Please contact Bull SAS for details about its license.
-           Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
-
-
-Description Converts qiskit circuit into a qlm circuit object,
-            you can use : qlm_circuit = to_qlm_circ(your_qiskit_circuit)
-            This is a placeholder, names and packaging might change to
-            keep consistency
-
-Overview
-=========
-
+Converts qiskit circuit into a qlm circuit object,
+you can use : qlm_circuit = to_qlm_circ(your_qiskit_circuit)
+This is a placeholder, names and packaging might change to
+keep consistency
 
 """
 
@@ -32,7 +29,16 @@ import numpy as np
 
 
 def get_qindex(circ, name, index):
-    """ Find the qubit index"""
+    """ Find the qubit index
+
+    Args:
+        circ: The qiskit QuantumCircuit in question
+        name: the name of the quantum register
+        index: the qubit's relative index inside the register
+
+    Returns:
+        The qubit's absolute index if all registers are concatenated.
+    """
     ret = 0
     for reg in circ.qregs:
         if name != reg.name:
@@ -42,7 +48,16 @@ def get_qindex(circ, name, index):
 
 
 def get_cindex(circ, name, index):
-    """ Find the classical bit index"""
+    """ Find the classical bit index
+
+    Args:
+        circ: The qiskit QuantumCircuit in question
+        name: the name of the classical register
+        index: the qubit's relative index inside the register
+
+    Returns:
+        The classical bit's absolute index if all registers are concatenated.
+    """
     ret = 0
     for reg in circ.cregs:
         if name != reg.name:
@@ -121,7 +136,25 @@ def get_gate(gate, params):
 
 
 def old_to_qlm_circ(qiskit_circuit, sep_measure=False):
-    """ translates a qiskit circuit into a qlm circuit"""
+    """ Converts a qiskit circuit into a qlm circuit
+        (old qiskit architecture)
+
+    Args:
+        qiskit_circuit: the qiskit circuit to convert
+        sep_measure: if set to True measures won't be included in the
+        resulting circuits, qubits to be measured will be put
+        in a list, the resulting measureless circuit and this
+        list will be returned in a tuple :(resulting_circuit, list_qubits).
+        If set to False, measures will be converted normally
+
+    Returns:
+        if sep_measure is True a tuple of two elements will be returned,
+        first one is the QLM resulting circuit with no measures, and the
+        second element of the returned tuple is a list of all qubits that
+        should be measured.
+        if sep_measure is False, the QLM resulting circuit is returned
+        directly
+    """
     prog = Program()
     qbits_num = 0
     to_measure = []
@@ -134,6 +167,8 @@ def old_to_qlm_circ(qiskit_circuit, sep_measure=False):
         cbits_num = cbits_num + reg.size
     cbits = prog.calloc(cbits_num)
     for op in qiskit_circuit.data:
+        if op[0].name =='barrier' or op[0].name == 'opaque':
+            continue
         qb = []  # qbits arguments
         cb = []  # cbits arguments
         prms = []  # gate parameters
@@ -143,7 +178,7 @@ def old_to_qlm_circ(qiskit_circuit, sep_measure=False):
 
         # Get cbit arguments
         for reg in op.cargs:
-            cb.append(qbits[get_cindex(qiskit_circuit, reg[0].name, reg[1])])
+            cb.append(cbits[get_cindex(qiskit_circuit, reg[0].name, reg[1])])
 
         # Get parameters
         for p in op.param:
@@ -164,7 +199,26 @@ def old_to_qlm_circ(qiskit_circuit, sep_measure=False):
 
 
 def new_to_qlm_circ(qiskit_circuit, sep_measure=False):
-    """ translates a qiskit circuit into a qlm circuit"""
+    """ Converts a qiskit circuit into a qlm circuit
+        (new qiskit architecture)
+
+    Args:
+        qiskit_circuit: the qiskit circuit to convert
+        sep_measure: if set to True measures won't be included in the
+                     resulting circuits, qubits to be measured will be put
+                     in a list, the resulting measureless circuit and this
+                     list will be returned in a tuple :
+                     (resulting_circuit, list_qubits). If set to False,
+                     measures will be converted normally
+
+    Returns:
+        if sep_measure is True a tuple of two elements will be returned,
+        first one is the QLM resulting circuit with no measures, and the
+        second element of the returned tuple is a list of all qubits that
+        should be measured.
+        if sep_measure is False, the QLM resulting circuit is returned
+        directly
+    """
     prog = Program()
     qbits_num = 0
     to_measure = []
@@ -177,6 +231,8 @@ def new_to_qlm_circ(qiskit_circuit, sep_measure=False):
         cbits_num = cbits_num + reg.size
     cbits = prog.calloc(cbits_num)
     for op in qiskit_circuit.data:
+        if op[0].name == "barrier" or op[0].name == "opaque":
+            continue
         qb = []  # qbits arguments
         cb = []  # cbits arguments
         prms = []  # gate parameters
@@ -186,7 +242,7 @@ def new_to_qlm_circ(qiskit_circuit, sep_measure=False):
 
         # Get cbit arguments
         for reg in op[2]:
-            cb.append(qbits[get_cindex(qiskit_circuit, reg[0].name, reg[1])])
+            cb.append(cbits[get_cindex(qiskit_circuit, reg[0].name, reg[1])])
 
         # Get parameters
         for p in op[0]._params:
@@ -207,6 +263,22 @@ def new_to_qlm_circ(qiskit_circuit, sep_measure=False):
 
 
 def to_qlm_circ(qiskit_circuit, sep_measure=False):
+    """ Converts a qiskit circuit into a qlm circuit
+        this function uses either new or old architecture,
+        depending on the qiskit version currently in use
+
+    Args:
+        qiskit_circuit: the qiskit circuit to convert
+        sep_measure: if set to True measures won't be included in the resulting circuits, qubits to be measured will be put in a list, the resulting measureless circuit and this list will be returned in a tuple : (resulting_circuit, list_qubits). If set to False, measures will be converted normally
+
+    Returns:
+        if sep_measure is True a tuple of two elements will be returned,
+        first one is the QLM resulting circuit with no measures, and the
+        second element of the returned tuple is a list of all qubits that
+        should be measured.
+        if sep_measure is False, the QLM resulting circuit is returned
+        directly
+    """
     from pkg_resources import parse_version
 
     if parse_version(qiskit.__version__) < parse_version("0.7.9"):
@@ -240,13 +312,28 @@ def gen_qiskit_gateset(qc):
         'CSIGN': qc.cz,
         'C-RZ': qc.crz,
         'CCNOT': qc.ccx,
-        'C-SWAP': qc.cswap
+        'C-SWAP': qc.cswap,
+        'U': qc.u3,
+        'RZZ': qc.rzz
     }
 
 from qat.core.util import extract_syntax
 
 supported_ctrls = ["CNOT", "CCNOT", "C-Y", "CSIGN", "C-H", "C-SWAP", "C-RZ"]
-def to_qiskit_circuit(qlm_circuit):
+def to_qiskit_circ(qlm_circuit):
+    """ Converts a QLM circuit to a qiskit circuit. Not all gates are
+        supported so exceptions will be raised if the gate isn't supported
+
+        List of supported gates :
+        H, X, Y, Z, SWAP, I, S, D-S, T, D-T, RX, RY, RZ, C-H, CNOT,
+        C-Y, CSIGN, C-RZ, CCNOT, C-SWAP, U, RZZ
+
+    Args:
+        qlm_circuit: the input QLM circuit to convert
+
+    Returns:
+        A QuantumCircuit qiskit object resulting from the conversion
+    """
     qreg = QuantumRegister(qlm_circuit.nbqbits)
     creg = ClassicalRegister(qlm_circuit.nbcbits)
     qc = QuantumCircuit(qreg, creg)
@@ -273,7 +360,15 @@ def to_qiskit_circuit(qlm_circuit):
 
 
 def job_to_qiskit_circuit(qlm_job):
+    """ Converts the circuit inside a QLM job into a qiskit circuit
+
+    Args:
+        qlm_job: the QLM job containing the circuit to convert
+
+    Returns:
+        A QuantumCircuit qiskit object resulting from the conversion
+    """
     # TODO account for type sample/observable
     # TODO account for nbshots
     # TODO account for
-    return to_qiskit_circuit(qlm_job.circuit)
+    return to_qiskit_circ(qlm_job.circuit)

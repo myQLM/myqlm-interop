@@ -22,7 +22,7 @@ Overview
 import unittest
 from qat.lang.AQASM.gates import *
 from qat.lang.AQASM.program import Program
-from qat.interop.pyquil.converters import to_pyquil
+from qat.interop.pyquil.converters import to_pyquil_circ
 from pyquil import Program as Prg
 from pyquil import gates as pg
 import numpy as np
@@ -102,7 +102,7 @@ class TestQiskit2QLMConversion(unittest.TestCase):
 
         qlm_circuit = prog.to_circ()
         # print_aq(qlm_circuit)
-        result = to_pyquil(qlm_circuit)
+        result = to_pyquil_circ(qlm_circuit)
         # print(result)
         expected = Prg()
         for op in quil_1qb:
@@ -132,7 +132,7 @@ class TestQiskit2QLMConversion(unittest.TestCase):
             qreg[4],
         )
         qlm_circuit = prog.to_circ()
-        result = to_pyquil(qlm_circuit)
+        result = to_pyquil_circ(qlm_circuit)
         expected = Prg()
         expected = (
             pg.Y(4).controlled(0).controlled(1).controlled(2).controlled(3).dagger()
@@ -150,10 +150,10 @@ class TestQiskit2QLMConversion(unittest.TestCase):
 
         prog.measure(qreg, creg)
 
-        result = to_pyquil(prog.to_circ())
+        result = to_pyquil_circ(prog.to_circ())
 
         expected = Prg()
-        cbs = expected.declare("creg", "BIT", 3)
+        cbs = expected.declare("ro", "BIT", 3)
         expected += pg.H(0)
         expected += pg.H(1)
         expected += pg.H(2)

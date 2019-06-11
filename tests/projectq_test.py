@@ -48,7 +48,7 @@ from qat.lang.AQASM import Program
 from qat.lang.AQASM.gates import *
 from qat.core.util import extract_syntax
 from qat.comm.datamodel.ttypes import OpType
-from qat.lang.parser.qasm_parser import ImplementationError
+from qat.interop.openqasm.qasm_parser import ImplementationError
 
 
 gates_1qb = [

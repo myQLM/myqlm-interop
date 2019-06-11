@@ -27,9 +27,9 @@ from cirq import ControlledGate
 import cirq.ops.common_gates as g_ops
 from qat.interop.cirq.converters import to_qlm_circ
 from qat.lang.AQASM import *
-from qat.core.circ import extract_syntax
+from qat.core.util import extract_syntax
 from qat.comm.datamodel.ttypes import OpType
-from numpy import array, cos, sin, complex128, pi
+from numpy import array, cos, sin, complex128, pi, sqrt
 
 # Adding parity gates and their rotations:
 def gen_XX():
@@ -208,23 +208,27 @@ class TestGcirq2QLMConversion(unittest.TestCase):
         gcirq = cirq.Circuit()
         qreg = [cirq.LineQubit(i) for i in range(5)]
 
-        gcirq.append(g_ops.X(qreg[0]) ** -pi)
-        gcirq.append(g_ops.Y(qreg[0]) ** -pi)
-        gcirq.append(g_ops.Z(qreg[0]) ** -pi)
+        gcirq.append(g_ops.X(qreg[0]) ** -3.67)
+        gcirq.append(g_ops.Y(qreg[0]) ** 7.9)
+        gcirq.append(g_ops.Z(qreg[0]) ** sqrt(5))
         gcirq.append(g_ops.S(qreg[0]) ** -pi)
-        gcirq.append(g_ops.T(qreg[0]) ** -pi)
+        gcirq.append(g_ops.T(qreg[0]) ** (sqrt(7)-pi))
         gcirq.append(g_ops.SWAP(qreg[0], qreg[1]) ** -0.5)
-        gcirq.append(g_ops.ISWAP(qreg[0], qreg[1]) ** 0.0)
+        gcirq.append(g_ops.ISWAP(qreg[0], qreg[1]) ** 16.0)
 
         result = to_qlm_circ(gcirq)
         for i, op in enumerate(result.ops):
             name, params = extract_syntax(result.gateDic[op.gate], result.gateDic)
-            if i < 2:
-                self.assertEqual(params[0], -pi * pi)
+            if i == 0:
+                self.assertEqual(params[0], -3.67 * pi)
+            elif i == 1:
+                self.assertEqual(params[0], 7.9 * pi)
+            elif i == 2:
+                self.assertEqual(params[0], sqrt(5) * pi)
             elif i == 3:
                 self.assertEqual(params[0], -pi * pi / 2)
             elif i == 4:
-                self.assertEqual(params[0], -pi * pi / 4)
+                self.assertEqual(params[0], (sqrt(7) - pi) * pi / 4)
             else:
                 continue
 

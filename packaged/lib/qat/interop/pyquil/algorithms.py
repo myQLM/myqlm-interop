@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#@brief
+
+#@file qat/interop/pyquil/algorithms.py
+#@namespace qat.interop.pyquil.algorithms
+#@authors Reda Drissi <mohamed-reda.drissi@atos.net>
+#@copyright 2019  Bull S.A.S.  -  All rights reserved.
+#           This is not Free or Open Source software.
+#           Please contact Bull SAS for details about its license.
+#           Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
+
 """
-@brief
-
-@namespace ...
-@authors Reda Drissi <mohamed-reda.drissi@atos.net>
-@copyright 2019  Bull S.A.S.  -  All rights reserved.
-           This is not Free or Open Source software.
-           Please contact Bull SAS for details about its license.
-           Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
-
-
-Description  Some pyquil algorithms taken from rigetti's grove repo
+Some pyquil algorithms taken from rigetti's grove repo
 
             - Simon algorithm
 
@@ -22,9 +22,6 @@ Description  Some pyquil algorithms taken from rigetti's grove repo
             - meyer penny
 
             - quantum dice
-
-Overview
-=========
 
 
 """
@@ -39,6 +36,17 @@ from grove.simon.simon import Simon, create_1to1_bitmap
 
 
 def run_simon(qc, bitmap=create_1to1_bitmap("101"), trials=30):
+    """ 
+    Runs simon's algorithm with preset parameters, mostly for testing
+    the execution process's stability.
+
+    Args:
+        qc: The instance of rigetti's simulator/connection to use
+        bitmap: The bitmap to use for this algorithm
+        trials: number of samples
+    Returns:
+        pyquil result object with measures.
+"""
     sm = Simon()
     sm._init_attr(bitmap)
     circ = sm.simon_circuit
@@ -52,6 +60,14 @@ ORACLE_GATE_NAME = "DEUTSCH_JOZSA_ORACLE"
 
 
 def _gen_bitmap(register_size=5):
+    """ Generate a bitmap
+    
+    Args:
+        register_size: register_size for every entry
+                       in this map
+    Returns:
+        bitmap with balanced zeroes and ones
+    """
     ret = {}
     size_0 = 0
     size_1 = 0
@@ -76,22 +92,35 @@ DEF_JOSZA_MAP = _gen_bitmap()
 
 
 def run_deutsch_josza(cxn, bitstring_map=DEF_JOSZA_MAP, trials=10):
-    """Computes whether bitstring_map represents a constant function, given that it is constant
-     or balanced. Constant means all inputs map to the same value, balanced means half of the
-     inputs maps to one value, and half to the other.
+    """
+    Computes whether bitstring_map represents a constant function,
+    given that it is constant or balanced.
+    Constant means all inputs map to the same value,
+    balanced means half of the inputs maps to one value,
+    and half to the other.
 
-    :param QVMConnection cxn: The connection object to the Rigetti cloud to run pyQuil programs.
-    :param bitstring_map: A dictionary whose keys are bitstrings, and whose values are bits
-     represented as strings.
-    :type bistring_map: Dict[String, String]
-    :return: True if the bitstring_map represented a constant function, false otherwise.
-    :rtype: bool
+    Args:
+        cxn: The connection object to a pyquil qpu running pyquil programs.
+        bitstring_map: A dictionary whose keys are bitstrings, and whose values are bits represented as strings.
+        trials: number of samples
+
+    Returns:
+        True if the bitstring_map represented a constant function,
+        false otherwise.
     """
     deutsch_jozsa_circuit, computational_qubits = _init_attr(bitstring_map)
     return cxn.run_and_measure(deutsch_jozsa_circuit, computational_qubits, trials)
 
 
 def deutsch_josza_is_constant_prob(result):
+    """ Calculates the probability that the bitstring_map represents a
+        constant function after running the quantum circuit
+
+    Args:
+        result: measurements of the qubits after the circuit execution
+    Returns:
+        probability that the function is constant
+    """
     bitstring = np.array(result, dtype=int)
     total = 0
     for res in result:
@@ -101,13 +130,12 @@ def deutsch_josza_is_constant_prob(result):
 
 
 def _init_attr(bit_map):
-    """
-    Instantiates the necessary Deutsch-Jozsa state.
+    """ Instantiates the necessary Deutsch-Jozsa state.
 
-    :param Dict[String, String] bitstring_map: truth-table of the input bitstring map in
-    dictionary format, used to construct the oracle in the Deutsch-Jozsa algorithm.
-    :return: None
-    :rtype: NoneType
+    Args:
+        bitstring_map: truth-table of the input bitstring map in
+                       dictionary format, used to construct the oracle
+                       in the Deutsch-Jozsa algorithm.
     """
     # self.bit_map = bitstring_map
     n_qubits = len(list(bit_map.keys())[0])
@@ -128,12 +156,20 @@ def _init_attr(bit_map):
 def _construct_deutsch_jozsa_circuit(
     qubits, computational_qubits, ancillas, unitary_matrix
 ):
-    """
-    Builds the Deutsch-Jozsa circuit. Which can determine whether a function f mapping
-    :math:`\{0,1\}^n \to \{0,1\}` is constant or balanced, provided that it is one of them.
+    """ Builds the Deutsch-Jozsa circuit. Which can determine
+        whether a function f mapping
+        `\{0,1\}^n \to \{0,1\}` is constant or balanced,
+        provided that it is one of them.
 
-    :return: A program corresponding to the desired instance of Deutsch Jozsa's Algorithm.
-    :rtype: Program
+    Args:
+        qubits: list of qubits
+        computational_qubits: list of qubits whose results matter
+        ancillas: list of ancillary qubits
+        unitary_matrix: the oracle's unitary_matrix
+
+    Returns:
+        A program corresponding to the desired instance of
+        Deutsch Jozsa's Algorithm.
     """
     dj_prog = Program()
 
@@ -170,13 +206,13 @@ def _unitary_function(mappings):
     will be on n + 1 qubits, where the 0th is the scratch bit and the return value
     of the function is left in the 1st.
 
-    :param mappings: Dictionary of the mappings of f(x) on all length n bitstrings, e.g.
-
+    Args:
+        mappings: Dictionary of the mappings of f(x) on all length
+        n bitstrings, e.g.
         >>> {'00': '0', '01': '1', '10': '1', '11': '0'}
 
-    :type mappings: Dict[String, Int]
-    :return: ndarray representing specified unitary transformation.
-    :rtype: np.ndarray
+    Returns:
+        ndarray representing specified unitary transformation.
     """
     num_qubits = int(np.log2(len(mappings)))
     bitsum = sum([int(bit) for bit in mappings.values()])
@@ -231,6 +267,10 @@ def QFT3():
     return prog
 
 def run_qft3(qc, trials=30):
+    """"
+    Executes and returns measures of a 3-qubit QFT circuit
+    in pyquil result format
+    """
     return qc.run(QFT3(), trials=trials)
 
 def meyer_penny_program():
@@ -262,6 +302,10 @@ def meyer_penny_program():
     return prog
 
 def run_meyer_penny(qc, trials=30):
+    """
+    Executes the program that simulates the Meyer-Penny Game
+    and returns measures in pyquil result format
+    """
     return qc.run(meyer_penny_program(), trials=trials)
 
 def quantum_die(number_of_sides=6):

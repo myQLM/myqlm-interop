@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 #pylint: skip-file
 """
-@file qat/lang/parser/qasm_parser.py
+@file qat/interop/openqasm/qasm_parser.py
+@namespace qat.interop.openqasm.qasm_parser
 @authors Reda Drissi <mohamed-reda.drissi@atos.net>
 @internal
 @copyright 2018  Bull S.A.S.  -  All rights reserved.
@@ -16,8 +17,8 @@ import re
 import ply.yacc as yacc
 from qat.lang.parser.gates_ast import ASTCircuitBuilder, GateAST
 from qat.comm.datamodel.ttypes import OpType
-from .qasm_lexer import OqasmLexer
-from .oqasm_routine import Element, Routine, Gate
+from qat.interop.openqasm.qasm_lexer import OqasmLexer
+from qat.interop.openqasm.oqasm_routine import Element, Routine, Gate
 
 from qat.lang.AQASM import AbstractGate
 from qat.core.circuit_builder.matrix_util import default_gate_set
@@ -91,6 +92,8 @@ def extract_inc(filename):
             res = re.search('^include .*$', line)
             if res:
                 incfile = res.group(0).split(" ", 1)[1][1:-2]
+                if incfile == "qelib1.inc":
+                    continue
                 incstr = extract_inc(incfile)
                 with open(filename, 'r') as main_split:
                     ret = main_split.read().split(line, 1)
@@ -1453,12 +1456,30 @@ class OqasmParser(object):
     ##########################
     def build(self, write_tables=False,
               debug=False,
-              tabmodule="aqasm_tab", **kwargs):
+              tabmodule="oqasm_tab", **kwargs):
+        """ Takes care of building a parser
+
+        Args:
+            debug: whether to activate debug output or not
+            write_tables: generate parser table file or not
+            tabmodule: parser tab to use
+        Returns:
+            Nothing
+        """
         self.parser = yacc.yacc(module=self, write_tables=write_tables,
                                 tabmodule=tabmodule, debug=False,
-                                **kwargs)
+                                errorlog=yacc.NullLogger(), **kwargs)
 
     def parse(self, string, debug=False):
+        """ Parses a given string
+
+        Args:
+            string: input string to parse
+            debug: whether to activate debug output or not
+
+        Returns:
+            returns 1 if parsing had no issues, otherwise error code
+        """
         self.input = string
         self.parser.parse(string, debug=debug)
         return 1

@@ -1,20 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#@brief 
+
+#@file qat/interop/qiskit/algorithms.py
+#@namespace qat.interop.qiskit.algorithms
+#@authors Reda Drissi <mohamed-reda.drissi@atos.net>
+#@copyright 2019  Bull S.A.S.  -  All rights reserved.
+#           This is not Free or Open Source software.
+#           Please contact Bull SAS for details about its license.
+#           Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
+
 """
-@brief 
-
-@namespace ...
-@authors Reda Drissi <mohamed-reda.drissi@atos.net>
-@copyright 2019  Bull S.A.S.  -  All rights reserved.
-           This is not Free or Open Source software.
-           Please contact Bull SAS for details about its license.
-           Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
-
-
-Description ...
-
-Overview
-=========
+Implementation of ready to use circuits of algorithms taken
+            from qiskit aqua
 
 
 """
@@ -48,6 +46,15 @@ def add_measures(circ):
 
 
 def shor_circuit():
+    """ Builds A QuantumCircuit object of shor's algorithm implementation
+        found in qiskit aqua
+
+    Args:
+
+    Returns:
+        Resulting circuit of the qiskit aqua implementation of Shor's
+        algorithm after adding measures on every qubit.
+    """
     backend = Aer.get_backend("qasm_simulator")
     shor = Shor()
     circ = shor.construct_circuit()
@@ -55,6 +62,15 @@ def shor_circuit():
 
 
 def grover_circuit():
+    """ Builds a QuantumCircuit of the qiskit aqua implementation of
+        grover's algorithm with set parameters.
+
+    Args:
+
+    Returns:
+        Resuling circuit of the qiskit aqua implementation of Grover's
+        algorithm after adding measures on every qubit.
+    """
     sat_cnf = """
 c Example DIMACS 3-sat
 p cnf 3 5
@@ -109,6 +125,15 @@ def prepare_init_state(T, qreg, N, N_sys):
 
 
 def get_qaoa():
+    """
+        Takes care of setting up qiskit aqua's qaoa implementation
+        with specific parameters
+    Args:
+
+    Returns:
+        built QAOA object from qiskit aqua (c.f qiskit's github for more
+        info)
+    """
     N = 2
     N_sys = N * 2
     T = 1000
@@ -127,10 +152,17 @@ def get_qaoa():
     return qaoa
 
 
-def qaoa_circ():
+def qaoa_circuit():
+    """ Builds the QAOA QuantumCircuit using qiskit aqua's implementation
+
+    Args:
+
+    Returns:
+        Resulting circuit of the qiskit aqua qaoa algorithm's
+        implementation after adding measures on every qubit
+    """
     import math
 
-    circ = get_qaoa().construct_circuit([math.pi] * 4)
-
+    circ = get_qaoa().construct_circuit([math.pi] * 4)[0]
     return add_measures(circ)
     # expected = qaoa.run(quantum_instance)

@@ -16,6 +16,9 @@
 /version.py
 /tests/Makefile
 
+# openqasm
+/packaged/lib/qat/interop/openqasm/examples/*.circ
+
 # /.autotools_cache/
 /.autotools_cache/ltmain.sh
 /.autotools_cache/missing
@@ -79,6 +82,8 @@
 /packaged/doc/Makefile.in
 /packaged/doc/doxyfile.stamp
 /packaged/doc/doxygen.warn
+/packaged/doc/latex
+/packaged/doc/html
 
 # /packaged/doc/examples/
 
