@@ -23,6 +23,12 @@ QiskitQPU
     :members: submit_job, submit, set_backend
     
 
+Qiskitjob
+
+.. autoclass:: qat.interop.qiskit.providers.Qiskitjob
+    :members:
+    
+
 AsyncQiskitQPU
 
 

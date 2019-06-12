@@ -15,7 +15,6 @@ from qat.interop.qiskit.converters import job_to_qiskit_circuit
 from qat.comm.shared.ttypes import Job, Batch
 from qat.comm.shared.ttypes import Result as QlmRes
 from qat.core.qpu.qpu import QPUHandler
-from qat.async.asyncqpu.Qiskitjob import Qiskitjob
 from qat.core.wrappers.result import State
 from qat.comm.shared.ttypes import Sample as ThriftSample
 from collections import Counter
@@ -268,6 +267,35 @@ class QiskitQPU(QPUHandler):
             for job in qlm_batch.jobs:
                 results.append(self.submit_job(job))
             return results 
+
+class Qiskitjob:
+    """ Wrapper around qiskit's asynchronous calls"""
+    def __init__(self, qobj):
+        self._job_id = qobj.job_id()
+        self._handler = qobj
+
+    def job_id(self):
+        """ Returns the job's id"""
+        return self._job_id
+
+    def status(self):
+        """ Returns the job status """
+        return self._handler.status()._name_
+
+    def result(self):
+        """ Returns the result if available"""
+        if self.status() == 'DONE':
+            from qat.interop.qiskit.providers import generate_qlm_result
+            return generate_qlm_result(self._handler.result())
+    def cancel(self):
+        """ Attempts to cancel the job"""
+        ret = self._handler.cancel()
+        if ret:
+            print("job successefully cancelled")
+            return True
+        else:
+            print("Unable to cancel job")
+            return False
 
 class AsyncQiskitQPU(QPUHandler):
     """ Wrapper around any qiskit simulator/quantum chip connection.

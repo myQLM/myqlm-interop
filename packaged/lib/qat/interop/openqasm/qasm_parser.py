@@ -23,6 +23,7 @@ from qat.interop.openqasm.oqasm_routine import Element, Routine, Gate
 from qat.lang.AQASM import AbstractGate
 from qat.core.circuit_builder.matrix_util import default_gate_set
 
+
 class ParsingEOF(Exception):
     '''
     Unexpected End Of File
@@ -219,6 +220,7 @@ class OqasmParser(object):
 
     def __init__(self):
         self.start = "main"
+        self.format_version = False
         self.lineno = 0
         self.compiler = ASTCircuitBuilder(include_matrices=True)
         U = AbstractGate('U', [float, float, float], arity=1,
@@ -492,6 +494,13 @@ class OqasmParser(object):
     #            | IGNORE
     #            | INCLUDE ';'
     # ----------------------------------------
+        version = t.stack[1].value.rsplit(' ', 1)[-1]
+        version = version.rsplit('\t', 1)[-1]
+        version = version.rsplit('\n', 1)[-1]
+        if version != '2.0' and not self.format_version :
+            self.format_version = True
+            print("WARNING: Version {} not fully supported, only version"
+                  .format(version) + " 2.0 is")
     def p_statement_0(self, t):
         """
             statement : quantum_op ';'
@@ -1235,13 +1244,13 @@ class OqasmParser(object):
                                         "parameters\nSupported Clifford gates"
                                         + " are :\nh, cx, ccx, x, y, z, s, "
                                         + "swap, cz'")
-                try:
+                if new_ops is not None:
                     #print("IF routine gives " + str(len(new_ops)))
                     for o in new_ops:
                         o.type = OpType.CLASSICCTRL
                         o.formula = formula
                         self.compiler.ops.append(o)
-                except NameError:
+                else:
                     new_op.type = OpType.CLASSICCTRL
                     new_op.formula = formula
                     self.compiler.ops.append(new_op)

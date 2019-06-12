@@ -43,6 +43,27 @@ HEADER = "OPENQASM 2.0;\nqreg q[4];\ncreg c[4];\n"
 
 class TestPyAqasmSimple(unittest.TestCase):
     """ Class for PyAQASM tests """
+
+    def test_version_verification(self):
+        """ Whether the correct version is parsed correctly """
+        data = "\nqreg q[4];\ncreg c[4];\ngate cu3(theta,phi,lambda) c, t\n{\nu1((lambda-phi)/2) t;\ncx c,t;\nu3(-theta/2,0,-(phi+lambda)/2) t;\
+        \ncx c,t;\nu3(theta/2,phi,0) t;\n}\ncu3(2.5, 2, 1) q[0], q[1];\nu2(1,2) q[0];\n"
+
+        right_parser = OqasmParser()
+        right_parser.build()
+
+        header = "OPENQASM\n\n\n\t\t\t   2.0\n\n\n  ;"
+        right_parser.parse(header + data)
+        self.assertEqual(right_parser.format_version, False)
+        header = "OPENQASM\n\n\n\t\t\t    2.1;"
+        del right_parser
+        wrong_parser = OqasmParser()
+        wrong_parser.build()
+
+        wrong_parser.parse(header + data)
+        self.assertEqual(wrong_parser.format_version, True)
+
+
     def test_cu_bug(self):
         """ Trying to fix cu1 bug ignoring third parameter"""
         oq_parser = OqasmParser()

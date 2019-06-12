@@ -286,7 +286,7 @@ def process_CSWAP(exp):
     return process_SWAP(exp).ctrl()
 
 
-# dictionary linking gcirq gate types and corresponding pyaqasm gates
+# dictionary linking cirq gate types and corresponding pyaqasm gates
 gate_dic = {
     common_gates.HPowGate: process_H,
     common_gates.XPowGate: process_X,
@@ -306,7 +306,7 @@ gate_dic = {
     cirq.ops.parity_gates.ZZPowGate: process_ZZ,
 }
 
-# gets a gcirq gate object and outputs corresponding pyaqasm gate
+# gets a cirq gate object and outputs corresponding pyaqasm gate
 def _get_gate(gate):
     """ Takes a cirq gate object and returns corresponding
         QLM gate
@@ -328,12 +328,12 @@ def _get_gate(gate):
         return gate_dic[type(gate)](1.0)
 
 
-# master function converting gcirq object to pyaqasm circuit object
+# master function converting cirq object to pyaqasm circuit object
 def to_qlm_circ(gcirc, sep_measure=False):
     """ Converts a google cirq circuit to a qlm circuit
 
     Args:
-        gcirq: the cirq circuit to convert
+        cirq: the cirq circuit to convert
         sep_measure: if set to True measures won't be included in the\
         resulting circuits, qubits to be measured will be put in a list,\
         the resulting measureless circuit and this list will be returned\
