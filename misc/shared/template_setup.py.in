@@ -12,7 +12,8 @@ setup(
     license="TODO",
     packages=[module],
     package_dir={module: "packaged/lib/" + path},
-    install_requires=["thrift>=0.10"],
+    install_requires=["thrift>=0.10", "qat-lang>=0.0.8", "numpy", "cirq",
+                      "ply", "projectq", "pyquil", "qiskit", "quantum-grove"],
     package_data={
         module: ["*.so", "*/*.so"]  # Keeping the compiler *.so files
     }
