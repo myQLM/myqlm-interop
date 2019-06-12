@@ -15,6 +15,7 @@ Welcome to MyQLM interoperations's documentation!
    cirq
    projectq
    openqasm
+   MyQLM interoperations
    Tutorials/Qiskit
    Tutorials/Pyquil
    Tutorials/Cirq
@@ -33,7 +34,7 @@ We have managed to establish binders between multiple languages :
 .. figure:: recap.png
 
 
-Refer to [this](Tutorials/MyQLM interoperations) document to figure out how we can use these binders through examples and 
+Refer to :doc:`MyQLM interoperations` document to figure out how we can use these binders through examples and 
 explanations, for further information about usage, refer to the linked tutorials on the left.
 
 .. Indices and tables
