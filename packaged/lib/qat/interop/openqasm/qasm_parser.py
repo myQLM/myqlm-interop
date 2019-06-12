@@ -1483,7 +1483,7 @@ class OqasmParser(object):
                                 errorlog=yacc.NullLogger(), **kwargs)
 
     def parse(self, string, debug=False):
-        """ Parses a given string
+        """ Parses a given string of openqasm source code
 
         Args:
             string: input string to parse
