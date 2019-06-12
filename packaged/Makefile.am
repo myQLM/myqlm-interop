@@ -1,3 +1,3 @@
 
-SUBDIRS=doc lib
+SUBDIRS= lib
             

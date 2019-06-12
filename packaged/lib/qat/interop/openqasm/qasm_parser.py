@@ -374,6 +374,7 @@ class OqasmParser(object):
         #print("We are getting for this routine")
         #print(args)
         #print(params)
+        routine = None
         for i in self.routines:  # let's get the routine first
             if i.name == routine_name:
                 routine = i
@@ -1125,6 +1126,8 @@ class OqasmParser(object):
             | IF '(' ID MATCHES NNINTEGER error
             | IF error
         """
+        new_op = None #For cythonization errors
+        new_ops  =None
         if len(t) == 3:
             raise SyntaxError("Ill-formed IF statement. Perhaps a"
                               + " missing '('?")

@@ -121,7 +121,6 @@ def deutsch_josza_is_constant_prob(result):
     Returns:
         probability that the function is constant
     """
-    bitstring = np.array(result, dtype=int)
     total = 0
     for res in result:
         if all([bit == 1 for bit in res]):
@@ -316,8 +315,8 @@ def quantum_die(number_of_sides=6):
     ro = prog.declare("ro", "BIT", qbits)
     # Hadamard intialize
     for qbit in range(qubits):
-        p += H(qbit)
+        prog += H(qbit)
     # Simple measurements
     for qbit in range(qubits):
-        p += MEASURE(qbit, ro[qbit])
+        prog += MEASURE(qbit, ro[qbit])
     return prog

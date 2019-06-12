@@ -55,7 +55,6 @@ def shor_circuit():
         Resulting circuit of the qiskit aqua implementation of Shor's
         algorithm after adding measures on every qubit.
     """
-    backend = Aer.get_backend("qasm_simulator")
     shor = Shor()
     circ = shor.construct_circuit()
     return add_measures(circ)
@@ -142,10 +141,6 @@ def get_qaoa():
 
     Hc = ising_hamiltonian(weights, N, N_sys)
     qreg = QuantumRegister(N_sys)
-    creg = ClassicalRegister(N)
-
-    backend = Aer.get_backend("qasm_simulator")
-    quantum_instance = QuantumInstance(backend)
 
     initial_state = prepare_init_state(T, qreg, N, N_sys)
     qaoa = QAOA(Hc, COBYLA(), p, initial_state)

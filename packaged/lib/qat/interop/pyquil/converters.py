@@ -160,4 +160,4 @@ def job_to_pyquil(qlm_job):
     Returns:
         A Pyquil circuit
     """
-    return to_pyquil(qlm_job.circuit, qlm_job.nbshots)
+    return to_pyquil_circ(qlm_job.circuit, qlm_job.nbshots)

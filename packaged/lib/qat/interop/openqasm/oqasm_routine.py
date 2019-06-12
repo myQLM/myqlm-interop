@@ -5,7 +5,7 @@ class Routine :
 
     def __init__(self, src=None):
         if src :
-            copy_constr(self, src)
+            self.copy_constr(src)
         else :
             self.name = None #name of the gate
             self.params = [] # parameters
