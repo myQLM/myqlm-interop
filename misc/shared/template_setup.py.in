@@ -1,0 +1,20 @@
+from setuptools import setup, find_packages
+
+name = "@PACKAGE@".replace("openqlm", "qat")
+module = name.replace("-", ".")
+path = name.replace("-", "/")
+
+setup(
+    name=name,
+    version="@VERSION@",
+    url="@PACKAGE_URL@",
+    author="Atos Quantum Lab",
+    license="TODO",
+    packages=[module],
+    package_dir={module: "packaged/lib/" + path},
+    install_requires=["thrift>=0.10", "qat-lang>=0.0.8", "numpy", "cirq",
+                      "ply", "projectq", "pyquil", "qiskit", "quantum-grove"],
+    package_data={
+        module: ["*.so", "*/*.so"]  # Keeping the compiler *.so files
+    }
+)
