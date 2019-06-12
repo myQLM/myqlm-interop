@@ -48,8 +48,7 @@ dist-hook:
 	cp ${nodist_AQASM_PYTHON} $(distdir)/qat/interop
 
 # For generation
-all-local: $(nobase_nodist_python_PYTHON) \
-		   $(abs_builddir)/qat/interop/__init__.py
+all-local: $(nobase_nodist_python_PYTHON)
 
 clean-local:
 	if test $(srcdir) != $(builddir);\
