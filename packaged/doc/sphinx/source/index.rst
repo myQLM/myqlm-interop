@@ -21,11 +21,20 @@ Welcome to MyQLM interoperations's documentation!
    Tutorials/Projectq
    Tutorials/Openqasm
         
-        
+
 .. contents:: Table of Contents
 
 
 
+We have managed to establish binders between multiple languages :
+
+
+
+.. figure:: recap.png
+
+
+Refer to [this](Tutorials/MyQLM interoperations) document to figure out how we can use these binders through examples and 
+explanations, for further information about usage, refer to the linked tutorials on the left.
 
 .. Indices and tables
     ==================
