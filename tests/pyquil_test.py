@@ -33,7 +33,7 @@ pygates_2qb = [SWAP, CNOT, H.ctrl(), RZ(3.14).ctrl(), RY(3.14).ctrl()]
 
 quil_1qb = [pg.X, pg.Y, pg.Z, pg.I, pg.S, pg.T, pg.H]
 quil_params = [pg.RX, pg.RY, pg.RZ, pg.PHASE]
-quil_ctrl = [pg.X, pg.H]
+quil_ctrl = [pg.H]
 quil_ctrl_prm = [pg.RZ, pg.RY]
 
 
@@ -111,12 +111,13 @@ class TestQiskit2QLMConversion(unittest.TestCase):
             expected += op(3.14, 0)
 
         expected += pg.SWAP(0, 1)
+        expected += pg.CNOT(0, 1)
         for op in quil_ctrl:
             expected += op(1).controlled(0)
         for op in quil_ctrl_prm:
             expected += op(3.14, 1).controlled(0)
 
-        expected += pg.CNOT(1, 2).controlled(0)
+        expected += pg.CCNOT(0, 1, 2)
         # print(expected)
         self.assertEqual(str(result).split("\n", 1)[1], str(expected))
 

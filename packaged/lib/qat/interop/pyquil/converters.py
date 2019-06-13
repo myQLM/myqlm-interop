@@ -18,7 +18,7 @@ import pyquil.quilatom
 import pyquil.gates as pg
 from pyquil import Program
 import qat.lang.AQASM.gates as aq
-
+from qat.core.util import extract_syntax
 import numpy as np
 
 
@@ -66,12 +66,19 @@ def build_gate(dic, ident, qubits):
         A pyquil gate operation
     """
     qlm_gate = dic[ident]
-    if qlm_gate.nbctrls is not None and qlm_gate.nbctrls > 0:
+    name = extract_syntax(dic[qlm_gate.name], dic)[0]
+    basename = name.rsplit("C-", 1)[-1].rsplit("D-", 1)[-1]
+
+    nbctrls = name.count("C-")
+    dag = name.count("D-")
+    if basename == "PH":
+        basename = "PHASE"
+    if nbctrls > 0:
         # build control and targets
         targets = []
         arity = dic[qlm_gate.subgate].arity
         targets = qubits[-arity:]
-        controls = qubits[0 : qlm_gate.nbctrls]
+        controls = qubits[0 : nbctrls]
         # base gate
         try:
             params = [
@@ -79,63 +86,28 @@ def build_gate(dic, ident, qubits):
             ]
         except AttributeError:
             params = []
-        i = 0
-        qlm_gate = dic[qlm_gate.subgate]
-        name = dic[qlm_gate.name].syntax
-        if name is None:
-            if dic[qlm_gate.name].subgate[0] == "_":
-                while dic[qlm_gate.name].is_dag:
-                    qlm_gate = dic[qlm_gate.subgate]
-                    i += 1
-                name = dic[qlm_gate.name].name
-                if name[0] == "_":
-                    try:
-                        name = dic[qlm_gate.name].syntax.name
-                    except:
-                        pass
-            else:
-                name = name.subgate
-        else:
-            name = dic[qlm_gate.name].syntax.name
-        if name == "PH":
-            name = "PHASE"
-        quil_gate = pyquil.quilbase.Gate(name, params, targets)
+
+        quil_gate = pyquil.quilbase.Gate(basename, params, targets)
         # applying controls (order isn't important)
         for ctrl in controls:
             quil_gate = quil_gate.controlled(ctrl)
-        if i % 2 == 1:
+        if dag:
             quil_gate = quil_gate.dagger()
         return quil_gate
-    elif qlm_gate.is_dag:
-        i = 0
-        # find how many times this gate has been daggered
-        while qlm_gate.is_dag:
-            qlm_gate = dic[qlm_gate.subgate]
-            i += 1
-        name = qlm_gate.syntax.name
+    elif dag:
         params = [param.double_p for param in qlm_gate.syntax.parameters]
         # if it's a pair numbr of times, then it goes back to normal
-        if i % 2 == 0:
-            if name == "PH":
-                name = "PHASE"
-            return pyquil.quilbase.Gate(name, params, qubits)
-        # else it's daggered once
-        else:
-            return pyquil.quilbase.Gate(name, params, qubits).dagger()
+        return pyquil.quilbase.Gate(basename, params, qubits).dagger()
     else:
-        name = qlm_gate.syntax.name
-        if name == "PH":
-            name = "PHASE"
         params = [param.double_p for param in qlm_gate.syntax.parameters]
-        return pyquil.quilbase.Gate(name, params, qubits)
+        return pyquil.quilbase.Gate(basename, params, qubits)
 
 
-def to_pyquil_circ(qlm_circuit, nbshots=1):
+def to_pyquil_circ(qlm_circuit):
     """ Converts a QLM circuit to a pyquil circuit
 
     Args:
         qlm_circuit: QLM circuit to convert
-        nbshots: number of samples
     Returns:
         Pyquil circuit
     """
@@ -149,7 +121,6 @@ def to_pyquil_circ(qlm_circuit, nbshots=1):
         elif op.type == 1:
             for qb, cb in zip(op.qbits, op.cbits):
                 p += pg.MEASURE(qb, creg[cb])
-    p.wrap_in_numshots_loop(nbshots)
     return p
 
 
@@ -160,4 +131,4 @@ def job_to_pyquil(qlm_job):
     Returns:
         A Pyquil circuit
     """
-    return to_pyquil_circ(qlm_job.circuit, qlm_job.nbshots)
+    return to_pyquil_circ(qlm_job.circuit)
