@@ -78,12 +78,12 @@
 /packaged/py-compile
 /packaged/Changelog
 
-# /packaged/doc/
-/packaged/doc/Makefile.in
-/packaged/doc/doxyfile.stamp
-/packaged/doc/doxygen.warn
-/packaged/doc/latex
-/packaged/doc/html
+/packaged/doc/
+#/packaged/doc/Makefile.in
+#/packaged/doc/doxyfile.stamp
+#/packaged/doc/doxygen.warn
+#/packaged/doc/latex
+#/packaged/doc/html
 
 # /packaged/doc/examples/
 
@@ -110,6 +110,7 @@
 /tests/unit_t
 /tests/report
 /tests/Makefile.in
+/tests/test*
 
 **/*.pyc
 **/*.pyo

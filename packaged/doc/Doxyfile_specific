@@ -1,4 +1,0 @@
-
-INPUT += ../../packaged/lib
-
-EXAMPLE_PATH           +=  ../../packaged/doc/examples/
