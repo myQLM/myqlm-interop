@@ -313,7 +313,7 @@ class TestPyAqasmSimple(unittest.TestCase):
     def test_openqasm_examples(self):
         from subprocess import call
 
-        call(["/home/reda/bsm/openqlm-interop/packaged/lib/qat/interop/openqasm/examples/compile_oqasm_examples.sh"])
+        call(["examples/compile_oqasm_examples.sh"])
 
     def test__rec_routines_eval_params(self):
         """Testing arithmetic expressions in parameters of recursive routines"""
