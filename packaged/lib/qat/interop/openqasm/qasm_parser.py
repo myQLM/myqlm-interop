@@ -1495,3 +1495,23 @@ class OqasmParser(object):
         self.input = string
         self.parser.parse(string, debug=debug)
         return 1
+
+    def compile(self, string, write_tables=False, debug=False,
+                tabmodule="oqasm_tab", **kwargs):
+        """ Compiles a chunk of openqasm code sent as a parameter,
+        and returns the corresponding QLM circuit
+
+        Args:
+            string: input openqasm code to parse
+            debug: whether to activate debug output or not
+            write_tables: generate parser table file or not (default False)
+            tabmodule: parser tab to use (default oqasm_tab.py)
+
+        Returns:
+            Corresponding QLM circuit
+        """
+        self.build(write_tables=write_tables, debug=debug,
+                   tabmodule=tabmodule, **kwargs)
+        self.parse(string, debug=debug)
+
+        return self.compiler.gen_circuit()
