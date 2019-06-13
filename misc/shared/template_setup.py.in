@@ -12,8 +12,13 @@ setup(
     license="TODO",
     packages=[module],
     package_dir={module: "packaged/lib/" + path},
-    install_requires=["thrift>=0.10", "qat-lang>=0.0.8", "numpy", "cirq",
-                      "ply", "projectq", "pyquil", "qiskit", "quantum-grove"],
+    install_requires=["thrift>=0.10", "qat-lang>=0.0.8", "numpy", "ply"],
+    extras_require={
+        "qiskit_binder": ["qiskit==0.8.0", "qiskit-aqua==0.5.0"],
+        "projectq_binder": ["projectq==0.4.2"],
+        "cirq_binder": ["cirq==0.4.0"],
+        "pyquil_binder": ["pyquil==2.7.2", "quantum-grove==1.7.0"]
+    },
     package_data={
         module: ["*.so", "*/*.so"]  # Keeping the compiler *.so files
     }
