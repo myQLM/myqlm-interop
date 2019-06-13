@@ -5,7 +5,7 @@ from qiskit.providers.models.backendconfiguration import (
 )
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
-from qiskit.converters import qobj_to_circuits
+from qiskit.assembler import disassemble
 from qiskit.validation.base import Obj
 from qiskit import execute
 
@@ -213,7 +213,7 @@ class QLMBackend(BaseBackend):
         if self._qpu is None:
             raise NoQpuAttached("No qpu attached to the QLM connector.")
         headers = [exp.header.as_dict() for exp in qobj.experiments]
-        circuits = qobj_to_circuits(qobj)
+        circuits = disassemble(qobj)[0]
         nbshots = qobj.config.shots
         qlm_task = Batch(jobs=[])
         n_list = []
