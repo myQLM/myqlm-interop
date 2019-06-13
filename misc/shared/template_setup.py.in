@@ -10,6 +10,7 @@ setup(
     url="@PACKAGE_URL@",
     author="Atos Quantum Lab",
     license="TODO",
+    description="Module %s - Compiled for Atos" % name,
     packages=[module],
     scripts=["../packaged/bin/oqasm2circ"],
     package_dir={module: "packaged/lib/" + path},
