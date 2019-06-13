@@ -1,0 +1,3 @@
+INPUT += @top_srcdir@/packaged/lib
+
+EXAMPLE_PATH           +=  @top_srcdir@/packaged/doc/examples/
