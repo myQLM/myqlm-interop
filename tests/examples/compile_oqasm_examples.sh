@@ -9,9 +9,9 @@
 #####################################################################
 
 cwd=`dirname $(readlink -f "$0")`
-COMPILER=~/bsm/openqlm-interop/packaged/bin/oqasm2circ
+COMPILER=oqasm2circ
 for f in `ls ${cwd}/*qasm`; do
-    echo "----------Executing File $f ----------------"
+    echo "----------Executing File `basename $f` ----------------"
     $COMPILER $f
     sleep 5
 done
