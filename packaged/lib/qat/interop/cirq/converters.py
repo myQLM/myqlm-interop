@@ -329,7 +329,7 @@ def _get_gate(gate):
 
 
 # master function converting cirq object to pyaqasm circuit object
-def to_qlm_circ(gcirc, sep_measure=False):
+def to_qlm_circ(cirq, sep_measure=False):
     """ Converts a google cirq circuit to a qlm circuit
 
     Args:
@@ -350,12 +350,12 @@ def to_qlm_circ(gcirc, sep_measure=False):
     """
     # building a qubit map to use correct qubits
     qubits = ops.QubitOrder.as_qubit_order(ops.QubitOrder.DEFAULT).order_for(
-        gcirc.all_qubits()
+        cirq.all_qubits()
     )
     qmap = {qbit: i for i, qbit in enumerate(qubits)}
 
     # extracting operations
-    operations = tuple(ops.flatten_op_tree(gcirc.all_operations()))
+    operations = tuple(ops.flatten_op_tree(cirq.all_operations()))
 
     # pyaqasm initialization
     prog = Program()

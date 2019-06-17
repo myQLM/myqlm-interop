@@ -11,8 +11,8 @@
 #           Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
 
 """
-Implementation of ready to use circuits of algorithms taken
-            from qiskit aqua
+Implementation of ready to use circuits of algorithms taken\
+ from qiskit aqua
 
 
 """
@@ -46,8 +46,8 @@ def add_measures(circ):
 
 
 def shor_circuit():
-    """ Builds A QuantumCircuit object of shor's algorithm implementation
-        found in qiskit aqua
+    """ Builds A QuantumCircuit object of shor's algorithm implementation\
+ found in qiskit aqua
 
     Args:
 
@@ -61,8 +61,8 @@ def shor_circuit():
 
 
 def grover_circuit():
-    """ Builds a QuantumCircuit of the qiskit aqua implementation of
-        grover's algorithm with set parameters.
+    """ Builds a QuantumCircuit of the qiskit aqua implementation of\
+ grover's algorithm with set parameters.
 
     Args:
 
@@ -125,8 +125,8 @@ def prepare_init_state(T, qreg, N, N_sys):
 
 def get_qaoa():
     """
-        Takes care of setting up qiskit aqua's qaoa implementation
-        with specific parameters
+        Takes care of setting up qiskit aqua's qaoa implementation\
+ with specific parameters
     Args:
 
     Returns:
