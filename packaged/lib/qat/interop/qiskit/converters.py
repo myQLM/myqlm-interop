@@ -136,8 +136,8 @@ def get_gate(gate, params):
 
 
 def old_to_qlm_circ(qiskit_circuit, sep_measure=False):
-    """ Converts a qiskit circuit into a qlm circuit
-        (old qiskit architecture)
+    """ Converts a qiskit circuit into a qlm circuit \
+ (old qiskit architecture)
 
     Args:
         qiskit_circuit: the qiskit circuit to convert
@@ -199,8 +199,8 @@ def old_to_qlm_circ(qiskit_circuit, sep_measure=False):
 
 
 def new_to_qlm_circ(qiskit_circuit, sep_measure=False):
-    """ Converts a qiskit circuit into a qlm circuit
-        (new qiskit architecture)
+    """ Converts a qiskit circuit into a qlm circuit\
+ (new qiskit architecture)
 
     Args:
         qiskit_circuit: the qiskit circuit to convert
@@ -263,9 +263,9 @@ def new_to_qlm_circ(qiskit_circuit, sep_measure=False):
 
 
 def to_qlm_circ(qiskit_circuit, sep_measure=False):
-    """ Converts a qiskit circuit into a qlm circuit
-        this function uses either new or old architecture,
-        depending on the qiskit version currently in use
+    """ Converts a qiskit circuit into a qlm circuit\
+ this function uses either new or old architecture,\
+ depending on the qiskit version currently in use
 
     Args:
         qiskit_circuit: the qiskit circuit to convert
@@ -321,11 +321,12 @@ from qat.core.util import extract_syntax
 
 supported_ctrls = ["CNOT", "CCNOT", "C-Y", "CSIGN", "C-H", "C-SWAP", "C-RZ"]
 def to_qiskit_circ(qlm_circuit):
-    """ Converts a QLM circuit to a qiskit circuit. Not all gates are
-        supported so exceptions will be raised if the gate isn't supported
+    """ Converts a QLM circuit to a qiskit circuit. Not all gates are\
+ supported so exceptions will be raised if the gate isn't supported
 
         List of supported gates :
         H, X, Y, Z, SWAP, I, S, D-S, T, D-T, RX, RY, RZ, C-H, CNOT,
+
         C-Y, CSIGN, C-RZ, CCNOT, C-SWAP, U, RZZ
 
     Args:

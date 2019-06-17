@@ -11,7 +11,7 @@
 #           Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
 
 """
-converts a Google cirq circuit object into a qlm circuit
+Converts a Google cirq circuit object into a qlm circuit
 object, you can directly use :
 qlm_circ=to_qlm_circ(your_google_circ)
 This is a placeholder, names and packaging might change

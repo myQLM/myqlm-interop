@@ -320,9 +320,8 @@ class AsyncQiskitQPU(QPUHandler):
         self.backend = backend
 
     def submit_job(self, qlm_job):
-        """ Submits a QLM job to be executed on the previously
-            selected backend, if no backends are chosen an exception
-            is raised
+        """ Submits a QLM job to be executed on the previously\
+ selected backend, if no backends are chosen an exception is raised
 
         Args:
             qlm_job: the qlm_job to be executed
