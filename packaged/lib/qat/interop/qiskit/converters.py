@@ -146,6 +146,10 @@ def old_to_qlm_circ(qiskit_circuit, sep_measure=False, **kwargs):
         in a list, the resulting measureless circuit and this
         list will be returned in a tuple :(resulting_circuit, list_qubits).
         If set to False, measures will be converted normally
+        kwargs: these are the options that you would use on a regular \
+        to_circ function, these are added for more flexibility, for\
+        advanced users
+
 
     Returns:
         if sep_measure is True a tuple of two elements will be returned,
@@ -210,6 +214,10 @@ def new_to_qlm_circ(qiskit_circuit, sep_measure=False, **kwargs):
                      list will be returned in a tuple :
                      (resulting_circuit, list_qubits). If set to False,
                      measures will be converted normally
+        kwargs: these are the options that you would use on a regular \
+        to_circ function, these are added for more flexibility, for\
+        advanced users
+
 
     Returns:
         if sep_measure is True a tuple of two elements will be returned,
@@ -270,6 +278,10 @@ def to_qlm_circ(qiskit_circuit, sep_measure=False, **kwargs):
     Args:
         qiskit_circuit: the qiskit circuit to convert
         sep_measure: if set to True measures won't be included in the resulting circuits, qubits to be measured will be put in a list, the resulting measureless circuit and this list will be returned in a tuple : (resulting_circuit, list_qubits). If set to False, measures will be converted normally
+        kwargs: these are the options that you would use on a regular \
+        to_circ function, these are added for more flexibility, for\
+        advanced users
+
 
     Returns:
         if sep_measure is True a tuple of two elements will be returned,

@@ -145,7 +145,6 @@ class AqasmEngine(MainEngine):
         self.nbqb += 1
         self.qb.qbits.extend(self.prog.qalloc(1))
         return MainEngine.allocate_qubit(self, dirty)
-
     def to_qlm_circ(self, sep_measure=False, **kwargs):
         """ 
     Generates the QLM circuit corresponding to all projectq
@@ -157,6 +156,9 @@ class AqasmEngine(MainEngine):
         the resulting measureless circuit and this list will be returned\
         in a tuple: (resulting_circuit, list_qubits).\
         If set to False, measures will be converted normally
+        kwargs: these are the options that you would use on a regular \
+        to_circ function, these are added for more flexibility, for\
+        advanced users
 
     Returns:
         if sep_measure is True a tuple of two elements will be returned,
@@ -166,12 +168,34 @@ class AqasmEngine(MainEngine):
         if sep_measure is False, the QLM resulting circuit is returned
         directly
     """
+        qreg_list = []
+        for i, qreg in enumerate(self.prog.registers):
+            if qreg.length == 0:
+                del self.prog.registers[i]
+                continue
+            qreg_list.append(qreg)
+            break
+        for qreg in self.prog.registers[1:]:
+            if qreg.length == 0:
+                del qreg
+                continue
+            qreg_list[0].length += qreg.length
+            qreg_list[0].qbits.extend(qreg.qbits)
+        self.prog.registers = qreg_list
         if sep_measure:
-            return self.prog.to_circ(**kwargs), self.to_measure
+            circuit =  self.prog.to_circ(**kwargs)
+            for qreg in circuit.qregs:
+                if qreg.length == 0:
+                    del qreg
+            return circuit, self.to_measure
         else:
             for qbit in self.to_measure:
                 self.prog.measure(qbit, qbit)
-            return self.prog.to_circ(**kwargs)
+            circuit =  self.prog.to_circ(**kwargs)
+            for qreg in circuit.qregs:
+                if qreg.length == 0:
+                    del qreg
+            return circuit
 
 
 class AqasmPrinter(MainEngine):
