@@ -329,7 +329,7 @@ def _get_gate(gate):
 
 
 # master function converting cirq object to pyaqasm circuit object
-def to_qlm_circ(cirq, sep_measure=False):
+def to_qlm_circ(cirq, sep_measure=False, **kwargs):
     """ Converts a google cirq circuit to a qlm circuit
 
     Args:
@@ -377,6 +377,6 @@ def to_qlm_circ(cirq, sep_measure=False):
         else:
             prog.apply(_get_gate(op.gate), qbs)
     if sep_measure:
-        return prog.to_circ(), to_measure
+        return prog.to_circ(**kwargs), to_measure
     else:
-        return prog.to_circ()
+        return prog.to_circ(**kwargs)

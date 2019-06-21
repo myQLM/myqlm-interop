@@ -135,7 +135,7 @@ def get_gate(gate, params):
         return gate_dic[gate](params)
 
 
-def old_to_qlm_circ(qiskit_circuit, sep_measure=False):
+def old_to_qlm_circ(qiskit_circuit, sep_measure=False, **kwargs):
     """ Converts a qiskit circuit into a qlm circuit \
  (old qiskit architecture)
 
@@ -193,12 +193,12 @@ def old_to_qlm_circ(qiskit_circuit, sep_measure=False):
             # Apply gates #
             prog.apply(get_gate(op.name, prms), qb)
     if sep_measure:
-        return prog.to_circ(), to_measure
+        return prog.to_circ(**kwargs), to_measure
     else:
-        return prog.to_circ()
+        return prog.to_circ(**kwargs)
 
 
-def new_to_qlm_circ(qiskit_circuit, sep_measure=False):
+def new_to_qlm_circ(qiskit_circuit, sep_measure=False, **kwargs):
     """ Converts a qiskit circuit into a qlm circuit\
  (new qiskit architecture)
 
@@ -257,12 +257,12 @@ def new_to_qlm_circ(qiskit_circuit, sep_measure=False):
             # Apply gates #
             prog.apply(get_gate(op[0].name, prms), qb)
     if sep_measure:
-        return prog.to_circ(), to_measure
+        return prog.to_circ(**kwargs), to_measure
     else:
-        return prog.to_circ()
+        return prog.to_circ(**kwargs)
 
 
-def to_qlm_circ(qiskit_circuit, sep_measure=False):
+def to_qlm_circ(qiskit_circuit, sep_measure=False, **kwargs):
     """ Converts a qiskit circuit into a qlm circuit\
  this function uses either new or old architecture,\
  depending on the qiskit version currently in use
