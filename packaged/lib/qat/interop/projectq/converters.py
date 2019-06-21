@@ -171,7 +171,7 @@ class AqasmEngine(MainEngine):
         else:
             for qbit in self.to_measure:
                 self.prog.measure(qbit, qbit)
-            return self.prog.to_circ(**kwargs)
+            return self.prog.to_circ(submatrices_only=False, **kwargs)
 
 
 class AqasmPrinter(MainEngine):
