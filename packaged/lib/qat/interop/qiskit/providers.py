@@ -16,6 +16,7 @@ from qiskit import execute
 # QLM imports
 from qat.interop.qiskit.converters import to_qlm_circ
 from qat.interop.qiskit.converters import job_to_qiskit_circuit
+from qat.comm.datamodel.ttypes import QRegister
 from qat.comm.shared.ttypes import Job, Batch
 from qat.comm.shared.ttypes import Result as QlmRes
 from qat.core.qpu.qpu import QPUHandler, get_registers
