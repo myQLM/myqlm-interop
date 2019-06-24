@@ -1,3 +1,7 @@
+
+
+
+
 from qiskit.providers import BaseBackend, BaseJob
 from qiskit.providers.models.backendconfiguration import (
     BackendConfiguration,
@@ -14,8 +18,9 @@ from qat.interop.qiskit.converters import to_qlm_circ
 from qat.interop.qiskit.converters import job_to_qiskit_circuit
 from qat.comm.shared.ttypes import Job, Batch
 from qat.comm.shared.ttypes import Result as QlmRes
-from qat.core.qpu.qpu import QPUHandler
+from qat.core.qpu.qpu import QPUHandler, get_registers
 from qat.core.wrappers.result import State
+from qat.core.wrappers.result import Result as WResult
 from qat.comm.shared.ttypes import Sample as ThriftSample
 from collections import Counter
 
@@ -45,7 +50,7 @@ def generate_qlm_result(qiskit_result):
         if not isinstance(state, int):
             print("State is {}".format(type(state)))
         ret.raw_data.append(
-            ThriftSample(state=State(state, qregs={}), probability=freq / nbshots)
+            ThriftSample(state=state, probability=freq / nbshots)
         )
     return ret
 
@@ -259,20 +264,26 @@ class QiskitQPU(QPUHandler):
         res = generate_qlm_result(qiskit_result)
         return res
 
-    def submit(self, qlm_batch):
-        if isinstance(qlm_batch, Job):
-            return self.submit_job(qlm_batch)
+def wrap_result(job, res):
+        """ Wrap a Result structure using the corresponding Job's information
+        This is mainly to provide a cleaner/higher level interface for the user """
+        qreg_list = None
+        if job.circuit is not None:
+            qreg_list = get_registers(job.circuit.qregs, job.qubits)
+        if qreg_list is not None:
+            res.wrap_samples(qreg_list)
         else:
-            results = []
-            for job in qlm_batch.jobs:
-                results.append(self.submit_job(job))
-            return results 
+            length = 0
+            if job.qubits is not None:
+                length = len(job.qubits)
+            res.wrap_samples([QRegister(start=0, length=length, type=1)])
 
 class Qiskitjob:
     """ Wrapper around qiskit's asynchronous calls"""
-    def __init__(self, qobj):
+    def __init__(self, qlm_job, qobj):
         self._job_id = qobj.job_id()
         self._handler = qobj
+        self._qlm_job = qlm_job
 
     def job_id(self):
         """ Returns the job's id"""
@@ -286,7 +297,11 @@ class Qiskitjob:
         """ Returns the result if available"""
         if self.status() == 'DONE':
             from qat.interop.qiskit.providers import generate_qlm_result
-            return generate_qlm_result(self._handler.result())
+            result = generate_qlm_result(self._handler.result())
+            result = WResult(result)
+            wrap_result(self._qlm_job, result)
+            return result
+
     def cancel(self):
         """ Attempts to cancel the job"""
         ret = self._handler.cancel()
@@ -334,7 +349,7 @@ class AsyncQiskitQPU(QPUHandler):
             raise ValueError("Backend cannot be None")
         qiskit_circuit = job_to_qiskit_circuit(qlm_job)
         async_job = execute(qiskit_circuit, self.backend, shots=qlm_job.nbshots)
-        return Qiskitjob(async_job)
+        return Qiskitjob(qlm_job, async_job)
 
     def submit(self, qlm_batch):
         """ Submits a QLM batch of jobs and returns the corresponding list

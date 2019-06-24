@@ -48,7 +48,7 @@ def generate_qlm_result(pyquil_result):
     counts = Counter(measurements)
     qlm_result = QlmRes()
     qlm_result.raw_data = [
-        ThriftSample(state=State(state, qregs={}), probability=freq / nbshots)
+        ThriftSample(state=state, probability=freq / nbshots)
         for state, freq in counts.items()
     ]
     return qlm_result
@@ -90,7 +90,7 @@ class PyquilQPU(QPUHandler):
         result = generate_qlm_result(self.qpu.run(executable))
         return result
 
-    def submit(self, qlm_batch):
+    def __submit(self, qlm_batch):
         if isinstance(qlm_batch, Job):
             return self.submit_job(qlm_batch)
         else:
