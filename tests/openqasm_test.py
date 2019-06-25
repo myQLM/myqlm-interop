@@ -5,11 +5,14 @@
 import unittest
 import os
 from math import pi
-from qat.comm.datamodel.ttypes import OpType
 from qat.interop.openqasm.qasm_parser import OqasmParser, ImplementationError,\
         extract_inc, InvalidParameterNumber
-from qat.core.util import extract_syntax
 
+try:
+    from qat.core.util import extract_syntax
+except ImportError:
+    from qat.core.circ import extract_syntax
+from qat.comm.datamodel.ttypes import OpType
 from qat.core.gate_set import WrongArgumentsNumber as WrongParams
 
 # name, type, nb_qbits, nb_params

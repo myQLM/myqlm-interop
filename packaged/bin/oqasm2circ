@@ -23,8 +23,13 @@ from argparse import ArgumentParser
 
 from qat.interop.openqasm.qasm_parser import OqasmParser, extract_inc
 from qat.lang.AQASM.misc import generate_gate_set
-from qat.lang.linking.linker import Linker
-from qat.lang.linking.util import inline_gates
+try:
+    from qat.lang.linking.linker import Linker
+    from qat.lang.linking.util import inline_gates
+except ImportError:
+    from qat.core.linker import GenericInstantiator
+    from qat.core.circ import writecirc
+
 
 class UnknownModule(Exception):
     """ Raised when some unknown python module is linked to the compiler """
@@ -85,13 +90,21 @@ def main():
         circ = aq_parser.compiler.gen_circuit()
         global_gate_set = aq_parser.compiler.gate_set
 
-        # Linking the various lib calls
-        linker = Linker(gate_set=global_gate_set, include_matrices=args.full_matrices)
-        linker.link(circ)
-        # Inlining the linked gates
-        inline_gates(circ)
+        try:
+            # Linking the various lib calls
+            linker = Linker(gate_set=global_gate_set,
+                            include_matrices=args.full_matrices)
+            linker.link(circ)
+            # Inlining the linked gates
+            inline_gates(circ)
+            circ.dump(output)
+        except NameError:
+            instantiator = GenericInstantiator()
+            instantiator.instantiate(circ, global_gate_set)
+            if args.full_matrices is True:
+                instantiator.fill_matrices(circ, global_gate_set)
+            writecirc(circ, output)
 
-        circ.dump(output)
 
 
 if __name__ == "__main__":

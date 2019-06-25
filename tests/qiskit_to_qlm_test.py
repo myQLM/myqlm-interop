@@ -24,7 +24,10 @@ from qiskit import QuantumRegister, QuantumCircuit, ClassicalRegister
 from qat.interop.qiskit.converters import to_qlm_circ
 from qat.lang.AQASM import Program
 from qat.lang.AQASM.gates import *
-from qat.core.util import extract_syntax
+try:
+    from qat.core.util import extract_syntax
+except ImportError:
+    from qat.core.circ import extract_syntax
 from qat.comm.datamodel.ttypes import OpType
 import numpy as np
 

@@ -18,7 +18,10 @@ import pyquil.quilatom
 import pyquil.gates as pg
 from pyquil import Program
 import qat.lang.AQASM.gates as aq
-from qat.core.util import extract_syntax
+try:
+    from qat.core.util import extract_syntax
+except ImportError:
+    from qat.core.circ import extract_syntax
 import numpy as np
 
 

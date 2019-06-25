@@ -46,7 +46,10 @@ from projectq import ops
 from qat.interop.projectq.converters import AqasmPrinter, AqasmEngine
 from qat.lang.AQASM import Program
 from qat.lang.AQASM.gates import *
-from qat.core.util import extract_syntax
+try:
+    from qat.core.util import extract_syntax
+except ImportError:
+    from qat.core.circ import extract_syntax
 from qat.comm.datamodel.ttypes import OpType
 from qat.interop.openqasm.qasm_parser import ImplementationError
 
@@ -154,7 +157,8 @@ class TestProjectq2QLMConversion(unittest.TestCase):
             int(qreg[0])
         except ImplementationError:
             pass
-
+        circ=eng.to_qlm_circ()
+        print(circ.ops)
 
 if __name__ == "__main__":
     unittest.main(argv=["first-arg-is-ignored"], exit=False)

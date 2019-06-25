@@ -27,9 +27,12 @@ from cirq import ControlledGate
 import cirq.ops.common_gates as g_ops
 from qat.interop.cirq.converters import to_qlm_circ
 from qat.lang.AQASM import *
-from qat.core.util import extract_syntax
-from qat.comm.datamodel.ttypes import OpType
+try:
+    from qat.core.util import extract_syntax
+except ImportError:
+    from qat.core.circ import extract_syntax
 from numpy import array, cos, sin, complex128, pi, sqrt
+from qat.comm.datamodel.ttypes import OpType
 
 # Adding parity gates and their rotations:
 def gen_XX():

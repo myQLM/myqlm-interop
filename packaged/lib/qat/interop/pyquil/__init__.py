@@ -23,6 +23,6 @@ __path__ = extend_path(__path__, __name__)
 
 if True: # version is less than selected
     import warnings
-    warnings.warn("Qiskit providers and algorithms are only compatible with\
+    warnings.warn("Pyquil providers and algorithms are only compatible with\
  version 0.0.12 and above")
 

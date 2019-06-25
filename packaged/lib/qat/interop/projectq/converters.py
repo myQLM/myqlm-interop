@@ -168,20 +168,24 @@ class AqasmEngine(MainEngine):
         if sep_measure is False, the QLM resulting circuit is returned
         directly
     """
-        qreg_list = []
-        for i, qreg in enumerate(self.prog.registers):
-            if qreg.length == 0:
-                del self.prog.registers[i]
-                continue
-            qreg_list.append(qreg)
-            break
-        for qreg in self.prog.registers[1:]:
-            if qreg.length == 0:
-                del qreg
-                continue
-            qreg_list[0].length += qreg.length
-            qreg_list[0].qbits.extend(qreg.qbits)
-        self.prog.registers = qreg_list
+        # this is only for backwards compatibility with old arch
+        try:
+            qreg_list = []
+            for i, qreg in enumerate(self.prog.registers):
+                if qreg.length == 0:
+                    del self.prog.registers[i]
+                    continue
+                qreg_list.append(qreg)
+                break
+            for qreg in self.prog.registers[1:]:
+                if qreg.length == 0:
+                    del qreg
+                    continue
+                qreg_list[0].length += qreg.length
+                qreg_list[0].qbits.extend(qreg.qbits)
+            self.prog.registers = qreg_list
+        except AttributeError:
+            pass
         if sep_measure:
             circuit =  self.prog.to_circ(**kwargs)
             for qreg in circuit.qregs:
@@ -192,9 +196,12 @@ class AqasmEngine(MainEngine):
             for qbit in self.to_measure:
                 self.prog.measure(qbit, qbit)
             circuit =  self.prog.to_circ(**kwargs)
-            for qreg in circuit.qregs:
-                if qreg.length == 0:
-                    del qreg
+            try:
+                for qreg in circuit.qregs:
+                    if qreg.length == 0:
+                        del qreg
+            except AttributeError:
+                pass
             return circuit
 
 

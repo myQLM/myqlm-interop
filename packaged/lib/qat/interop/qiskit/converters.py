@@ -23,8 +23,6 @@ import qiskit
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, Aer
 from qat.lang.AQASM import *
 from qat.lang.AQASM.gates import *
-from qat.comm.shared.ttypes import Job, Batch, Result
-from qat.comm.datamodel.ttypes import Circuit
 import numpy as np
 
 
@@ -334,7 +332,10 @@ def gen_qiskit_gateset(qc):
         'RZZ': qc.rzz
     }
 
-from qat.core.util import extract_syntax
+try:
+    from qat.core.util import extract_syntax
+except ImportError:
+    from qat.core.circ import extract_syntax
 
 supported_ctrls = ["CNOT", "CCNOT", "C-Y", "CSIGN", "C-H", "C-SWAP", "C-RZ"]
 def to_qiskit_circ(qlm_circuit):
@@ -362,9 +363,8 @@ def to_qiskit_circ(qlm_circuit):
     for op in qlm_circuit.ops:
         if op.type == 0:
             name, params = extract_syntax(qlm_circuit.gateDic[op.gate], qlm_circuit.gateDic)
-            if (qlm_circuit.gateDic[op.gate].nbctrls is not None and
-                qlm_circuit.gateDic[op.gate].nbctrls > 0 and
-                name not in supported_ctrls):
+            nbctrls = name.count('C-')
+            if ( nbctrls > 0 and name not in supported_ctrls):
                     raise ValueError(
                         "Controlled gates aren't supported by qiskit"
                     )
