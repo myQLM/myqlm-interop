@@ -194,7 +194,7 @@ class QLMBackend(BaseBackend):
     Basic connector implementing a Qiskit Backend, plugable on a QLM QPUHandler.
     """
 
-    def __init__(self, configuration=_QLM_BACKEND, qpu=None, provider=None):
+    def __init__(self, qpu=None, configuration=_QLM_BACKEND, provider=None):
         super(QLMBackend, self).__init__(configuration, provider)
         self.id_counter = 0
         self._qpu = qpu
@@ -363,21 +363,56 @@ class AsyncQiskitQPU(QPUHandler):
         a job returns a qat.async.asyncqpu.Qiskitjob which is a wrapper
         around any queries qiskit jobs offer, but with the exact same
         interface as the QLM's Asyncjob
-    """
-    def __init__(self, backend=None, plugins=None):
-        super(QPUHandler, self).__init__(plugins)
-        self.backend = backend
 
-    def set_backend(self, backend):
-        """ Sets the qiskit backend to be used
+    Parameters:
+        backend: The Backend qiskit object that is supposed to execute \
+the circuit, if not supplied, QiskitQPU will try logging to IBMQ with \
+the env variable QISKIT_TOKEN and QISKIT_URL, then select the least \
+busy quantum chip available to you, if this fails, the backend will be \
+qiskit's "qasm_simulator"
+        plugins: Any plugins you want to add (c.f qat.core documentation)
+        token: qiskit IBMQ login token, if not supplied loaded from env \
+variable QISKIT_TOKEN
+        url: qiskit IBMQ login url, if not supplied loaded from env \
+variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main" is chosen
+
+    """
+    def __init__(self, backend=None, plugins=None, token=None, url=None):
+        super(QPUHandler, self).__init__(plugins)
+        self.set_backend(backend, token, url)
+
+    def set_backend(self, backend=None, token=None, url=None):
+        """ Sets the backend that will execute circuits
 
         Args:
-            backend: the qiskit backend to use
+            backend: The Backend qiskit object that is supposed to execute \
+        the circuit, if not supplied, QiskitQPU will try logging to IBMQ with \
+        the env variable QISKIT_TOKEN and QISKIT_URL, then select the least \
+        busy quantum chip available to you, if this fails, the backend will be \
+        qiskit's "qasm_simulator"
+            plugins: Any plugins you want to add (c.f qat.core documentation)
+            token: qiskit IBMQ login token, if not supplied loaded from env \
+        variable QISKIT_TOKEN
+            url: qiskit IBMQ login url, if not supplied loaded from env \
+        variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main" is chosen
 
         Returns:
-            Nothing
+            None
         """
-        self.backend = backend
+        if backend is None:
+            try:
+                if token is not None:
+                    token = os.getenv("QISKIT_TOKEN")
+                    if url is None:
+                        url = os.getenv("QISKIT_URL")
+                IBMQ.save_accounts(token, url)
+                IBMQ.load_accounts()
+                IBMQ.enable_account(token)
+                self.backend = least_busy(IBMQ.backends(simulator=False))
+            except:
+                self.backend = Aer.get_backend("qasm_simulator")
+        else:
+            self.backend = backend
 
     def submit_job(self, qlm_job):
         """ Submits a QLM job to be executed on the previously\
