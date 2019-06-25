@@ -291,7 +291,10 @@ variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-com
                 if token is None:
                     token = os.getenv("QISKIT_TOKEN")
                     if url is None:
-                        url = os.getenv("QISKIT_URL")
+                        try:
+                            url = os.getenv("QISKIT_URL")
+                        except:
+                            url = "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main"
                 IBMQ.save_account(token, url)
                 IBMQ.load_accounts()
                 #IBMQ.enable_account(token)
@@ -307,7 +310,6 @@ variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-com
 
         qiskit_circuit = job_to_qiskit_circuit(qlm_job)
         qiskit_result = execute(qiskit_circuit, self.backend, shots=qlm_job.nbshots).result()
-        print(qiskit_result)
         res = generate_qlm_result(qiskit_result)
         return res
 
@@ -406,7 +408,10 @@ variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-com
                 if token is None:
                     token = os.getenv("QISKIT_TOKEN")
                     if url is None:
-                        url = os.getenv("QISKIT_URL")
+                        try:
+                            url = os.getenv("QISKIT_URL")
+                        except:
+                            url = "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main"
                 IBMQ.save_account(token, url)
                 IBMQ.load_accounts()
                 #IBMQ.enable_account(token)
