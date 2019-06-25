@@ -44,10 +44,13 @@ def generate_qlm_result(qiskit_result):
     """
 
     nbshots = qiskit_result.results[0].shots
-    counts = [vars(result.data.counts) for result in qiskit_result.results]
+    try:
+        counts = [vars(result.data.counts) for result in qiskit_result.results]
+    except AttributeError:
+        print("No measures, so the result is empty")
+        return QlmRes(raw_data=[])
     counts = [{int(k, 16): v for k, v in count.items()} for count in counts]
-    ret = QlmRes()
-    ret.raw_data = []
+    ret = QlmRes(raw_data=[])
     for state, freq in counts[0].items():
         if not isinstance(state, int):
             print("State is {}".format(type(state)))

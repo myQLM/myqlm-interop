@@ -326,6 +326,11 @@ def gen_qiskit_gateset(qc):
         'CCNOT': qc.ccx,
         'C-SWAP': qc.cswap,
         'U': qc.u3,
+        'U3': qc.u3,
+        'U2': qc.u2,
+        'U1': qc.u1,
+        'U0': qc.u0,
+        'PH': qc.rz,
         'RZZ': qc.rzz
     }
 
@@ -348,8 +353,11 @@ def to_qiskit_circ(qlm_circuit):
         A QuantumCircuit qiskit object resulting from the conversion
     """
     qreg = QuantumRegister(qlm_circuit.nbqbits)
-    creg = ClassicalRegister(qlm_circuit.nbcbits)
-    qc = QuantumCircuit(qreg, creg)
+    if qlm_circuit.nbcbits > 0:
+        creg = ClassicalRegister(qlm_circuit.nbcbits)
+        qc = QuantumCircuit(qreg, creg)
+    else:
+        qc = QuantumCircuit(qreg)
     dic = gen_qiskit_gateset(qc)
     for op in qlm_circuit.ops:
         if op.type == 0:
