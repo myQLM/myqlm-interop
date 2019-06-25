@@ -11,7 +11,8 @@ from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 from qiskit.assembler import disassemble
 from qiskit.validation.base import Obj
-from qiskit import execute, Aer
+from qiskit.providers.ibmq import least_busy
+from qiskit import execute, Aer, IBMQ
 
 # QLM imports
 from qat.interop.qiskit.converters import to_qlm_circ
@@ -287,13 +288,13 @@ variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-com
         """
         if backend is None:
             try:
-                if token is not None:
+                if token is None:
                     token = os.getenv("QISKIT_TOKEN")
                     if url is None:
                         url = os.getenv("QISKIT_URL")
-                IBMQ.save_accounts(token, url)
+                IBMQ.save_account(token, url)
                 IBMQ.load_accounts()
-                IBMQ.enable_account(token)
+                #IBMQ.enable_account(token)
                 self.backend = least_busy(IBMQ.backends(simulator=False))
             except:
                 self.backend = Aer.get_backend("qasm_simulator")
@@ -306,6 +307,7 @@ variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-com
 
         qiskit_circuit = job_to_qiskit_circuit(qlm_job)
         qiskit_result = execute(qiskit_circuit, self.backend, shots=qlm_job.nbshots).result()
+        print(qiskit_result)
         res = generate_qlm_result(qiskit_result)
         return res
 
@@ -401,13 +403,13 @@ variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-com
         """
         if backend is None:
             try:
-                if token is not None:
+                if token is None:
                     token = os.getenv("QISKIT_TOKEN")
                     if url is None:
                         url = os.getenv("QISKIT_URL")
-                IBMQ.save_accounts(token, url)
+                IBMQ.save_account(token, url)
                 IBMQ.load_accounts()
-                IBMQ.enable_account(token)
+                #IBMQ.enable_account(token)
                 self.backend = least_busy(IBMQ.backends(simulator=False))
             except:
                 self.backend = Aer.get_backend("qasm_simulator")
