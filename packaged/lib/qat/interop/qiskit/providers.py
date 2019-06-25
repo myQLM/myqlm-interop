@@ -287,19 +287,20 @@ variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-com
             None
         """
         if backend is None:
-            try:
-                if token is None:
-                    token = os.getenv("QISKIT_TOKEN")
-                    if url is None:
-                        try:
-                            url = os.getenv("QISKIT_URL")
-                        except:
-                            url = "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main"
-                IBMQ.save_account(token, url)
+            if token is None:
+                token = os.getenv("QISKIT_TOKEN")
+            if token is not None:
+                if url is None:
+                        url = os.getenv("QISKIT_URL")
+                if url is None:
+                        url = "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main"
+
+                if not any(entry['token'] == token for entry in IBMQ.stored_accounts()):
+                    IBMQ.save_account(token, url)
                 IBMQ.load_accounts()
                 #IBMQ.enable_account(token)
                 self.backend = least_busy(IBMQ.backends(simulator=False))
-            except:
+            else:
                 self.backend = Aer.get_backend("qasm_simulator")
         else:
             self.backend = backend
@@ -404,19 +405,19 @@ variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-com
             None
         """
         if backend is None:
-            try:
-                if token is None:
-                    token = os.getenv("QISKIT_TOKEN")
-                    if url is None:
-                        try:
-                            url = os.getenv("QISKIT_URL")
-                        except:
-                            url = "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main"
-                IBMQ.save_account(token, url)
+            if token is None:
+                token = os.getenv("QISKIT_TOKEN")
+            if token is not None:
+                if url is None:
+                    url = os.getenv("QISKIT_URL")
+                if url is None:
+                    url = "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main"
+                if not any(entry['token'] == token for entry in IBMQ.stored_accounts()):
+                    IBMQ.save_account(token, url)
                 IBMQ.load_accounts()
                 #IBMQ.enable_account(token)
                 self.backend = least_busy(IBMQ.backends(simulator=False))
-            except:
+            else:
                 self.backend = Aer.get_backend("qasm_simulator")
         else:
             self.backend = backend
