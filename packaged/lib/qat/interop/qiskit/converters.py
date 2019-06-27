@@ -292,9 +292,9 @@ def to_qlm_circ(qiskit_circuit, sep_measure=False, **kwargs):
     from pkg_resources import parse_version
 
     if parse_version(qiskit.__version__) < parse_version("0.7.9"):
-        return old_to_qlm_circ(qiskit_circuit, sep_measure)
+        return old_to_qlm_circ(qiskit_circuit, sep_measure, **kwargs)
     else:
-        return new_to_qlm_circ(qiskit_circuit, sep_measure)
+        return new_to_qlm_circ(qiskit_circuit, sep_measure, **kwargs)
 
 
 def qlm_circ_sep_meas(qiskit_circuit):

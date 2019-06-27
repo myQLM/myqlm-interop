@@ -17,6 +17,7 @@ Circuit conversion functions for pyquil
 import pyquil.quilatom
 import pyquil.gates as pg
 from pyquil import Program
+from pyquil.quilbase import Measurement, Declare, Gate
 import qat.lang.AQASM.gates as aq
 try:
     from qat.core.util import extract_syntax
@@ -25,25 +26,23 @@ except ImportError:
 import numpy as np
 
 
-GATE_DIC = [
-    "I",
-    "H",
-    "X",
-    "Y",
-    "Z",
-    "RX",
-    "RY",
-    "RZ",
-    "CNOT",
-    "S",
-    "T",
-    "CNOT",
-    "CCNOT",
-    "SWAP",
-    "PH",
-    "ISWAP",
-]
-
+QLM_GATE_DIC = {
+    "I": aq.I,
+    "H": aq.H,
+    "X": aq.X,
+    "Y": aq.Y,
+    "Z": aq.Z,
+    "RX": aq.RX,
+    "RY": aq.RY,
+    "RZ": aq.RZ,
+    "CNOT": aq.CNOT,
+    "S": aq.S,
+    "T": aq.T,
+    "CCNOT": aq.CCNOT,
+    "SWAP": aq.SWAP,
+    "PH": aq.PH,
+    "ISWAP": aq.ISWAP,
+}
 
 def build_qbits(qbits):
     """ Builds a list of pyquil atoms from a list of integers
@@ -126,6 +125,78 @@ def to_pyquil_circ(qlm_circuit):
                 p += pg.MEASURE(qb, creg[cb])
     return p
 
+def build_cregs(prog, pyquil_prog):
+    creg_size = 0
+    pq_cregs = []
+    for op in pyquil_prog.instructions:
+        if not isinstance(op, Declare):
+            continue
+        # (name, offset)
+        pq_cregs.append((op.name, creg_size))
+        creg_size += op.memory_size
+    return (prog.calloc(creg_size), pq_cregs)
+
+
+def to_qlm_circ(pyquil_prog, sep_measures=False, **kwargs):
+        """ Converts a pyquil circuit into a qlm circuit\
+ this function uses either new or old architecture,\
+ depending on the qiskit version currently in use
+
+    Args:
+        pyquil_prog: the pyquil circuit to convert
+        sep_measure: if set to True measures won't be included in the resulting circuits, qubits to be measured will be put in a list, the resulting measureless circuit and this list will be returned in a tuple : (resulting_circuit, list_qubits). If set to False, measures will be converted normally
+        kwargs: these are the options that you would use on a regular \
+        to_circ function, these are added for more flexibility, for\
+        advanced users
+
+
+    Returns:
+        if sep_measure is True a tuple of two elements will be returned,
+        first one is the QLM resulting circuit with no measures, and the
+        second element of the returned tuple is a list of all qubits that
+        should be measured.
+        if sep_measure is False, the QLM resulting circuit is returned
+        directly
+    """
+    from qat.lang.AQASM import Program as QlmProgram
+    import qat.lang.AQASM.gates as aq
+    prog = QlmProgram()
+    qreg = prog.qalloc(len(pyquil_prog.get_qubits()))
+    if not sep_measures:
+        creg, quil_regs = build_cregs(prog, pyquil_prog)
+    else:
+        to_measure = []
+    for op in pyquil_prog.instructions:
+        if isinstance(op, Gate):
+            if len(op.params) > 0:
+                gate = QLM_GATE_DIC[op.name](*params)
+            else:
+                gate = QLM_GATE_DIC[op.name]
+            if op.modifiers.count('DAGGER')%2 == 1:
+                gate = gate.dag()
+            ctrls = op.modifiers.count('CONTROLLED')
+            qubits = op.qubits
+            if ctrls > 0:
+                for _ in range(ctrls):
+                    gate = gate.ctrl()
+                qubits = op.qubits[ctrls:]
+                qubits.extend(reversed(op.qubits[:ctrls]))
+            qubits = [qreg[qbit.index] for qbit in qubits]
+            prog.apply(gate, *qubits)
+        elif isinstance(op, Measurement):
+            if not sep_measures:
+                pq_reg = op.classical_reg.name
+                real_offset = 0
+                for entry in quil_regs:
+                    if entry[0] == pq_reg:
+                        real_offset = entry[1]
+                real_offset += op.classical_reg.offset
+                prog.measure(qreg[op.qubit.index], creg[real_offset])
+            else:
+                to_measure.append(op.qubit.index)
+    if sep_measures:
+        return prog.to_circ(**kwargs), to_measure
+       return prog.to_circ(**kwargs)
 
 def job_to_pyquil(qlm_job):
     """ Converts a QLM job's circuit to a pyquil circuit

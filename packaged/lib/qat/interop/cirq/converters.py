@@ -384,3 +384,58 @@ def to_qlm_circ(cirq, sep_measure=False, **kwargs):
         return prog.to_circ(**kwargs), to_measure
     else:
         return prog.to_circ(**kwargs)
+
+QLM_GATE_DIC = {
+    'H': common_gates.H,
+    'X': common_gates.X,
+    'Y': common_gates.Y,
+    'Z': common_gates.Z,
+    'RX': common_gates.Rx,
+    'RY': common_gates.Ry,
+    'RZ': common_gates.Rz,
+    'S': common_gates.S,
+    'T': common_gates.T,
+    'SWAP': common_gates.SWAP,
+    'ISWAP': common_gates.ISWAP,
+    'CNOT': common_gates.CNOT,
+    'CSIGN': common_gates.CZ,
+    'CCNOT': ops.three_qubit_gates.CCX,
+    'PH': common_gates.Rz
+}
+def to_cirq_circ(qlm_circuit):
+    """ Converts a QLM circuit to a cirq circuit.
+    Args:
+        qlm_circuit: the input QLM circuit to convert
+
+    Returns:
+        A cirq Circuit object resulting from the conversion
+    """
+    from qat.core.util import extract_syntax
+    cirq_circ = cirq.Circuit()
+    qreg = [cirq.LineQubit(i) for i in range(qlm_circuit.nbqbits)]
+
+    for op in qlm_circuit.ops:
+        if op.type == 0:
+            name, params = extract_syntax(qlm_circuit.gateDic[op.gate],
+                                          qlm_circuit.gateDic)
+            nbctrls = name.count('C-')
+            dag = name.count('D-')
+            if name == "I":
+                continue
+            gate = QLM_GATE_DIC[name.rsplit('-', 1)[-1]]
+            if len(params) > 0:
+                gate = gate(*params)
+
+            if dag%2 == 1:
+                gate = cirq.inverse(gate)
+
+            if nbctrls > 0:
+                for _ in range(nbctrls):
+                    gate = ops.ControlledGate(gate)
+            cirq_circ.append(gate.on(*[qreg[i] for i in op.qbits]))
+
+        elif op.type == 1:
+            for qb in op.qbits:
+                cirq_circ.append(common_gates.measure(qreg[qb]))
+
+    return cirq_circ

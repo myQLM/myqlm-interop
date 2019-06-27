@@ -311,8 +311,8 @@ def quantum_die(number_of_sides=6):
     """ Generates a quantum program to roll a die of n faces"""
 
     prog = Program()
-    qbits = int(ceil(log(number_of_sides, 2)))
-    ro = prog.declare("ro", "BIT", qbits)
+    qubits = int(ceil(log(number_of_sides, 2)))
+    ro = prog.declare("ro", "BIT", qubits)
     # Hadamard intialize
     for qbit in range(qubits):
         prog += H(qbit)

@@ -26,5 +26,5 @@ from pkg_resources import parse_version
 if parse_version(VERSION) <= parse_version('0.0.9'):
     import warnings
     warnings.warn("Pyquil providers and algorithms are not compatible with\
- version 0.0.9 and below")
+ version 0.0.10 and below")
 
