@@ -34,6 +34,10 @@ import numpy as np
 
 from grove.simon.simon import Simon, create_1to1_bitmap
 
+def get_simon(bitmap=create_1to1_bitmap("101")):
+    sm = Simon()
+    sm._init_attr(bitmap)
+    return sm.simon_circuit
 
 def run_simon(qc, bitmap=create_1to1_bitmap("101"), trials=30):
     """ 
@@ -47,9 +51,7 @@ def run_simon(qc, bitmap=create_1to1_bitmap("101"), trials=30):
     Returns:
         pyquil result object with measures.
 """
-    sm = Simon()
-    sm._init_attr(bitmap)
-    circ = sm.simon_circuit
+    circ = get_simon(bitmap)
     return qc.run_and_measure(circ, qubits=list(circ.get_qubits()), trials=trials)
 
 

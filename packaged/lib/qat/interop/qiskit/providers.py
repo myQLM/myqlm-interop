@@ -298,7 +298,12 @@ variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-com
                 if url is None:
                         url = "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main"
 
-                if not any(entry['token'] == token for entry in IBMQ.stored_accounts()):
+                exists = False
+                for entry in IBMQ.stored_accounts():
+                    if entry['token'] == token:
+                        exists = True
+                        break
+                if not exists:
                     IBMQ.save_account(token, url)
                 IBMQ.load_accounts()
                 #IBMQ.enable_account(token)
@@ -415,7 +420,14 @@ variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-com
                     url = os.getenv("QISKIT_URL")
                 if url is None:
                     url = "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main"
-                if not any(entry['token'] == token for entry in IBMQ.stored_accounts()):
+
+                exists = False
+                for entry in IBMQ.stored_accounts():
+                    if entry['token'] == token:
+                        exists = True
+                        break
+
+                if not exists:
                     IBMQ.save_account(token, url)
                 IBMQ.load_accounts()
                 #IBMQ.enable_account(token)

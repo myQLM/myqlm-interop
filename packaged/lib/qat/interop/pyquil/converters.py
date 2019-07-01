@@ -40,6 +40,7 @@ QLM_GATE_DIC = {
     "T": aq.T,
     "CCNOT": aq.CCNOT,
     "SWAP": aq.SWAP,
+    "PHASE": aq.PH,
     "PH": aq.PH,
     "ISWAP": aq.ISWAP,
 }
@@ -78,9 +79,9 @@ def build_gate(dic, ident, qubits):
     if nbctrls > 0:
         # build control and targets
         targets = []
-        arity = dic[qlm_gate.subgate].arity
-        targets = qubits[-arity:]
-        controls = qubits[0 : nbctrls]
+        arity = len(qubits)-nbctrls
+        targets = qubits[:arity]
+        controls = list(qubits[-nbctrls:])
         # base gate
         try:
             params = [
@@ -138,7 +139,7 @@ def build_cregs(prog, pyquil_prog):
 
 
 def to_qlm_circ(pyquil_prog, sep_measures=False, **kwargs):
-        """ Converts a pyquil circuit into a qlm circuit\
+    """ Converts a pyquil circuit into a qlm circuit\
  this function uses either new or old architecture,\
  depending on the qiskit version currently in use
 
@@ -159,9 +160,11 @@ def to_qlm_circ(pyquil_prog, sep_measures=False, **kwargs):
         directly
     """
     from qat.lang.AQASM import Program as QlmProgram
-    import qat.lang.AQASM.gates as aq
     prog = QlmProgram()
     qreg = prog.qalloc(len(pyquil_prog.get_qubits()))
+    creg = None
+    quil_regs = None
+    to_measure = []
     if not sep_measures:
         creg, quil_regs = build_cregs(prog, pyquil_prog)
     else:
@@ -169,9 +172,16 @@ def to_qlm_circ(pyquil_prog, sep_measures=False, **kwargs):
     for op in pyquil_prog.instructions:
         if isinstance(op, Gate):
             if len(op.params) > 0:
-                gate = QLM_GATE_DIC[op.name](*params)
+                if op.name == "CPHASE":
+                    gate = aq.PH(*op.params).ctrl()
+                else:
+                    gate = QLM_GATE_DIC[op.name](*op.params)
             else:
-                gate = QLM_GATE_DIC[op.name]
+                if op.name in QLM_GATE_DIC:
+                    gate = QLM_GATE_DIC[op.name]
+                else:
+                    raise ValueError("Gate {} is not supported"
+                                     .format(op.name))
             if op.modifiers.count('DAGGER')%2 == 1:
                 gate = gate.dag()
             ctrls = op.modifiers.count('CONTROLLED')
@@ -196,7 +206,8 @@ def to_qlm_circ(pyquil_prog, sep_measures=False, **kwargs):
                 to_measure.append(op.qubit.index)
     if sep_measures:
         return prog.to_circ(**kwargs), to_measure
-       return prog.to_circ(**kwargs)
+    else:
+        return prog.to_circ(**kwargs)
 
 def job_to_pyquil(qlm_job):
     """ Converts a QLM job's circuit to a pyquil circuit

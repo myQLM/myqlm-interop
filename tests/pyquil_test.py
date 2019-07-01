@@ -84,9 +84,9 @@ def print_aq(circuit):
     print(result)
 
 
-class TestQiskit2QLMConversion(unittest.TestCase):
-    """ Tests the function converting qiskit circuit
-        to qlm circuit"""
+class TestQLM2PyquilConversion(unittest.TestCase):
+    """ Tests the function converting qlm circuit
+        to pyquil circuit"""
 
     def test_default_gates(self):
         prog = Program()
@@ -113,9 +113,9 @@ class TestQiskit2QLMConversion(unittest.TestCase):
         expected += pg.SWAP(0, 1)
         expected += pg.CNOT(0, 1)
         for op in quil_ctrl:
-            expected += op(1).controlled(0)
+            expected += op(0).controlled(1)
         for op in quil_ctrl_prm:
-            expected += op(3.14, 1).controlled(0)
+            expected += op(3.14, 0).controlled(1)
 
         expected += pg.CCNOT(0, 1, 2)
         # print(expected)
@@ -126,17 +126,13 @@ class TestQiskit2QLMConversion(unittest.TestCase):
         qreg = prog.qalloc(5)
         prog.apply(
             Y.ctrl().ctrl().ctrl().ctrl().dag().dag().dag(),
-            qreg[0],
-            qreg[1],
-            qreg[2],
-            qreg[3],
-            qreg[4],
+            *qreg
         )
         qlm_circuit = prog.to_circ()
         result = to_pyquil_circ(qlm_circuit)
         expected = Prg()
         expected = (
-            pg.Y(4).controlled(0).controlled(1).controlled(2).controlled(3).dagger()
+            pg.Y(0).controlled(1).controlled(2).controlled(3).controlled(4).dagger()
         )
         self.assertEqual(str(result).split("\n", 1)[1][:-1], str(expected))
 
