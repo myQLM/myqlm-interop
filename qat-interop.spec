@@ -1,11 +1,11 @@
 
 ###############################################################################
 #
-# openqlm-interop product packaging
+# qat-interop product packaging
 #
 ###############################################################################
 
-%define name openqlm-interop
+%define name qat-interop
 
 %define version 0.0.1
 
@@ -52,7 +52,7 @@ Prefix: /usr
 
 
 # Package summary
-Summary:        New product openqlm-interop
+Summary:        New product qat-interop
 Name:           %{name}
 Version:        %{version}
 Release:        %{release}
@@ -96,30 +96,30 @@ BuildRequires:  doxygen
 
 # Main package description
 %description
-openqlm-interop description
+qat-interop description
 
 # Documenatation sub-package
 %package doc
-Summary: Documentation of the openqlm-interop package
+Summary: Documentation of the qat-interop package
 
 %description doc
-Doxygen documentation of openqlm-interop package
+Doxygen documentation of qat-interop package
 
 # Devel sub-package
 %package devel
-Summary: Header files providing the openqlm-interop API
+Summary: Header files providing the qat-interop API
 Requires: %{name}
 
 %description devel
-Header files providing the openqlm-interop API
+Header files providing the qat-interop API
 
 # Tests sub-package
 %package tests
 Requires: %{name}
-Summary: Tests for the openqlm-interop library
+Summary: Tests for the qat-interop library
 
 %description tests
-Test for the openqlm-interop library
+Test for the qat-interop library
 
 
 ###############################################################################
