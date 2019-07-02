@@ -12,11 +12,9 @@
 
 
 """
-Converts qiskit circuit into a qlm circuit object,
+Converts qiskit circuit into a qlm circuit object, or the opposite
 you can use : qlm_circuit = to_qlm_circ(your_qiskit_circuit)
-This is a placeholder, names and packaging might change to
-keep consistency
-
+Or qiskit_circuit = to_qiskit_circ(your_qlm_circuit).
 """
 
 import qiskit
@@ -133,13 +131,13 @@ def get_gate(gate, params):
         return gate_dic[gate](params)
 
 
-def old_to_qlm_circ(qiskit_circuit, sep_measure=False, **kwargs):
+def old_to_qlm_circ(qiskit_circuit, sep_measures=False, **kwargs):
     """ Converts a qiskit circuit into a qlm circuit \
  (old qiskit architecture)
 
     Args:
         qiskit_circuit: the qiskit circuit to convert
-        sep_measure: if set to True measures won't be included in the
+        sep_measures: if set to True measures won't be included in the
         resulting circuits, qubits to be measured will be put
         in a list, the resulting measureless circuit and this
         list will be returned in a tuple :(resulting_circuit, list_qubits).
@@ -150,11 +148,11 @@ def old_to_qlm_circ(qiskit_circuit, sep_measure=False, **kwargs):
 
 
     Returns:
-        if sep_measure is True a tuple of two elements will be returned,
+        if sep_measures is True a tuple of two elements will be returned,
         first one is the QLM resulting circuit with no measures, and the
         second element of the returned tuple is a list of all qubits that
         should be measured.
-        if sep_measure is False, the QLM resulting circuit is returned
+        if sep_measures is False, the QLM resulting circuit is returned
         directly
     """
     prog = Program()
@@ -176,37 +174,37 @@ def old_to_qlm_circ(qiskit_circuit, sep_measure=False, **kwargs):
         prms = []  # gate parameters
         # Get qbit arguments
         for reg in op.qargs:
-            qb.append(qbits[get_qindex(qiskit_circuit, reg[0].name, reg[1])])
+            qb.append(get_qindex(qiskit_circuit, reg[0].name, reg[1]))
 
         # Get cbit arguments
         for reg in op.cargs:
-            cb.append(cbits[get_cindex(qiskit_circuit, reg[0].name, reg[1])])
+            cb.append(get_cindex(qiskit_circuit, reg[0].name, reg[1]))
 
         # Get parameters
         for p in op.param:
             prms.append(float(p))
         # Apply measure #
         if op.name == "measure":
-            if sep_measure:
-                to_measure.append(qb)
+            if sep_measures:
+                to_measure.extend(qb.index)
             else:
-                prog.measure(qb, cb)
+                prog.measure([qbits[i] for i in qb], [cbits[i] for i in cb])
         else:
             # Apply gates #
-            prog.apply(get_gate(op.name, prms), qb)
-    if sep_measure:
-        return prog.to_circ(**kwargs), to_measure
+            prog.apply(get_gate(op.name, prms), *[qbits[i] for i in qb])
+    if sep_measures:
+        return prog.to_circ(**kwargs), list(set(to_measure))
     else:
         return prog.to_circ(**kwargs)
 
 
-def new_to_qlm_circ(qiskit_circuit, sep_measure=False, **kwargs):
+def new_to_qlm_circ(qiskit_circuit, sep_measures=False, **kwargs):
     """ Converts a qiskit circuit into a qlm circuit\
  (new qiskit architecture)
 
     Args:
         qiskit_circuit: the qiskit circuit to convert
-        sep_measure: if set to True measures won't be included in the
+        sep_measures: if set to True measures won't be included in the
                      resulting circuits, qubits to be measured will be put
                      in a list, the resulting measureless circuit and this
                      list will be returned in a tuple :
@@ -218,11 +216,11 @@ def new_to_qlm_circ(qiskit_circuit, sep_measure=False, **kwargs):
 
 
     Returns:
-        if sep_measure is True a tuple of two elements will be returned,
+        if sep_measures is True a tuple of two elements will be returned,
         first one is the QLM resulting circuit with no measures, and the
         second element of the returned tuple is a list of all qubits that
         should be measured.
-        if sep_measure is False, the QLM resulting circuit is returned
+        if sep_measures is False, the QLM resulting circuit is returned
         directly
     """
     prog = Program()
@@ -244,57 +242,58 @@ def new_to_qlm_circ(qiskit_circuit, sep_measure=False, **kwargs):
         prms = []  # gate parameters
         # Get qbit arguments
         for reg in op[1]:
-            qb.append(qbits[get_qindex(qiskit_circuit, reg[0].name, reg[1])])
+            qb.append(get_qindex(qiskit_circuit, reg[0].name, reg[1]))
 
         # Get cbit arguments
         for reg in op[2]:
-            cb.append(cbits[get_cindex(qiskit_circuit, reg[0].name, reg[1])])
+            cb.append(get_cindex(qiskit_circuit, reg[0].name, reg[1]))
 
         # Get parameters
         for p in op[0]._params:
             prms.append(float(p))
         # Apply measure #
         if op[0].name == "measure":
-            if sep_measure:
-                to_measure.append(qb)
+            if sep_measures:
+                to_measure.extend(qb)
             else:
-                prog.measure(qb, cb)
+                prog.measure([qbits[i] for i in qb], [cbits[i] for i in cb])
         else:
             # Apply gates #
-            prog.apply(get_gate(op[0].name, prms), qb)
-    if sep_measure:
-        return prog.to_circ(**kwargs), to_measure
+            prog.apply(get_gate(op[0].name, prms), *[qbits[i] for i in qb])
+    if sep_measures:
+        return prog.to_circ(**kwargs), list(set(to_measure))
     else:
         return prog.to_circ(**kwargs)
 
 
-def to_qlm_circ(qiskit_circuit, sep_measure=False, **kwargs):
+def to_qlm_circ(qiskit_circuit, sep_measures=False, **kwargs):
     """ Converts a qiskit circuit into a qlm circuit\
- this function uses either new or old architecture,\
+ . This function uses either new or old architecture,\
  depending on the qiskit version currently in use
 
     Args:
         qiskit_circuit: the qiskit circuit to convert
-        sep_measure: if set to True measures won't be included in the resulting circuits, qubits to be measured will be put in a list, the resulting measureless circuit and this list will be returned in a tuple : (resulting_circuit, list_qubits). If set to False, measures will be converted normally
+        sep_measures: if set to True measures won't be included in the resulting circuits, qubits to be measured will be put in a list, the resulting measureless circuit and this list will be returned in a tuple : (resulting_circuit, list_qubits). If set to False, measures will be converted normally\
+(Defaults to False)
         kwargs: these are the options that you would use on a regular \
-        to_circ function, these are added for more flexibility, for\
-        advanced users
+        to_circ function, to generate a QLM circuit from a PyAQASM program\
+ these are added for more flexibility, for advanced users
 
 
     Returns:
-        if sep_measure is True a tuple of two elements will be returned,
-        first one is the QLM resulting circuit with no measures, and the
+        if sep_measures is True a tuple of two elements will be returned,
+        first element is the QLM resulting circuit with no measures, and the
         second element of the returned tuple is a list of all qubits that
         should be measured.
-        if sep_measure is False, the QLM resulting circuit is returned
+        if sep_measures is False, the QLM resulting circuit is returned
         directly
     """
     from pkg_resources import parse_version
 
     if parse_version(qiskit.__version__) < parse_version("0.7.9"):
-        return old_to_qlm_circ(qiskit_circuit, sep_measure, **kwargs)
+        return old_to_qlm_circ(qiskit_circuit, sep_measures, **kwargs)
     else:
-        return new_to_qlm_circ(qiskit_circuit, sep_measure, **kwargs)
+        return new_to_qlm_circ(qiskit_circuit, sep_measures, **kwargs)
 
 
 def qlm_circ_sep_meas(qiskit_circuit):

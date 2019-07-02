@@ -113,9 +113,9 @@ class TestQLM2PyquilConversion(unittest.TestCase):
         expected += pg.SWAP(0, 1)
         expected += pg.CNOT(0, 1)
         for op in quil_ctrl:
-            expected += op(0).controlled(1)
+            expected += op(1).controlled(0)
         for op in quil_ctrl_prm:
-            expected += op(3.14, 0).controlled(1)
+            expected += op(3.14, 1).controlled(0)
 
         expected += pg.CCNOT(0, 1, 2)
         # print(expected)
@@ -132,7 +132,7 @@ class TestQLM2PyquilConversion(unittest.TestCase):
         result = to_pyquil_circ(qlm_circuit)
         expected = Prg()
         expected = (
-            pg.Y(0).controlled(1).controlled(2).controlled(3).controlled(4).dagger()
+            pg.Y(4).controlled(0).controlled(1).controlled(2).controlled(3).dagger()
         )
         self.assertEqual(str(result).split("\n", 1)[1][:-1], str(expected))
 

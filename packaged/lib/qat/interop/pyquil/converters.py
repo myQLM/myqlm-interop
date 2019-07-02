@@ -80,8 +80,8 @@ def build_gate(dic, ident, qubits):
         # build control and targets
         targets = []
         arity = len(qubits)-nbctrls
-        targets = qubits[:arity]
-        controls = list(qubits[-nbctrls:])
+        targets = qubits[-arity:]
+        controls = list(qubits[:nbctrls])
         # base gate
         try:
             params = [
@@ -140,23 +140,22 @@ def build_cregs(prog, pyquil_prog):
 
 def to_qlm_circ(pyquil_prog, sep_measures=False, **kwargs):
     """ Converts a pyquil circuit into a qlm circuit\
- this function uses either new or old architecture,\
- depending on the qiskit version currently in use
 
     Args:
         pyquil_prog: the pyquil circuit to convert
-        sep_measure: if set to True measures won't be included in the resulting circuits, qubits to be measured will be put in a list, the resulting measureless circuit and this list will be returned in a tuple : (resulting_circuit, list_qubits). If set to False, measures will be converted normally
+        sep_measures: if set to True measures won't be included in the resulting circuits, qubits to be measured will be put in a list, the resulting measureless circuit and this list will be returned in a tuple : (resulting_circuit, list_qubits). If set to False, measures will be converted normally\
+ (Default set to False)
         kwargs: these are the options that you would use on a regular \
-        to_circ function, these are added for more flexibility, for\
-        advanced users
+        to_circ function, to generate a QLM circuit from a PyAQASM program\
+ these are added for more flexibility, for advanced users
 
 
     Returns:
-        if sep_measure is True a tuple of two elements will be returned,
+        if sep_measures is True a tuple of two elements will be returned,
         first one is the QLM resulting circuit with no measures, and the
         second element of the returned tuple is a list of all qubits that
         should be measured.
-        if sep_measure is False, the QLM resulting circuit is returned
+        if sep_measures is False, the QLM resulting circuit is returned
         directly
     """
     from qat.lang.AQASM import Program as QlmProgram
@@ -189,8 +188,8 @@ def to_qlm_circ(pyquil_prog, sep_measures=False, **kwargs):
             if ctrls > 0:
                 for _ in range(ctrls):
                     gate = gate.ctrl()
-                qubits = op.qubits[ctrls:]
-                qubits.extend(reversed(op.qubits[:ctrls]))
+                qubits = list(reversed(op.qubits[:ctrls]))
+                qubits.extend(op.qubits[ctrls:])
             qubits = [qreg[qbit.index] for qbit in qubits]
             prog.apply(gate, *qubits)
         elif isinstance(op, Measurement):
@@ -205,7 +204,7 @@ def to_qlm_circ(pyquil_prog, sep_measures=False, **kwargs):
             else:
                 to_measure.append(op.qubit.index)
     if sep_measures:
-        return prog.to_circ(**kwargs), to_measure
+        return prog.to_circ(**kwargs), list(set(to_measure))
     else:
         return prog.to_circ(**kwargs)
 

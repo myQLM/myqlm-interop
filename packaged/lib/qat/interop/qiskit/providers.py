@@ -371,10 +371,10 @@ class Qiskitjob:
             return False
 
 class AsyncQiskitQPU(QPUHandler):
-    """ Wrapper around any qiskit simulator/quantum chip connection.
-        Unlike the other wrapper, this one is asynchronous, and submitting
-        a job returns a qat.async.asyncqpu.Qiskitjob which is a wrapper
-        around any queries qiskit jobs offer, but with the exact same
+    """ Wrapper around any qiskit simulator/quantum chip connection.\
+        Unlike the other wrapper, this one is asynchronous, and submitting\
+        a job returns a qat.async.asyncqpu.Qiskitjob which is a wrapper\
+        around any queries qiskit jobs offer, but with the exact same\
         interface as the QLM's Asyncjob
 
     Parameters:

@@ -309,7 +309,7 @@ def run_meyer_penny(qc, trials=30):
     """
     return qc.run(meyer_penny_program(), trials=trials)
 
-def quantum_die(number_of_sides=6):
+def quantum_dice(number_of_sides=6):
     """ Generates a quantum program to roll a die of n faces"""
 
     prog = Program()
@@ -322,3 +322,10 @@ def quantum_die(number_of_sides=6):
     for qbit in range(qubits):
         prog += MEASURE(qbit, ro[qbit])
     return prog
+
+def run_quantum_dice(qc, trials=30, number_of_sides=6):
+    """
+    Executes the program that simulates a quantum die roll
+    and returns measures in pyquil result format
+    """
+    return qc.run(quantum_dice(number_of_sides), trials=trials)

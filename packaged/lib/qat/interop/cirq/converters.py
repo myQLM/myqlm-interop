@@ -13,10 +13,12 @@
 """
 Converts a Google cirq circuit object into a qlm circuit
 object, you can directly use :
-qlm_circ=to_qlm_circ(your_google_circ)
-This is a placeholder, names and packaging might change
-to keep consistency
 
+qlm_circ = to_qlm_circ(your_google_circ)
+
+Or
+
+google_circ = to_cirq_circ(your_qlm_circ)
 
 Note:
     when mixing LineQubit and GridQubit, all grid\
@@ -329,27 +331,28 @@ def _get_gate(gate):
 
 
 # master function converting cirq object to pyaqasm circuit object
-def to_qlm_circ(cirq, sep_measure=False, **kwargs):
+def to_qlm_circ(cirq, sep_measures=False, **kwargs):
     """ Converts a google cirq circuit to a qlm circuit
 
     Args:
         cirq: the cirq circuit to convert
-        sep_measure: if set to True measures won't be included in the\
+        sep_measures: if set to True measures won't be included in the\
         resulting circuits, qubits to be measured will be put in a list,\
         the resulting measureless circuit and this list will be returned\
         in a tuple: (resulting_circuit, list_qubits).\
-        If set to False, measures will be converted normally
+        If set to False, measures will be converted normally(Defaults to\
+ False)
         kwargs: these are the options that you would use on a regular \
-        to_circ function, these are added for more flexibility, for\
-        advanced users
+        to_circ function, to generate a QLM circuit from a PyAQASM program\
+ these are added for more flexibility, for advanced users
 
 
     Returns:
-        if sep_measure is True a tuple of two elements will be returned,
+        if sep_measures is True a tuple of two elements will be returned,
         first one is the QLM resulting circuit with no measures, and the
         second element of the returned tuple is a list of all qubits that
         should be measured.
-        if sep_measure is False, the QLM resulting circuit is returned
+        if sep_measures is False, the QLM resulting circuit is returned
         directly
     """
     # building a qubit map to use correct qubits
@@ -370,18 +373,19 @@ def to_qlm_circ(cirq, sep_measure=False, **kwargs):
     for op in operations:
         qbs = []
         for qb in op.qubits:
-            if sep_measure:
-                to_measure.append(qmap[qb])
             qbs.append(qreg[qmap[qb]])
+            if (ops.MeasurementGate.is_measurement(cast(ops.GateOperation, op)) 
+            and sep_measures):
+                to_measure.append(qmap[qb])
         if ops.MeasurementGate.is_measurement(cast(ops.GateOperation, op)):
-            if not sep_measure:
+            if not sep_measures:
                 prog.measure(qbs, qbs)
         elif _get_gate(op.gate) == "none":
             continue
         else:
             prog.apply(_get_gate(op.gate), qbs)
-    if sep_measure:
-        return prog.to_circ(**kwargs), to_measure
+    if sep_measures:
+        return prog.to_circ(**kwargs), list(set(to_measure))
     else:
         return prog.to_circ(**kwargs)
 
