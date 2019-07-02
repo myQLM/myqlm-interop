@@ -22,14 +22,14 @@ from collections import Counter
 
 def compare_results(expected, result, aggregate=True):
     if aggregate:
-        expected_arr = [entry.state.state for entry in expected.raw_data]
-        result_arr = [entry.state.state for entry in expected.raw_data]
+        expected_arr = [entry.state for entry in expected.raw_data]
+        result_arr = [entry.state for entry in expected.raw_data]
         expected_counts = Counter(expected_arr)
         result_counts = Counter(result_arr)
     else:
-        expected_counts = {entry.state.state:entry.probability for entry in
+        expected_counts = {entry.state:entry.probability for entry in
                            expected.raw_data}
-        result_counts = {entry.state.state:entry.probability for entry in
+        result_counts = {entry.state:entry.probability for entry in
                          result.raw_data}
 
     distance = {}
@@ -65,7 +65,7 @@ if __name__=="__main__":
     mps = MPS(lnnize=True)
     qvm_res = run_simon(qvm, trials=10024)
 
-    simon_res = {entry.state.state:entry.probability for entry in generate_qlm_result(qvm_res).raw_data}
+    simon_res = {entry.state:entry.probability for entry in generate_qlm_result(qvm_res).raw_data}
 
     print(simon_res)
     print(max(simon_res.values()))
