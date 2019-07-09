@@ -21,7 +21,7 @@ from qat.comm.datamodel.ttypes import QRegister
 from qat.comm.shared.ttypes import Job, Batch
 from qat.comm.shared.ttypes import Result as QlmRes
 from qat.core.qpu.qpu import QPUHandler, get_registers
-from qat.core.wrappers.result import State
+from qat.core.wrappers.result import State, aggregate_data
 from qat.core.wrappers.result import Result as WResult
 from qat.comm.shared.ttypes import Sample as ThriftSample
 from collections import Counter
@@ -229,13 +229,18 @@ class QLMBackend(BaseBackend):
         n_list = []
         for circuit in circuits:
             qlm_circuit = to_qlm_circ(circuit)
-            job = qlm_circuit.to_job()
+            job = qlm_circuit.to_job(aggregate_data=False)
             job.nbshots = nbshots
             job.qubits = [i for i in range(qlm_circuit.nbqbits)]
             n_list.append(job.qubits[-1]+1)
             qlm_task.jobs.append(job)
 
         results = self._qpu.submit(qlm_task)
+        for res in results:
+            for sample in res.raw_data:
+                sample.intermediate_measures = None
+            res = aggregate_data(res)
+
         # Creating a job that will contain the results
         job = QLMJob(self, str(self.id_counter))
         self.id_counter += 1
