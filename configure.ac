@@ -4,7 +4,7 @@ AC_CONFIG_MACRO_DIR([.autotools_cache/m4])
 AC_CONFIG_AUX_DIR([.autotools_cache])
 m4_include([.autotools_cache/m4/common.m4])
 
-define([MODULE], openqlm-interop)
+define([MODULE], qat-interop)
 
 AC_PACKAGE([MODULE])
 AC_INIT(MODULE, [MODULE_VERSION(MODULE)])

@@ -1,16 +1,22 @@
+import os
 from setuptools import setup, find_packages
 
-name = "@PACKAGE@".replace("openqlm", "qat")
-module = name.replace("-", ".")
-path = name.replace("-", "/")
+module = "@PACKAGE@".replace("-", ".")
+path = "@PACKAGE@".replace("-", "/")
+
+client_name = "Atos"
+try:
+    client_name = os.environ["MYQLM_CUSTOMER"]
+except KeyError:
+    pass
 
 setup(
-    name=name,
+    name="@PACKAGE@",
     version="@VERSION@",
     url="@PACKAGE_URL@",
     author="Atos Quantum Lab",
-    license="TODO",
-    description="Module %s - Compiled for Atos" % name,
+    license="Atos myQLM EULA",
+    description="Module @PACKAGE@ - Compiled for %s" % client_name,
     packages=[module],
     scripts=["../packaged/bin/oqasm2circ"],
     package_dir={module: "packaged/lib/" + path},
