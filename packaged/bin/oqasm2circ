@@ -9,7 +9,7 @@
            Please contact Bull SAS for details about its license.
            Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
 
-@file openqlm-interop/packaged/bin/oqasm2circ
+@file qat-interop/packaged/bin/oqasm2circ
 @brief An OpenQASM compiler in python
 
 Description Command line tool for compiling Openqasm circuits into

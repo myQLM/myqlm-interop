@@ -9,10 +9,10 @@
            This is not Free or Open Source software.\n
            Please contact Bull SAS for details about its license.\n
            Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
-@brief Version of the package openqlm-interop 0.0.1
+@brief Version of the package qat-interop 0.0.1
 """
 
-PACKAGE = "openqlm-interop"
+PACKAGE = "qat-interop"
 PACKAGE_BUGREPORT = ""
 PACKAGE_URL = ""
 VERSION = "0.0.1"
