@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-@brief 
+@brief
 
 @namespace ...
 @authors Reda Drissi <mohamed-reda.drissi@atos.net>
@@ -69,12 +69,3 @@ if __name__=="__main__":
 
     print(simon_res)
     print(max(simon_res.values()))
-    #circ = to_qlm_circ(shor_circ)
-    #print(type(circ))
-    #shor_job = circ.to_job(nbshots=10)
-    #shor_job.nbshots=100
-    #print(shor_job.nbshots)
-    #shor_res = linalg.submit(shor_job)
-
-    #print("Distance is {}".format(analyze_distance(compare_results(shor_res, shor_qiskit))))
-
