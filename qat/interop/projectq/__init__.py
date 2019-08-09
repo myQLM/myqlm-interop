@@ -22,15 +22,11 @@ __path__ = extend_path(__path__, __name__)
 
 
 from pkg_resources import parse_version
-import pyquil
-import grove
+import projectq
 import warnings
 
-if parse_version(pyquil.__version__) > parse_version('2.7.2'):
-    warnings.warn("pyquil version {} is not tested, use version 2.7.2"
-                  .format(pyquil.__version__))
+if parse_version(projectq.__version__) > parse_version('0.4.2'):
+    warnings.warn("projectq version {} is not tested, use version 0.4.2"
+                  .format(projectq.__version__))
 
-if parse_version(grove.__version__) > parse_version('1.7.0'):
-    warnings.warn("grove version {} is not tested, use version 1.7.0"
-                  .format(grove.__version__))
 
