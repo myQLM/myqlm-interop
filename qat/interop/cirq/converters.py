@@ -391,9 +391,9 @@ def to_qlm_circ(cirq, sep_measures=False, **kwargs):
 
 QLM_GATE_DIC = {
     'H': common_gates.H,
-    'X': common_gates.X,
-    'Y': common_gates.Y,
-    'Z': common_gates.Z,
+    'X': common_gates.XPowGate,
+    'Y': common_gates.YPowGate,
+    'Z': common_gates.ZPowGate,
     'RX': common_gates.Rx,
     'RY': common_gates.Ry,
     'RZ': common_gates.Rz,
@@ -404,7 +404,7 @@ QLM_GATE_DIC = {
     'CNOT': common_gates.CNOT,
     'CSIGN': common_gates.CZ,
     'CCNOT': ops.three_qubit_gates.CCX,
-    'PH': common_gates.Rz
+    'PH': common_gates.ZPowGate
 }
 def to_cirq_circ(qlm_circuit):
     """ Converts a QLM circuit to a cirq circuit.
@@ -416,7 +416,7 @@ def to_cirq_circ(qlm_circuit):
     """
     from qat.core.util import extract_syntax
     cirq_circ = cirq.Circuit()
-    qreg = [cirq.LineQubit(i) for i in range(qlm_circuit.nbqbits)]
+    qreg = [cirq.LineQubit(i+1) for i in range(qlm_circuit.nbqbits)]
 
     for op in qlm_circuit.ops:
         if op.type == 0:
@@ -428,7 +428,10 @@ def to_cirq_circ(qlm_circuit):
                 continue
             gate = QLM_GATE_DIC[name.rsplit('-', 1)[-1]]
             if len(params) > 0:
-                gate = gate(*params)
+                if name.rsplit('-', 1)[-1] == 'PH':
+                    gate = gate(exponent=params[0]/pi)
+                else:
+                    gate = gate(*params)
 
             if dag%2 == 1:
                 gate = cirq.inverse(gate)
@@ -442,4 +445,7 @@ def to_cirq_circ(qlm_circuit):
             for qb in op.qbits:
                 cirq_circ.append(common_gates.measure(qreg[qb]))
 
+    # to unify the interface adding measures here
+    for qbit in qreg:
+        cirq_circ.append(common_gates.measure(qbit))
     return cirq_circ

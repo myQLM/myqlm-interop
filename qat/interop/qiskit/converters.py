@@ -353,6 +353,7 @@ def to_qiskit_circ(qlm_circuit):
         A QuantumCircuit qiskit object resulting from the conversion
     """
     qreg = QuantumRegister(qlm_circuit.nbqbits)
+    creg = None
     if qlm_circuit.nbcbits > 0:
         creg = ClassicalRegister(qlm_circuit.nbcbits)
         qc = QuantumCircuit(qreg, creg)
@@ -376,6 +377,10 @@ def to_qiskit_circ(qlm_circuit):
         elif op.type == 1:
             for index in range(len(op.qbits)):
                 qc.measure(op.qbits[index], op.cbits[index])
+
+    # Adding measures to unify the interface
+    for qbit, cbit in zip(qreg, creg):
+        qc.measure(qbit, cbit)
     return qc
 
 

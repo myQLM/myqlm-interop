@@ -25,7 +25,7 @@ from qat.core.wrappers.result import State, aggregate_data
 from qat.core.wrappers.result import Result as WResult
 from qat.comm.shared.ttypes import Sample as ThriftSample
 from collections import Counter
-
+import numpy as np
 
 def to_string(state, nbqbits):
     st = bin(state)[2:]
@@ -55,7 +55,11 @@ def generate_qlm_result(qiskit_result):
         if not isinstance(state, int):
             print("State is {}".format(type(state)))
         ret.raw_data.append(
-            ThriftSample(state=state, probability=freq / nbshots)
+            ThriftSample(state=state,
+                         probability=freq / nbshots,
+                         err=np.sqrt(freq / nbshots*(1.-freq/nbshots)/(nbshots-1))
+                         if nbshots > 1 else None
+                        )
         )
     return ret
 

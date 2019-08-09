@@ -24,7 +24,7 @@ from qat.comm.shared.ttypes import Sample as ThriftSample
 from qat.comm.shared.ttypes import Job
 
 from collections import Counter
-
+import numpy as np
 
 def generate_qlm_result(pyquil_result):
     """ Converts pyquil result to QLM Result
@@ -48,7 +48,11 @@ def generate_qlm_result(pyquil_result):
     counts = Counter(measurements)
     qlm_result = QlmRes()
     qlm_result.raw_data = [
-        ThriftSample(state=state, probability=freq / nbshots)
+        ThriftSample(state=state,
+                     probability=freq / nbshots,
+                     err=np.sqrt(freq / nbshots*(1.-freq/nbshots)(nbshots-1))
+                     if nbshots > 1 else None
+                    )
         for state, freq in counts.items()
     ]
     return qlm_result

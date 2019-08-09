@@ -124,6 +124,9 @@ def to_pyquil_circ(qlm_circuit):
         elif op.type == 1:
             for qb, cb in zip(op.qbits, op.cbits):
                 p += pg.MEASURE(qb, creg[cb])
+    # Adding measures to unify interface
+    for qb in range (len(creg)):
+        p += pg.MEASURE(qb, creg[qb])
     return p
 
 def build_cregs(prog, pyquil_prog):
