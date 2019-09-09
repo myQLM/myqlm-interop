@@ -22,7 +22,7 @@ setup(
     version="0.0.1",
     author="Atos Quantum Lab",
     license="Atos myQLM EULA",
-    packages=find_namespace_packages(),
+    packages=find_namespace_packages(include=["qat.*"]),
     scripts=["bin/oqasm2circ"],
     install_requires=["thrift==0.10", "qat-lang>=0.0.8", "numpy", "ply"],
     extras_require={
