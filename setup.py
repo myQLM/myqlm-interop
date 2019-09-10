@@ -18,7 +18,7 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 setup(
-    name="qat-interop",
+    name="myqlm-interop",
     version="0.0.1",
     author="Atos Quantum Lab",
     license="Atos myQLM EULA",
