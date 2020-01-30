@@ -14,11 +14,16 @@
 Converts a Google cirq circuit object into a qlm circuit
 object, you can directly use :
 
-qlm_circ = to_qlm_circ(your_google_circ)
+
+.. code-block:: python
+
+    qlm_circ = to_qlm_circ(your_google_circ)
 
 Or
 
-google_circ = to_cirq_circ(your_qlm_circ)
+.. code-block:: python
+
+    google_circ = to_cirq_circ(your_qlm_circ)
 
 Note:
     when mixing LineQubit and GridQubit, all grid\

@@ -13,8 +13,17 @@
 
 """
 Converts qiskit circuit into a qlm circuit object, or the opposite
-you can use : qlm_circuit = to_qlm_circ(your_qiskit_circuit)
-Or qiskit_circuit = to_qiskit_circ(your_qlm_circuit).
+you can use : 
+
+.. code-block:: python
+
+    qlm_circuit = to_qlm_circ(your_qiskit_circuit)
+
+Or 
+
+.. code-block:: python
+
+    qiskit_circuit = to_qiskit_circ(your_qlm_circuit)
 """
 
 import qiskit
