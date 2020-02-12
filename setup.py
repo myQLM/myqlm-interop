@@ -19,12 +19,12 @@ class PyTest(TestCommand):
 
 setup(
     name="myqlm-interop",
-    version="0.0.1",
+    version="0.0.6",
     author="Atos Quantum Lab",
     license="Atos myQLM EULA",
     packages=find_namespace_packages(include=["qat.*"]),
     scripts=["bin/oqasm2circ"],
-    install_requires=["thrift==0.10", "qat-lang>=0.0.1", "numpy", "ply"],
+    install_requires=["thrift==0.10", "qat-lang>=0.0.6", "numpy", "ply"],
     extras_require={
         "qiskit_binder": ["qiskit==0.7.2", "qiskit-terra==0.8.0",
                           "qiskit-aqua==0.5.0"],

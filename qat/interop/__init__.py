@@ -26,8 +26,8 @@ __path__ = extend_path(__path__, __name__)
 from qat.core.version import VERSION
 from pkg_resources import parse_version
 
-if parse_version(VERSION) <= parse_version('0.0.9'):
+if parse_version(VERSION) < parse_version('0.0.6'):
     import warnings
     warnings.warn("Qiskit and Pyquil providers and algorithms are not\
- compatible with version 0.0.10 and below")
+ compatible with version 0.0.5 and below")
 
