@@ -385,7 +385,7 @@ def to_qlm_circ(cirq, sep_measures=False, **kwargs):
         if ops.MeasurementGate.is_measurement(cast(ops.GateOperation, op)):
             if not sep_measures:
                 prog.measure(qbs, qbs)
-        elif _get_gate(op.gate) == "none":
+        elif isinstance(_get_gate(op.gate), str) and _get_gate(op.gate) == "none":
             continue
         else:
             prog.apply(_get_gate(op.gate), qbs)
