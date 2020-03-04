@@ -6,7 +6,7 @@
 
 @namespace ...
 @authors Reda Drissi <mohamed-reda.drissi@atos.net>
-@copyright 2019  Bull S.A.S.  -  All rights reserved.
+@copyright 2019-2020 Bull S.A.S.  -  All rights reserved.
            This is not Free or Open Source software.
            Please contact Bull SAS for details about its license.
            Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
@@ -22,7 +22,7 @@ Overview
 import unittest
 from qat.lang.AQASM.gates import *
 from qat.lang.AQASM.program import Program
-from qat.interop.pyquil.converters import to_pyquil_circ
+from qat.interop.pyquil.converters import qlm_to_pyquil
 from pyquil import Program as Prg
 from pyquil import gates as pg
 import numpy as np
@@ -102,7 +102,7 @@ class TestQLM2PyquilConversion(unittest.TestCase):
 
         qlm_circuit = prog.to_circ()
         # print_aq(qlm_circuit)
-        result = to_pyquil_circ(qlm_circuit)
+        result = qlm_to_pyquil(qlm_circuit)
         # print(result)
         expected = Prg()
         for op in quil_1qb:
@@ -129,7 +129,7 @@ class TestQLM2PyquilConversion(unittest.TestCase):
             *qreg
         )
         qlm_circuit = prog.to_circ()
-        result = to_pyquil_circ(qlm_circuit)
+        result = qlm_to_pyquil(qlm_circuit)
         expected = Prg()
         expected = (
             pg.Y(4).controlled(0).controlled(1).controlled(2).controlled(3).dagger()
@@ -147,7 +147,7 @@ class TestQLM2PyquilConversion(unittest.TestCase):
 
         prog.measure(qreg, creg)
 
-        result = to_pyquil_circ(prog.to_circ())
+        result = qlm_to_pyquil(prog.to_circ())
 
         expected = Prg()
         cbs = expected.declare("ro", "BIT", 3)

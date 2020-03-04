@@ -5,7 +5,7 @@
 #@file qat/interop/pyquil/converters.py
 #@namespace qat.interop.pyquil.converters
 #@authors Reda Drissi <mohamed-reda.drissi@atos.net>
-#@copyright 2019  Bull S.A.S.  -  All rights reserved.
+#@copyright 2019-2020 Bull S.A.S.  -  All rights reserved.
 #           This is not Free or Open Source software.
 #           Please contact Bull SAS for details about its license.
 #           Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
@@ -14,6 +14,7 @@
 Circuit conversion functions for pyquil
 """
 
+import warnings
 import pyquil.quilatom
 import pyquil.gates as pg
 from pyquil import Program
@@ -106,7 +107,7 @@ def build_gate(dic, ident, qubits):
         return pyquil.quilbase.Gate(basename, params, qubits)
 
 
-def to_pyquil_circ(qlm_circuit):
+def qlm_to_pyquil(qlm_circuit):
     """ Converts a QLM circuit to a pyquil circuit
 
     Args:
@@ -141,7 +142,7 @@ def build_cregs(prog, pyquil_prog):
     return (prog.calloc(creg_size), pq_cregs)
 
 
-def to_qlm_circ(pyquil_prog, sep_measures=False, **kwargs):
+def pyquil_to_qlm(pyquil_prog, sep_measures=False, **kwargs):
     """ Converts a pyquil circuit into a qlm circuit\
 
     Args:
@@ -218,4 +219,22 @@ def job_to_pyquil(qlm_job):
     Returns:
         A Pyquil circuit
     """
-    return to_pyquil_circ(qlm_job.circuit)
+    return qlm_to_pyquil(qlm_job.circuit)
+
+
+def to_pyquil_circ(qlm_circuit):
+    """ Deprecated """
+    warnings.warn(
+        "to_pyquil_circ is deprecated, please use qlm_to_pyquil",
+        FutureWarning,
+    )
+    return qlm_to_pyquil(qlm_circuit)
+
+
+def to_qlm_circ(pyquil_prog, sep_measures=False, **kwargs):
+    """ Deprecated """
+    warnings.warn(
+        "to_qlm_circ is deprecated, please use pyquil_to_qlm",
+        FutureWarning,
+    )
+    return pyquil_to_qlm(pyquil_prog, sep_measures, **kwargs)

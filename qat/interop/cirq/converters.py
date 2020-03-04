@@ -5,7 +5,7 @@
 #@file qat/interop/cirq/converters.py
 #@namespace qat.interop.cirq.converters
 #@authors Reda Drissi <mohamed-reda.drissi@atos.net>
-#@copyright 2019  Bull S.A.S.  -  All rights reserved.
+#@copyright 2019-2020 Bull S.A.S.  -  All rights reserved.
 #           This is not Free or Open Source software.
 #           Please contact Bull SAS for details about its license.
 #           Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
@@ -17,7 +17,7 @@ object, you can directly use :
 
 .. code-block:: python
 
-    qlm_circ = to_qlm_circ(your_google_circ)
+    qlm_circ = cirq_to_qlm(your_google_circ)
 
 Or
 
@@ -31,6 +31,7 @@ Note:
     The order will follow coordinates.
 
 """
+import warnings
 from qat.lang.AQASM import *
 from math import pi
 from numpy import array, complex128, cos, sin, diag
@@ -336,7 +337,7 @@ def _get_gate(gate):
 
 
 # master function converting cirq object to pyaqasm circuit object
-def to_qlm_circ(cirq, sep_measures=False, **kwargs):
+def cirq_to_qlm(cirq, sep_measures=False, **kwargs):
     """ Converts a google cirq circuit to a qlm circuit
 
     Args:
@@ -411,7 +412,7 @@ QLM_GATE_DIC = {
     'CCNOT': ops.three_qubit_gates.CCX,
     'PH': common_gates.ZPowGate
 }
-def to_cirq_circ(qlm_circuit):
+def qlm_to_cirq(qlm_circuit):
     """ Converts a QLM circuit to a cirq circuit.
     Args:
         qlm_circuit: the input QLM circuit to convert
@@ -454,3 +455,21 @@ def to_cirq_circ(qlm_circuit):
     for qbit in qreg:
         cirq_circ.append(common_gates.measure(qbit))
     return cirq_circ
+
+
+def to_qlm_circ(cirq, sep_measures=False, **kwargs):
+    """ Deprecated """
+    warnings.warn(
+        "to_qlm_circ is deprecated, please use cirq_to_qlm",
+        FutureWarning,
+    )
+    return cirq_to_qlm(cirq, sep_measures, **kwargs)
+
+
+def to_cirq_circ(qlm_circuit):
+    """ Deprecated """
+    warnings.warn(
+        "to_cirq_circ is deprecated, please use qlm_to_cirq",
+        FutureWarning,
+    )
+    return qlm_to_cirq(qlm_circuit)

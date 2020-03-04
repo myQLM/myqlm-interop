@@ -5,7 +5,7 @@
 
 @namespace ...
 @authors Reda Drissi <mohamed-reda.drissi@atos.net>
-@copyright 2019  Bull S.A.S.  -  All rights reserved.
+@copyright 2019-2020 Bull S.A.S.  -  All rights reserved.
            This is not Free or Open Source software.
            Please contact Bull SAS for details about its license.
            Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
@@ -17,7 +17,7 @@ Description ...
 """
 
 import cirq
-from qat.interop.cirq.converters import to_cirq_circ
+from qat.interop.cirq.converters import qlm_to_cirq
 
 from qat.core.qpu.qpu import QPUHandler
 from qat.core.wrappers.result import State
@@ -71,7 +71,7 @@ class CirqQPU(QPUHandler):
     def submit_job(self, qlm_job):
         qlm_circuit = qlm_job.circuit
         nbshots = qlm_job.nbshots
-        cirq_circuit = to_cirq_circ(qlm_circuit)
+        cirq_circuit = qlm_to_cirq(qlm_circuit)
         result = generate_qlm_result(self.qpu.run(cirq_circuit,
                                                   repetitions=nbshots))
         return result

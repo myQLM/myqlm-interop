@@ -6,7 +6,7 @@
 
 @namespace ...
 @authors Reda Drissi <mohamed-reda.drissi@atos.net>
-@copyright 2019  Bull S.A.S.  -  All rights reserved.
+@copyright 2019-2020 Bull S.A.S.  -  All rights reserved.
            This is not Free or Open Source software.
            Please contact Bull SAS for details about its license.
            Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
@@ -25,7 +25,7 @@ import cirq.ops
 import cirq
 from cirq import ControlledGate
 import cirq.ops.common_gates as g_ops
-from qat.interop.cirq.converters import to_qlm_circ
+from qat.interop.cirq.converters import cirq_to_qlm
 from qat.lang.AQASM import *
 try:
     from qat.core.util import extract_syntax
@@ -164,7 +164,7 @@ class TestGcirq2QLMConversion(unittest.TestCase):
         for qbit in qreg1 + qreg2 + qreg3:
             gcirq.append(cirq.measure(qbit))
         # Generating qlm circuit
-        result = to_qlm_circ(gcirq)
+        result = cirq_to_qlm(gcirq)
 
         # Generating equivalent qlm circuit
         prog = Program()
@@ -219,7 +219,7 @@ class TestGcirq2QLMConversion(unittest.TestCase):
         gcirq.append(g_ops.SWAP(qreg[0], qreg[1]) ** -0.5)
         gcirq.append(g_ops.ISWAP(qreg[0], qreg[1]) ** 16.0)
 
-        result = to_qlm_circ(gcirq)
+        result = cirq_to_qlm(gcirq)
         for i, op in enumerate(result.ops):
             name, params = extract_syntax(result.gateDic[op.gate], result.gateDic)
             if i == 0:
@@ -238,7 +238,7 @@ class TestGcirq2QLMConversion(unittest.TestCase):
     def test_invalid_powers(self):
         gcirq = cirq.Circuit()
         qreg = [cirq.LineQubit(i) for i in range(5)]
-        to_qlm_circ(gcirq)
+        cirq_to_qlm(gcirq)
         try:
             gcirq.append(g_ops.H(qreg[0]) ** pi)
         except ValueError:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-@brief 
+@brief
 
 @namespace ...
 @authors Reda Drissi <mohamed-reda.drissi@atos.net>
@@ -33,4 +33,3 @@ if parse_version(pyquil.__version__) > parse_version('2.7.2'):
 if parse_version(grove.__version__) > parse_version('1.7.0'):
     warnings.warn("grove version {} is not tested, use version 1.7.0"
                   .format(grove.__version__))
-

@@ -6,7 +6,7 @@
 
 @namespace ...
 @authors Reda Drissi <mohamed-reda.drissi@atos.net>
-@copyright 2019  Bull S.A.S.  -  All rights reserved.
+@copyright 2019-2020 Bull S.A.S.  -  All rights reserved.
            This is not Free or Open Source software.
            Please contact Bull SAS for details about its license.
            Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
@@ -23,7 +23,7 @@ import unittest
 from qat.lang.AQASM.gates import *
 from qat.core.util import get_syntax
 from qat.lang.AQASM.program import Program
-from qat.interop.pyquil.converters import to_pyquil_circ, to_qlm_circ
+from qat.interop.pyquil.converters import qlm_to_pyquil, pyquil_to_qlm
 from pyquil import Program as Prg
 from pyquil import gates as pg
 import numpy as np
@@ -83,7 +83,7 @@ class TestPyquil2QLMConversion(unittest.TestCase):
         prog.apply(CCNOT, qreg[0], qreg[1], qreg[2])
 
         expected = prog.to_circ()
-        #result = to_pyquil_circ(qlm_circuit)
+        #result = qlm_to_pyquil(qlm_circuit)
         # print(result)
         result = Prg()
         for op in quil_1qb:
@@ -100,7 +100,7 @@ class TestPyquil2QLMConversion(unittest.TestCase):
 
         result += pg.CCNOT(0, 1, 2)
 
-        qlm_circuit = to_qlm_circ(result)
+        qlm_circuit = pyquil_to_qlm(result)
         exp_str = print_aq(expected)
         res_str = print_aq(qlm_circuit)
         self.assertEqual(exp_str, res_str)
@@ -117,7 +117,7 @@ class TestPyquil2QLMConversion(unittest.TestCase):
         result += (
             pg.Y(4).controlled(0).controlled(1).controlled(2).controlled(3).dagger()
         )
-        result = to_qlm_circ(result)
+        result = pyquil_to_qlm(result)
         res_str = print_aq(result)
         exp_str = print_aq(expected)
         self.assertEqual(res_str, exp_str)
@@ -145,7 +145,7 @@ class TestPyquil2QLMConversion(unittest.TestCase):
         result += pg.MEASURE(1, cbs[1])
         result += pg.MEASURE(2, cbs[2])
 
-        result = to_qlm_circ(result)
+        result = pyquil_to_qlm(result)
         exp_str = print_aq(expected)
         res_str = print_aq(result)
         self.assertEqual(res_str, exp_str)
@@ -170,7 +170,7 @@ class TestPyquil2QLMConversion(unittest.TestCase):
         result += pg.MEASURE(1, cbs[1])
         result += pg.MEASURE(2, cbs[2])
 
-        result, to_measure = to_qlm_circ(result, True)
+        result, to_measure = pyquil_to_qlm(result, True)
         exp_str = print_aq(expected)
         res_str = print_aq(result)
         self.assertEqual(res_str, exp_str)
@@ -185,9 +185,9 @@ class TestPyquil2QLMConversion(unittest.TestCase):
         qpu = PyquilQPU(qvm)
         pyquil_prog = QFT3()
 
-        expected = qpu.submit(to_qlm_circ(pyquil_prog).to_job())
+        expected = qpu.submit(pyquil_to_qlm(pyquil_prog).to_job())
 
-        result = qpu.submit(to_qlm_circ(to_pyquil_circ(to_qlm_circ(pyquil_prog))).to_job())
+        result = qpu.submit(pyquil_to_qlm(qlm_to_pyquil(pyquil_to_qlm(pyquil_prog))).to_job())
         print(expected)
         print(result)
 

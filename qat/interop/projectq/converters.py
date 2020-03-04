@@ -5,7 +5,7 @@
 #@file qat/interop/projectq/converters.py
 #@namespace qat.interop.projectq.converters
 #@authors Reda Drissi <mohamed-reda.drissi@atos.net>
-#@copyright 2019  Bull S.A.S.  -  All rights reserved.
+#@copyright 2019-2020 Bull S.A.S.  -  All rights reserved.
 #           This is not Free or Open Source software.
 #           Please contact Bull SAS for details about its license.
 #           Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
@@ -27,8 +27,9 @@ code your projectq circuit : Example :
     H | q[0]
     CNOT | (q[0], q[1])
     # then recover your generated qlm circuit with
-    circ=eng.to_qlm_circ()
+    circ=eng.projectq_to_qlm()
 """
+import warnings
 from math import pi
 import projectq
 from projectq.cengines import LastEngineException, MainEngine
@@ -145,7 +146,8 @@ class AqasmEngine(MainEngine):
         self.nbqb += 1
         self.qb.qbits.extend(self.prog.qalloc(1))
         return MainEngine.allocate_qubit(self, dirty)
-    def to_qlm_circ(self, sep_measure=False, **kwargs):
+    
+    def projectq_to_qlm(self, sep_measure=False, **kwargs):
         """ 
     Generates the QLM circuit corresponding to all projectq
     commands we sent to the engine
@@ -203,6 +205,14 @@ class AqasmEngine(MainEngine):
             except AttributeError:
                 pass
             return circuit
+
+    def to_qlm_circ(self, sep_measure=False, **kwargs):
+        """ Deprecated """
+        warnings.warn(
+            "to_qlm_circ is deprecated, please use projectq_to_qlm",
+            FutureWarning,
+        )
+        return self.projectq_to_qlm(sep_measure, **kwargs)
 
 
 class AqasmPrinter(MainEngine):

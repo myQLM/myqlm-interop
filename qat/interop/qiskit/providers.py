@@ -1,6 +1,29 @@
+#!/usr/bind/env python3.6
+# -*- coding: utf-8 -*-
+
+"""
+@file qat/interop/qiskit/providers.py
+@namespace qat.interop.qiskit.providers
+@authors Reda Drissi <mohamed-reda.drissi@atos.net>
+         Cyprien Lambert <cyprien.lambert@atos.net>
+@copyright 2019-2020 Bull S.A.S.  -  All rights reserved.
+                This is not Free or Open Source software.
+                Please contact Bull SAS for details about its license.
+                Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
+
+Classes and methods for providers, including:
+    BackendToQPU: Synchronous QPU, capable of running in a Qiskit
+            backend
+    AsyncBackendToQPU: Asynchronous QPU, capable of running in a
+            Qiskit Backend
+    QPUToBackend: Implementation of a Qiskit backend, capable of
+            running in a QPU backend
+"""
 
 import os
-
+from collections import Counter
+import warnings
+import numpy as np
 
 from qiskit.providers import BaseBackend, BaseJob
 from qiskit.providers.models.backendconfiguration import (
@@ -11,33 +34,44 @@ from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 from qiskit.assembler import disassemble
 from qiskit.validation.base import Obj
-from qiskit.providers.ibmq import least_busy
 from qiskit import execute, Aer, IBMQ
 
 # QLM imports
-from qat.interop.qiskit.converters import to_qlm_circ
+from qat.interop.qiskit.converters import qiskit_to_qlm
 from qat.interop.qiskit.converters import job_to_qiskit_circuit
 from qat.comm.datamodel.ttypes import QRegister
-from qat.comm.shared.ttypes import Job, Batch
+from qat.comm.shared.ttypes import Job
 from qat.comm.shared.ttypes import Result as QlmRes
 from qat.core.qpu.qpu import QPUHandler, get_registers
-from qat.core.wrappers.result import State, aggregate_data
+from qat.core import Batch
+from qat.core.wrappers.result import aggregate_data
 from qat.core.wrappers.result import Result as WResult
+from qat.core.wrappers.result import BatchResult
 from qat.comm.shared.ttypes import Sample as ThriftSample
-from collections import Counter
-import numpy as np
+
 
 def to_string(state, nbqbits):
-    st = bin(state)[2:]
-    st = "0" * (nbqbits - len(st)) + st
-    return st
+    """
+    Converts a state into a string.
+
+    Args:
+        state: Int representing the quantum state written in decimal
+        nbqbits: Number of qubits of the quantum state
+
+    Returns:
+        String of the quantum state in binary form
+    """
+    state_str = bin(state)[2:]
+    state_str = "0" * (nbqbits - len(state_str)) + state_str
+    return state_str
 
 
 def generate_qlm_result(qiskit_result):
-    """ Generates a QLM Result from a qiskit result
+    """
+    Generates a QLM Result from a qiskit result.
 
     Args:
-        qiskit_result: The qiskit result to convert
+        qiskit_result: The qiskit.Result object to convert
 
     Returns:
         A QLM Result object built from the data in qiskit_result
@@ -57,19 +91,59 @@ def generate_qlm_result(qiskit_result):
         ret.raw_data.append(
             ThriftSample(state=state,
                          probability=freq / nbshots,
-                         err=np.sqrt(freq / nbshots*(1.-freq/nbshots)/(nbshots-1))
-                         if nbshots > 1 else None
-                        )
+                         err=np.sqrt(
+                             freq / nbshots*(1.-freq/nbshots)/(nbshots-1))
+                         if nbshots > 1 else None)
         )
     return ret
 
 
-def generate_experiment_result(qlm_result, nbqbits, head):
+def generate_qlm_list_results(qiskit_result):
     """
-    Generates an experiment result.
-    Returns a qiskit.ExperimentResult structure.
+    Generates a QLM Result from a qiskit result.
+
+    Args:
+        qiskit_result: The qiskit.Result object to convert
+
+    Returns:
+        A QLM Result object built from the data in qiskit_result
     """
-    counts = dict()
+
+    nbshots = qiskit_result.results[0].shots
+    try:
+        counts = [vars(result.data.counts) for result in qiskit_result.results]
+    except AttributeError:
+        print("No measures, so the result is empty")
+        return QlmRes(raw_data=[])
+    counts = [{int(k, 16): v for k, v in count.items()} for count in counts]
+    ret_list = []
+    for count in counts:
+        ret = QlmRes(raw_data=[])
+        for state, freq in count.items():
+            if not isinstance(state, int):
+                print("State is {}".format(type(state)))
+            ret.raw_data.append(
+                ThriftSample(state=state,
+                             probability=freq / nbshots,
+                             err=np.sqrt(
+                                 freq / nbshots*(1.-freq/nbshots)/(nbshots-1))
+                             if nbshots > 1 else None)
+            )
+        ret_list.append(ret)
+    return ret_list
+
+
+def _generate_experiment_result(qlm_result, head):
+    """
+    Generates a Qiskit experiment result.
+
+    Args:
+        qlm_result: qat.core.wrappers.Result object which data is aggregated
+        head: Header of the experiment
+
+    Returns:
+        A qiskit.ExperimentResult structure.
+    """
     samples = [hex(s.state.state) for s in qlm_result.raw_data]
     counts = dict(Counter(samples))
     data = ExperimentResultData.from_dict({"counts": counts})
@@ -81,19 +155,29 @@ def generate_experiment_result(qlm_result, nbqbits, head):
     )
 
 
-def generate_result(
-    backend_name,
-    backend_version,
-    qobj_id,
-    job_id,
-    success,
-    qlm_results,
-    n_list,
-    headers,
-):
+def _qlm_to_qiskit_result(
+        backend_name,
+        backend_version,
+        qobj_id,
+        job_id,
+        success,
+        qlm_results,
+        headers
+        ):
     """
     Tranform a QLM result into a qiskit result structure.
-    Returns a qiskit.Result structure.
+
+    Args:
+        backend_name:
+        backend_version:
+        qobj_id:
+        job_id:
+        success:
+        qlm_results: List of qat.core.wrappers.Result objects
+        headers: List of the experiments' headers
+
+    Returns:
+        A qiskit.Result structure.
     """
     return Result(
         backend_name=backend_name,
@@ -102,29 +186,35 @@ def generate_result(
         job_id=job_id,
         success=success,
         results=[
-            generate_experiment_result(result, n, head)
-            for result, n, head in zip(qlm_results, n_list, headers)
+            _generate_experiment_result(result, head)
+            for result, head in zip(qlm_results, headers)
         ],
     )
 
 
 class QLMJob(BaseJob):
     """
-    QLM Job.
-    QLM Job implement the required BaseJob interface of Qiskit with a small twist:
-    everything is computed synchronously (meaning that the job is stored at submit and
-    computed at result).
+    QLM Job implement the required BaseJob interface of Qiskit with a
+    small twist: everything is computed synchronously (meaning that the
+    job is stored at submit and computed at result).
     """
 
-    def add_results(self, qlm_result, qobj_id, n_list, headers):
-        self._results = generate_result(
+    def set_results(self, qlm_result, qobj_id, headers):
+        """
+        Sets the results of the Job.
+            Args:
+                qlm_result: qat.core.wrappers.Result object
+                qobj_id: Identifier of the initial Qobj structure
+                headers: List of the experiments' headers, gotten from
+                        the initial Qobj structure's experiments
+        """
+        self._results = _qlm_to_qiskit_result(
             self._backend._configuration.backend_name,
             self._backend._configuration.backend_version,
             qobj_id,
             self._job_id,
             True,
             qlm_result,
-            n_list,
             headers,
         )
 
@@ -141,11 +231,9 @@ class QLMJob(BaseJob):
         return self._results
 
 
-## TODO :  can be improved by publishing any pyAQASM abstract gate via its circuit implementation.
-## For now lets stick with the QASM usual gate set
-
 _QLM_GATE_NAMES = [
     "id",
+    "iden",
     "u0",
     "u1",
     "u2",
@@ -171,15 +259,16 @@ _QLM_GATE_NAMES = [
     "swap",
     "ccx",
     "cswap",
+    "r",
 ]
 
 _QLM_GATES = [GateConfig(name="FOO", parameters=[], qasm_def="BAR")]
 
 _QLM_PARAMS = {
-    "backend_name": "QLMConnector",  # Name of the back end
+    "backend_name": "QiskitConnector",  # Name of the back end
     "backend_version": "0.0.1",  # Version of the back end
     "n_qubits": 100,  # Nb qbits
-    "basis_gates": _QLM_GATE_NAMES,  # We accept all the gates of Qiskit (and more, but hey..)
+    "basis_gates": _QLM_GATE_NAMES,  # We accept all the gates of Qiskit
     "gates": _QLM_GATES,  # They don't even use it for their simulators, so...
     "local": True,  # Its a local backend
     "simulator": True,  # Its a simulator. Is it though?
@@ -187,56 +276,67 @@ _QLM_PARAMS = {
     "open_pulse": False,  # We do not support open Pulse
     "memory": False,  # We do not support Memory (wth?)
     "max_shots": 4096,
+    "coupling_map": None,
 }  # Max shots is 4096 (required :/)
 
 
 class NoQpuAttached(Exception):
-    pass
+    """
+    Exception raised in QPUToBackend.run() when there is not qpu attached to it
+    """
 
 
 _QLM_BACKEND = BackendConfiguration(**_QLM_PARAMS)
 
 
-class QLMBackend(BaseBackend):
+class QPUToBackend(BaseBackend):
     """
-    Basic connector implementing a Qiskit Backend, plugable on a QLM QPUHandler.
+    Basic connector implementing a Qiskit Backend, plugable on a QLM QPUHandler
     """
 
     def __init__(self, qpu=None, configuration=_QLM_BACKEND, provider=None):
-        super(QLMBackend, self).__init__(configuration, provider)
+        """
+        Args:
+            qpu: QLM QPU object
+            configuration: BackendConfiguration object, leave default value for
+                    standard uses
+            provider: Provider responsible for this backend
+        """
+        super(QPUToBackend, self).__init__(configuration, provider)
         self.id_counter = 0
         self._qpu = qpu
 
     def set_qpu(self, qpu):
         """
-            Sets the QPU that this backend is supposed to use
+        Sets the QLM QPU that this backend is supposed to use.
+
+        Args:
+            qpu: QLM QPU object
         """
         self._qpu = qpu
 
     def run(self, qobj):
         """ Convert all the circuits inside qobj into a Batch of
-            QLM jobs before sending them into a QLM qpu
+            QLM jobs before sending them into a QLM qpu.
 
         Args:
-            qobj: qiskit batch of circuits to run
+            qobj: Qiskit batch of circuits to run
 
         Returns:
-            Returns the results of the QLM qpu execution after being
-            converted into qiskit results
+            Returns a QLMJob object containing the results of the QLM qpu
+            execution after being converted into qiskit results
         """
         if self._qpu is None:
             raise NoQpuAttached("No qpu attached to the QLM connector.")
-        headers = [exp.header.as_dict() for exp in qobj.experiments]
+        headers = [exp.header.to_dict() for exp in qobj.experiments]
         circuits = disassemble(qobj)[0]
         nbshots = qobj.config.shots
         qlm_task = Batch(jobs=[])
-        n_list = []
         for circuit in circuits:
-            qlm_circuit = to_qlm_circ(circuit)
+            qlm_circuit = qiskit_to_qlm(circuit)
             job = qlm_circuit.to_job(aggregate_data=False)
             job.nbshots = nbshots
-            job.qubits = [i for i in range(qlm_circuit.nbqbits)]
-            n_list.append(job.qubits[-1]+1)
+            job.qubits = list(range(0, qlm_circuit.nbqbits))
             qlm_task.jobs.append(job)
 
         results = self._qpu.submit(qlm_task)
@@ -248,52 +348,66 @@ class QLMBackend(BaseBackend):
         # Creating a job that will contain the results
         job = QLMJob(self, str(self.id_counter))
         self.id_counter += 1
-        job.add_results(results, qobj.qobj_id, n_list, headers)
+        job.set_results(results, qobj.qobj_id, headers)
         return job
 
 
-class QiskitQPU(QPUHandler):
-    """ 
-        :class:`~qat.interop.qiskit.providers.QiskitQPU` is a 
+class BackendToQPU(QPUHandler):
+    """
+        :class:`~qat.interop.qiskit.providers.BackendToQPU` is a
         wrapper around any qiskit simulator/ quantum chip connection
         to follow how other standard QLM qpus work, this qpu is also
         synchronous, despite the asynchronous nature of qiskit's
-        simulators. If you need an Asynchronous qiskit qpu, then use
-        :class:`~qat.interop.qiskit.providers.AsyncQiskitQPU`
-        this implementes :func:`~qat.interop.qiskit.providers.QiskitQPU.submit_job`
-
+        simulators.
+        This implements
+        :func:`~qat.interop.qiskit.providers.BackendToQPU.submit_job`
+        Supports plugins.
+        If you need an Asynchronous qiskit qpu, then use
+        :class:`~qat.interop.qiskit.providers.AsyncBackendToQPU`
 
     Parameters:
-        backend: The Backend qiskit object that is supposed to execute \
-the circuit, if not supplied, QiskitQPU will try logging to IBMQ with \
-the env variable QISKIT_TOKEN and QISKIT_URL, then select the least \
-busy quantum chip available to you, if this fails, the backend will be \
-qiskit's "qasm_simulator"
-        plugins: Any plugins you want to add (c.f qat.core documentation)
-        token: qiskit IBMQ login token, if not supplied loaded from env \
-variable QISKIT_TOKEN
-        url: qiskit IBMQ login url, if not supplied loaded from env \
-variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main" is chosen
-
+        backend: The Backend qiskit object that is supposed to execute
+                the circuit, if not supplied, BackendToQPU will try logging to
+                IBMQ with the env variable QISKIT_TOKEN and QISKIT_URL,
+                then select the least busy quantum chip available to you,
+                if this fails, the backend will be qiskit's "qasm_simulator"
     """
-    def __init__(self, backend=None, plugins=None, token=None, url=None):
-        super(QPUHandler, self).__init__(plugins)
-        self.set_backend(backend, token, url)
+    def __init__(self, backend=None, plugins=None, token=None,
+                 ibmq_backend='ibmq_qasm_simulator'):
+        """
+        Args:
+            backend: The Backend qiskit object that is supposed to execute
+                    the circuit, if not supplied, BackendToQPU will try logging
+                    to IBMQ with the env variable QISKIT_TOKEN and QISKIT_URL,
+                    then select the least busy quantum chip available to you,
+                    if this fails, the backend will be qiskit's
+                    "qasm_simulator"
+            plugins: Any plugins you want to add (c.f qat.core documentation)
+            token: qiskit IBMQ login token, if not supplied loaded from env
+                    variable QISKIT_TOKEN
+            ibmq_backend: Name of the IBM Quantum Experience backend, default
+                    value is 'ibmq_qasm_simulator', which goes up to 32qubits
+        """
+        super().__init__(plugins)
+        self.set_backend(backend, token, ibmq_backend)
 
-    def set_backend(self, backend=None, token=None, url=None):
-        """ Sets the backend that will execute circuits
+    def set_backend(self, backend=None, token=None,
+                    ibmq_backend='ibmq_qasm_simulator'):
+        """
+        Sets the backend that will execute circuits
 
         Args:
-            backend: The Backend qiskit object that is supposed to execute \
-        the circuit, if not supplied, QiskitQPU will try logging to IBMQ with \
-        the env variable QISKIT_TOKEN and QISKIT_URL, then select the least \
-        busy quantum chip available to you, if this fails, the backend will be \
-        qiskit's "qasm_simulator"
+            backend: The Backend qiskit object that is supposed to execute
+                    the circuit, if not supplied, BackendToQPU will try logging
+                    to IBMQ with the env variable QISKIT_TOKEN and QISKIT_URL,
+                    then select the least busy quantum chip available to you,
+                    if this fails, the backend will be qiskit's
+                    "qasm_simulator"
             plugins: Any plugins you want to add (c.f qat.core documentation)
-            token: qiskit IBMQ login token, if not supplied loaded from env \
-        variable QISKIT_TOKEN
-            url: qiskit IBMQ login url, if not supplied loaded from env \
-        variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main" is chosen
+            token: qiskit IBMQ login token, if not supplied loaded from env
+                    variable QISKIT_TOKEN
+            ibmq_backend: Name of the IBM Quantum Experience backend, default
+                    value is 'ibmq_qasm_simulator', which goes up to 32qubits
 
         Returns:
             None
@@ -302,121 +416,239 @@ variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-com
             if token is None:
                 token = os.getenv("QISKIT_TOKEN")
             if token is not None:
-                if url is None:
-                        url = os.getenv("QISKIT_URL")
-                if url is None:
-                        url = "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main"
+                if IBMQ.stored_account()['token'] != token:
+                    IBMQ.save_account(token, overwrite=True)
 
-                exists = False
-                for entry in IBMQ.stored_accounts():
-                    if entry['token'] == token:
-                        exists = True
-                        break
-                if not exists:
-                    IBMQ.save_account(token, url)
-                IBMQ.load_accounts()
-                #IBMQ.enable_account(token)
-                self.backend = least_busy(IBMQ.backends(simulator=False))
+                provider = IBMQ.load_account()
+                self.backend = provider.get_backend(ibmq_backend)
             else:
                 self.backend = Aer.get_backend("qasm_simulator")
         else:
             self.backend = backend
 
+    def _submit_batch(self, qlm_batch):
+        """
+        Submits a Batch object to execute on a Qiskit backend.
+
+        Args:
+            qlm_batch:
+
+        Returns:
+            A QLM BatchResult object
+        """
+        if self.backend is None:
+            raise ValueError("Backend cannot be None")
+
+        if isinstance(qlm_batch, Job):
+            qlm_batch = Batch(jobs=[qlm_batch])
+        qiskit_circuits = []
+        for qlm_job in qlm_batch.jobs:
+            qiskit_circuit = job_to_qiskit_circuit(qlm_job)
+            qiskit_circuits.append(qiskit_circuit)
+        qiskit_result = execute(qiskit_circuits, self.backend,
+                                shots=qlm_batch.jobs[0].nbshots,
+                                coupling_map=None).result()
+        results = generate_qlm_list_results(qiskit_result)
+        new_results = []
+        for result in results:
+            new_results.append(WResult(result))
+        return _wrap_results(qlm_batch, new_results)
+
     def submit_job(self, qlm_job):
+        """
+        Submits a Job to execute on a Qiskit backend.
+
+        Args:
+            qlm_job: A QLM Job object
+
+        Returns:
+           A QLM Result object
+        """
         if self.backend is None:
             raise ValueError("Backend cannot be None")
 
         qiskit_circuit = job_to_qiskit_circuit(qlm_job)
-        qiskit_result = execute(qiskit_circuit, self.backend, shots=qlm_job.nbshots).result()
-        res = generate_qlm_result(qiskit_result)
-        return res
+        qiskit_result = execute(qiskit_circuit, self.backend,
+                                shots=qlm_job.nbshots,
+                                coupling_map=None).result()
+        result = generate_qlm_result(qiskit_result)
+        return result
 
-def wrap_result(job, res):
-        """ Wrap a Result structure using the corresponding Job's information
-        This is mainly to provide a cleaner/higher level interface for the user """
+
+def _wrap_results(qlm_batch, results):
+    """
+    Wrap a Result structure using the corresponding Job's information
+    This is mainly to provide a cleaner/higher level interface for the user
+
+    Args:
+        qlm_batch: QLM Batch which results are to be wrapped
+        results: list of qat.core.wrappers.Result object to be wrapped
+
+    Returns:
+        qat.core.wrappers.Result object or
+        qat.core.wrappers.BatchResult object if the batch submitted
+        contains several jobs
+    """
+    for i in range(len(qlm_batch.jobs)):
+        qlm_job = qlm_batch.jobs[i]
+        result = results[i]
         qreg_list = None
-        if job.circuit is not None:
-            qreg_list = get_registers(job.circuit.qregs, job.qubits)
+        if qlm_job.circuit is not None:
+            qreg_list = get_registers(qlm_job.circuit.qregs, qlm_job.qubits)
         if qreg_list is not None:
-            res.wrap_samples(qreg_list)
+            result.wrap_samples(qreg_list)
         else:
             length = 0
-            if job.qubits is not None:
-                length = len(job.qubits)
-            res.wrap_samples([QRegister(start=0, length=length, type=1)])
+            if qlm_job.qubits is not None:
+                length = len(qlm_job.qubits)
+            result.wrap_samples([QRegister(start=0, length=length, type=1)])
 
-class Qiskitjob:
-    """ Wrapper around qiskit's asynchronous calls"""
-    def __init__(self, qlm_job, qobj):
-        self._job_id = qobj.job_id()
-        self._handler = qobj
-        self._qlm_job = qlm_job
+    return BatchResult(results=results, meta_data=qlm_batch.meta_data)
+
+
+class QiskitJob:
+    """
+    Wrapper around Qiskit's asynchronous calls.
+
+    Parameters:
+        _job_id: The identifier of Qiskit's Qobj structure
+        _handler: The Qobj structure
+        _qlm_batch: The QLM Batch which was initially submitted
+    """
+    def __init__(self, qlm_batch, async_job):
+        """
+        Args:
+            qlm_batch: QLM Batch or QLM Job object. If a QLM Job object
+                    is given, it will be converted in a QLM Batch object
+            async_job: Qiskit job instance derived from BaseJob.
+                    Result of a previous asynchronous execution of qlm_job
+        """
+        self._job_id = async_job.job_id()
+        self._handler = async_job
+        if isinstance(qlm_batch, Job):
+            self._qlm_batch = Batch(jobs=[qlm_batch])
+        else:
+            self._qlm_batch = qlm_batch
 
     def job_id(self):
-        """ Returns the job's id"""
+        """ Returns the job's ID. """
         return self._job_id
 
     def status(self):
-        """ Returns the job status """
+        """ Returns the job status. """
         return self._handler.status()._name_
 
     def result(self):
-        """ Returns the result if available"""
+        """
+        Returns the result if available.
+
+        Returns:
+            qat.core.wrappers.Result object or
+            qat.core.wrappers.BatchResult object if the batch submitted
+            contains several jobs
+        """
         if self.status() == 'DONE':
-            from qat.interop.qiskit.providers import generate_qlm_result
-            result = generate_qlm_result(self._handler.result())
-            result = WResult(result)
-            wrap_result(self._qlm_job, result)
-            return result
+            results = generate_qlm_list_results(self._handler.result())
+            new_results = []
+            for result in results:
+                new_results.append(WResult(result))
+            batch_result = _wrap_results(self._qlm_batch, new_results)
+            if not batch_result.results or len(batch_result.results) == 1:
+                return batch_result.results[0]
+            return batch_result
+
+        return None
 
     def cancel(self):
-        """ Attempts to cancel the job"""
+        """
+        Attempts to cancel the job.
+
+        Returns:
+            Boolean indicating the success or lack thereof of the attempt.
+        """
         ret = self._handler.cancel()
+
         if ret:
             print("job successefully cancelled")
             return True
-        else:
-            print("Unable to cancel job")
-            return False
 
-class AsyncQiskitQPU(QPUHandler):
-    """ Wrapper around any qiskit simulator/quantum chip connection.\
-        Unlike the other wrapper, this one is asynchronous, and submitting\
-        a job returns a qat.async.asyncqpu.Qiskitjob which is a wrapper\
-        around any queries qiskit jobs offer, but with the exact same\
-        interface as the QLM's Asyncjob
+        print("Unable to cancel job")
+        return False
 
-    Parameters:
-        backend: The Backend qiskit object that is supposed to execute \
-the circuit, if not supplied, QiskitQPU will try logging to IBMQ with \
-the env variable QISKIT_TOKEN and QISKIT_URL, then select the least \
-busy quantum chip available to you, if this fails, the backend will be \
-qiskit's "qasm_simulator"
-        plugins: Any plugins you want to add (c.f qat.core documentation)
-        token: qiskit IBMQ login token, if not supplied loaded from env \
-variable QISKIT_TOKEN
-        url: qiskit IBMQ login url, if not supplied loaded from env \
-variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main" is chosen
-
-    """
-    def __init__(self, backend=None, plugins=None, token=None, url=None):
-        super(QPUHandler, self).__init__(plugins)
-        self.set_backend(backend, token, url)
-
-    def set_backend(self, backend=None, token=None, url=None):
-        """ Sets the backend that will execute circuits
+    def dump(self, file_name):
+        """
+        Dumps the QLM Batch object used for creating the job into a
+        binary file.
 
         Args:
-            backend: The Backend qiskit object that is supposed to execute \
-        the circuit, if not supplied, QiskitQPU will try logging to IBMQ with \
-        the env variable QISKIT_TOKEN and QISKIT_URL, then select the least \
-        busy quantum chip available to you, if this fails, the backend will be \
-        qiskit's "qasm_simulator"
+            file_name: Name of the binary file to be created
+
+        Returns:
+            None
+        """
+        if isinstance(self._qlm_batch.meta_data, dict):
+            self._qlm_batch.meta_data['job_id'] = self._job_id
+        else:
+            self._qlm_batch.meta_data = {'job_id': self._job_id}
+
+        self._qlm_batch.dump(file_name)
+
+
+class AsyncBackendToQPU(QPUHandler):
+    """
+    Wrapper around any qiskit simulator/quantum chip connection.
+    Unlike the other wrapper, this one is asynchronous, and submitting
+    a job returns a qat.async.asyncqpu.QiskitJob which is a wrapper
+    around any queries qiskit jobs offer, but with the exact same
+    interface as the QLM's Asyncjob.
+    Does not support plugins.
+
+    Parameters:
+        backend: The Backend qiskit object that is supposed to execute
+                the circuit, if not supplied, AsyncBackendToQPU will try
+                logging to IBMQ with the env variable QISKIT_TOKEN and
+                QISKIT_URL, then select the least busy quantum chip
+                available to you, if this fails, the backend will be
+                qiskit's "qasm_simulator"
+    """
+    def __init__(self, backend=None, token=None,
+                 ibmq_backend='ibmq_qasm_simulator'):
+        """
+        Args:
+            backend: The Backend qiskit object that is supposed to execute
+                    the circuit, if not supplied, AsyncBackendToQPU will try
+                    logging to IBMQ with the env variable QISKIT_TOKEN and
+                    QISKIT_URL, then select the least busy quantum chip
+                    available to you, if this fails, the backend will be
+                    qiskit's "qasm_simulator"
             plugins: Any plugins you want to add (c.f qat.core documentation)
-            token: qiskit IBMQ login token, if not supplied loaded from env \
-        variable QISKIT_TOKEN
-            url: qiskit IBMQ login url, if not supplied loaded from env \
-        variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main" is chosen
+            token: Qiskit IBMQ login token, if not supplied loaded from env
+                    variable QISKIT_TOKEN
+            ibmq_backend: Name of the IBM Quantum Experience backend, default
+                    value is 'ibmq_qasm_simulator', which goes up to 32qubits
+        """
+        super().__init__()
+        self.set_backend(backend, token, ibmq_backend)
+
+    def set_backend(self, backend=None, token=None,
+                    ibmq_backend='ibmq_qasm_simulator'):
+        """
+        Sets the backend that will execute circuits.
+        If no backend and no token are specified, the backend  will be
+        a simulator.
+
+        Args:
+            backend: The Backend qiskit object that is supposed to execute
+                    the circuit, if not supplied, AsyncBackendToQPU will try
+                    logging to IBMQ with the env variable QISKIT_TOKEN and
+                    QISKIT_URL, then select the least busy quantum chip
+                    available to you, if this fails, the backend will be
+                    qiskit's "qasm_simulator"
+            plugins: Any plugins you want to add (c.f qat.core documentation)
+            token: Qiskit IBMQ login token, if not supplied loaded from env
+                    variable QISKIT_TOKEN
+            ibmq_backend: Name of the IBM Quantum Experience backend, default
+                    value is 'ibmq_qasm_simulator', which goes up to 32qubits
 
         Returns:
             None
@@ -425,68 +657,163 @@ variable QISKIT_URL, if not set, the hardcoded default: "https://api.quantum-com
             if token is None:
                 token = os.getenv("QISKIT_TOKEN")
             if token is not None:
-                if url is None:
-                    url = os.getenv("QISKIT_URL")
-                if url is None:
-                    url = "https://api.quantum-computing.ibm.com/api/Hubs/ibm-q/Groups/open/Projects/main"
+                if IBMQ.stored_account()['token'] != token:
+                    IBMQ.save_account(token, overwrite=True)
 
-                exists = False
-                for entry in IBMQ.stored_accounts():
-                    if entry['token'] == token:
-                        exists = True
-                        break
-
-                if not exists:
-                    IBMQ.save_account(token, url)
-                IBMQ.load_accounts()
-                #IBMQ.enable_account(token)
-                self.backend = least_busy(IBMQ.backends(simulator=False))
+                provider = IBMQ.load_account()
+                self.backend = provider.get_backend(ibmq_backend)
             else:
                 self.backend = Aer.get_backend("qasm_simulator")
         else:
             self.backend = backend
 
     def submit_job(self, qlm_job):
-        """ Submits a QLM job to be executed on the previously\
- selected backend, if no backends are chosen an exception is raised
+        """
+        Submits a QLM job to be executed on the previously
+        selected backend, if no backends are chosen an exception is raised.
 
         Args:
-            qlm_job: the qlm_job to be executed
+            qlm_job: The QLM Job object to be executed
 
         Returns:
-            A Qiskitjob with the same interface as Asyncjob for the
-            user to have information on their job execution
+            A QiskitJob with the same interface as a job derived from
+            BaseJob for the user to have information on their job execution
         """
         if self.backend is None:
             raise ValueError("Backend cannot be None")
+
         qiskit_circuit = job_to_qiskit_circuit(qlm_job)
-        async_job = execute(qiskit_circuit, self.backend, shots=qlm_job.nbshots)
-        return Qiskitjob(qlm_job, async_job)
+        async_job = execute(qiskit_circuit, self.backend,
+                            shots=qlm_job.nbshots, coupling_map=None)
+        return QiskitJob(qlm_job, async_job)
 
     def submit(self, qlm_batch):
-        """ Submits a QLM batch of jobs and returns the corresponding list
-        of Qiskitjobs
+        """
+        Submits a QLM batch of jobs and returns the corresponding QiskitJob.
 
         Args:
-            batch: a batch of QLM jobs. If a single job is provided, the function calls the submit_job method, and returns a single Qiskitjob
+            qlm_batch: A batch of QLM jobs. If a single QLM job is provided,
+                    a batch is created from this single job.
         Returns:
-            A list of Qiskitjob instances
+            A QiskitJob with the same interface as a job derived from
+            BaseJob for the user to have information on their job execution
         """
         if self.backend is None:
             raise ValueError("Backend cannot be None")
+
         if isinstance(qlm_batch, Job):
-            return self.submit_job(qlm_batch)
-        async_results = []
-        for job in qlm_batch.jobs:
-            async_results.append(self.submit_job(job))
-        return async_results
+            qlm_batch = Batch(jobs=[qlm_batch])
+        qiskit_circuits = []
+        for qlm_job in qlm_batch.jobs:
+            qiskit_circuit = job_to_qiskit_circuit(qlm_job)
+            qiskit_circuits.append(qiskit_circuit)
+        async_job = execute(qiskit_circuits, self.backend,
+                            shots=qlm_batch.jobs[0].nbshots, coupling_map=None)
+        return QiskitJob(qlm_batch, async_job)
+
+    def retrieve_job(self, file_name):
+        """
+        Retrieves a QiskitJob from a binary file in which the QLM Batch object
+        - from which the QiskitJob has been created - has been dumped.
+
+        Args:
+            file_name: Name of the binary file
+
+        Returns:
+            QiskitJob object
+        """
+        qlm_batch = Batch.load(file_name)
+        async_job = self.backend.retrieve_job(qlm_batch.meta_data['job_id'])
+        return QiskitJob(qlm_batch, async_job)
 
 
-class QLMConnector:
+class QiskitConnector:
+    """
+    Component connecting a QPU to Qiskit by returning a QPUToBackend.
+    """
     def __or__(self, qpu):
-        backend = QLMBackend(_QLM_BACKEND)
+        """
+        Converts a QPU to a QPUToBackend object. The syntax is similar to
+        plugins' but the type is changed by the operation.
+
+        Args:
+            qpu:
+
+        Return:
+            QPUToBackend object
+        """
+        backend = QPUToBackend(_QLM_BACKEND)
         backend.set_qpu(qpu)
         return backend
+
+
+class Qiskitjob(QiskitJob):
+    """ Deprecated, use QiskitJob."""
+    def __init__(self, qlm_job, qobj):
+        warnings.warn(
+            "Qiskitjob is deprecated, please use QiskitJob.",
+            FutureWarning,
+        )
+        super(Qiskitjob, self).__init__(qlm_job, qobj)
+
+
+class QLMBackend(QPUToBackend):
+    """
+    Deprecated, use QPUToBackend.
+    """
+    def __init__(self, qpu=None, configuration=_QLM_BACKEND, provider=None):
+        warnings.warn(
+            "QLMBackend is deprecated, please use QPUToBackend.",
+            FutureWarning,
+        )
+        super(QLMBackend, self).__init__(
+            qpu=qpu, configuration=configuration, provider=provider)
+
+
+class QiskitQPU(BackendToQPU):
+    """
+    Deprecated, use BackendToQPU.
+    """
+    def __init__(self, backend=None, plugins=None, token=None, url=None,
+                 ibmq_backend='ibmq_qasm_simulator'):
+        warnings.warn(
+            "QiskitQPU(backend=None, plugins=None, token=None, url=None) "
+            + "is deprecated, please use BackendToQPU(backend=None, "
+            + "plugins=None, token=None, ibmq_backend='ibmq_qasm_simulator')",
+            FutureWarning,
+        )
+        del url
+        super(QiskitQPU, self).__init__(backend=backend, plugins=plugins,
+                                        token=token, ibmq_backend=ibmq_backend)
+
+
+class AsyncQiskitQPU(AsyncBackendToQPU):
+    """
+    Deprecated, use AsyncBackendToQPU.
+    """
+    def __init__(self, backend=None, plugins=None, token=None, url=None,
+                 ibmq_backend='ibmq_qasm_simulator'):
+        warnings.warn(
+            "AsyncQiskitQPU(backend=None, plugins=None, token=None, url=None) "
+            + "is deprecated, please use AsyncBackendToQPU(backend=None, "
+            + "token=None, ibmq_backend='ibmq_qasm_simulator')",
+            FutureWarning,
+        )
+        del plugins, url
+        super(AsyncQiskitQPU, self).__init__(backend=backend, token=token,
+                                             ibmq_backend=ibmq_backend)
+
+
+class QLMConnector(QiskitConnector):
+    """
+    Deprecated, use QiskitConnector.
+    """
+    def __or__(self, qpu):
+        warnings.warn(
+            "QLMConnector is deprecated, please use QiskitConnector()",
+            FutureWarning,
+        )
+        return super().__or__(qpu)
 
 
 QLMConnector = QLMConnector()

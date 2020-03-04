@@ -5,7 +5,7 @@
 #@file qat/interop/pyquil/providers.py
 #@namespace qat.interop.pyquil.providers
 #@authors Reda Drissi <mohamed-reda.drissi@atos.net>
-#@copyright 2019  Bull S.A.S.  -  All rights reserved.
+#@copyright 2019-2020 Bull S.A.S.  -  All rights reserved.
 #           This is not Free or Open Source software.
 #           Please contact Bull SAS for details about its license.
 #           Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
@@ -16,7 +16,7 @@ Providers functions and classes for pyquil
 """
 from pyquil import get_qc
 
-from qat.interop.pyquil.converters import to_pyquil_circ
+from qat.interop.pyquil.converters import qlm_to_pyquil
 from qat.core.qpu.qpu import QPUHandler
 from qat.core.wrappers.result import State
 from qat.comm.shared.ttypes import Result as QlmRes
@@ -82,7 +82,7 @@ class PyquilQPU(QPUHandler):
 
     def submit_job(self, qlm_job):
         qlm_circuit = qlm_job.circuit
-        pyquil_circuit = to_pyquil_circ(qlm_circuit)
+        pyquil_circuit = qlm_to_pyquil(qlm_circuit)
         if self.compiler:
             try:
                 executable = self.qpu.compile(pyquil_circuit)

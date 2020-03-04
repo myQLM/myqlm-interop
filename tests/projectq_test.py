@@ -6,7 +6,7 @@
 
 @namespace ...
 @authors Reda Drissi <mohamed-reda.drissi@atos.net>
-@copyright 2019  Bull S.A.S.  -  All rights reserved.
+@copyright 2019-2020 Bull S.A.S.  -  All rights reserved.
            This is not Free or Open Source software.
            Please contact Bull SAS for details about its license.
            Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
@@ -108,7 +108,7 @@ class TestProjectq2QLMConversion(unittest.TestCase):
         All(Measure) | qreg2
         All(Measure) | qreg3
         # Generating qlm circuit
-        result = eng.to_qlm_circ()
+        result = eng.projectq_to_qlm()
 
         # Generating equivalent qlm circuit
         prog = Program()
@@ -157,7 +157,7 @@ class TestProjectq2QLMConversion(unittest.TestCase):
             int(qreg[0])
         except ImplementationError:
             pass
-        circ=eng.to_qlm_circ()
+        circ=eng.projectq_to_qlm()
         print(circ.ops)
 
 if __name__ == "__main__":

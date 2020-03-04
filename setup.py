@@ -26,15 +26,18 @@ setup(
     scripts=["bin/oqasm2circ"],
     install_requires=["thrift==0.10", "qat-lang>=0.0.6", "numpy", "ply"],
     extras_require={
-        "qiskit_binder": ["qiskit==0.7.2", "qiskit-terra==0.8.0",
-                          "qiskit-aqua==0.5.0"],
+        "qiskit_binder": ["qiskit==0.14.1", "qiskit-terra==0.11.1",
+                          "qiskit-aqua==0.6.2", "qiskit-ignis==0.2.0",
+                          "qiskit-aer==0.3.4", "qiskit-ibmq-provider==0.4.5"],
         "projectq_binder": ["projectq==0.4.2"],
         "cirq_binder": ["cirq==0.4.0"],
         "pyquil_binder": ["pyquil==2.7.2", "quantum-grove==1.7.0"],
-        "all": ["qiskit==0.7.2", "qiskit-terra==0.8.0", "qiskit-aqua==0.5.0",
+        "all": ["qiskit==0.14.1", "qiskit-terra==0.11.1", "qiskit-aqua==0.6.2",
+                "qiskit-ignis==0.2.0", "qiskit-aer==0.3.4",
+                "qiskit-ibmq-provider==0.4.5",
                 "projectq==0.4.2", "cirq==0.4.0", "pyquil==2.7.2",
                 "quantum-grove==1.7.0"]
     },
     tests_require=["pytest"],
-    cmdclass = {'test': PyTest},
+    cmdclass={'test': PyTest},
 )

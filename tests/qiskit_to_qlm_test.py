@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 """
-@brief 
+@brief
 
 @namespace ...
 @authors Reda Drissi <mohamed-reda.drissi@atos.net>
-@copyright 2019  Bull S.A.S.  -  All rights reserved.
+         Cyprien Lambert <cyprien.lambert@atos.net>
+@copyright 2019-2020 Bull S.A.S.  -  All rights reserved.
            This is not Free or Open Source software.
            Please contact Bull SAS for details about its license.
            Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
@@ -16,23 +17,39 @@ Description This is a test suite for qiskit to qlm circuit converter
 
 Overview
 =========
-
-
 """
+
 import unittest
+import logging
 from qiskit import QuantumRegister, QuantumCircuit, ClassicalRegister
-from qat.interop.qiskit.converters import to_qlm_circ
+from qiskit.circuit import Parameter
+from qat.interop.qiskit import qiskit_to_qlm, RXX, RZZ, MS, \
+        U2, U3, R, BackendToQPU
 from qat.lang.AQASM import Program
-from qat.lang.AQASM.gates import *
-try:
-    from qat.core.util import extract_syntax
-except ImportError:
-    from qat.core.circ import extract_syntax
+from qat.lang.AQASM.gates import H, X, Y, Z, SWAP, I, S, \
+        T, RX, RY, RZ, CNOT, CCNOT
+
+from qat.core.util import extract_syntax
 from qat.comm.datamodel.ttypes import OpType
-import numpy as np
+
+LOGGER = logging.getLogger()
+# Set level to logging.DEBUG in order to see more information
+LOGGER.setLevel(logging.WARNING)
+
+# redirects log writing to terminal
+STREAM_HANDLER = logging.StreamHandler()
+STREAM_HANDLER.setLevel(logging.DEBUG)
+LOGGER.addHandler(STREAM_HANDLER)
 
 
 def gen_gates(ocirc):
+    """
+    Generates a tuple object of five lists each containing gate methods
+    applied to the qiskit circuit passed as a parameter.
+
+    Args:
+        ocirc: QuantumCircuit object
+    """
     gates_1qb_0prm = [
         ocirc.x,
         ocirc.y,
@@ -45,8 +62,8 @@ def gen_gates(ocirc):
         ocirc.tdg,
     ]
     gates_2qb_0prm = [ocirc.ch, ocirc.cx, ocirc.swap]
-    gates_1qb_1prm = [ocirc.rx, ocirc.ry, ocirc.rz, ocirc.u0, ocirc.u1]
-    gates_2qb_1prm = [ocirc.crz, ocirc.cu1, ocirc.rzz]
+    gates_1qb_1prm = [ocirc.rx, ocirc.ry, ocirc.rz, ocirc.u1]
+    gates_2qb_1prm = [ocirc.crz, ocirc.cu1, ocirc.rxx, ocirc.rzz]
     gates_3qb_0prm = [ocirc.cswap, ocirc.ccx]
     return (
         gates_1qb_0prm,
@@ -57,23 +74,7 @@ def gen_gates(ocirc):
     )
 
 
-# -- Generating qlm circuit to compare --#
-def gen_U(theta, phi, lamda):
-    m11 = (np.e ** (1j * (phi + lamda) / 2)) * np.cos(theta / 2)
-    m12 = (-1) * (np.e ** (1j * (phi - lamda) / 2)) * np.sin(theta / 2)
-    m21 = (np.e ** (1j * (phi - lamda) / 2)) * np.sin(theta / 2)
-    m22 = (np.e ** (1j * (phi + lamda) / 2)) * np.cos(theta / 2)
-    return np.array([[m11, m12], [m21, m22]], dtype=np.complex128)
-
-
-def gen_RZZ(theta):
-    return np.diag([1, np.exp(1j * theta), np.exp(1j * theta), 1])
-
-
-U = AbstractGate("U", [float] * 3, arity=1, matrix_generator=gen_U)
-RZZ = AbstractGate("RZZ", [float], arity=2, matrix_generator=gen_RZZ)
-
-pygates_1qb = [
+PYGATES_1QB = [
     X,
     Y,
     Z,
@@ -86,84 +87,207 @@ pygates_1qb = [
     RX(3.14),
     RY(3.14),
     RZ(3.14),
-    I,
-    RY(3.14),
+    RZ(3.14)
 ]
-pygates_2qb = [H.ctrl(), CNOT, SWAP, RZ(3.14).ctrl(), RY(3.14).ctrl(), RZZ(3.14)]
+
+PYGATES_2QB = [
+    H.ctrl(),
+    CNOT,
+    SWAP,
+    RZ(3.14).ctrl(),
+    RZ(3.14).ctrl(),
+    RXX(3.14),
+    RZZ(3.14)
+]
 
 
 class TestQiskit2QLMConversion(unittest.TestCase):
-    """ Tests the function converting qiskit circuit
-        to qlm circuit"""
+    """
+    Tests the function converting a qiskit circuit
+    to a qlm circuit.
+    """
 
-    def test_default_gates_and_qbit_reorder(self):
+    def test0_default_gates_and_qbit_reorder(self):
+        """
+        Tries out every default gate and check that they match
+        once the Qiskit circuit is translated into a QLM circuit.
+        """
         qreg1 = QuantumRegister(2)
         qreg2 = QuantumRegister(1)
         qreg3 = QuantumRegister(2)
         creg = ClassicalRegister(5)
         ocirc = QuantumCircuit(qreg1, qreg2, qreg3, creg)
-        gates_1qb_0prm, gates_1qb_1prm, gates_2qb_0prm, gates_2qb_1prm, gates_3qb_0prm = gen_gates(
-            ocirc
-        )
-        for op in gates_1qb_0prm:
-            op(qreg2[0])
-        for op in gates_1qb_1prm:
-            op(3.14, qreg2[0])
-        for op in gates_2qb_0prm:
-            op(qreg3[0], qreg1[1])
-        for op in gates_2qb_1prm:
-            op(3.14, qreg3[0], qreg1[1])
-        for op in gates_3qb_0prm:
-            op(qreg2[0], qreg3[1], qreg1[1])
+
+        gates_1qb_0prm, gates_1qb_1prm, gates_2qb_0prm, \
+            gates_2qb_1prm, gates_3qb_0prm = gen_gates(ocirc)
+
+        for gate_op in gates_1qb_0prm:
+            gate_op(qreg2[0])
+        for gate_op in gates_1qb_1prm:
+            gate_op(3.14, qreg2[0])
+        for gate_op in gates_2qb_0prm:
+            gate_op(qreg3[0], qreg1[1])
+        for gate_op in gates_2qb_1prm:
+            gate_op(3.14, qreg3[0], qreg1[1])
+        for gate_op in gates_3qb_0prm:
+            gate_op(qreg2[0], qreg3[1], qreg1[1])
+
         ocirc.u2(3.14, 3.14, qreg3[0])
-        ocirc.u_base(3.14, 3.14, 3.14, qreg3[0])
+        ocirc.u3(3.14, 3.14, 3.14, qreg3[0])
+        ocirc.r(3.14, 3.14, qreg3[0])
+        ocirc.ms(3.14, [qreg1[1], qreg2[0], qreg3[0]])
+
         ocirc.measure(qreg1[0], creg[4])
         ocirc.measure(qreg1[1], creg[3])
         ocirc.measure(qreg2[0], creg[2])
         ocirc.measure(qreg3[0], creg[1])
         ocirc.measure(qreg3[1], creg[0])
-        result = to_qlm_circ(ocirc)
+
+        result = qiskit_to_qlm(ocirc)
+
         prog = Program()
         qubits = prog.qalloc(5)
         cbits = prog.calloc(5)
-        for op in pygates_1qb:
-            prog.apply(op, qubits[2])
-        for op in pygates_2qb:
-            prog.apply(op, qubits[3], qubits[1])
+        for gate_op in PYGATES_1QB:
+            prog.apply(gate_op, qubits[2])
+        for gate_op in PYGATES_2QB:
+            prog.apply(gate_op, qubits[3], qubits[1])
 
         prog.apply(SWAP.ctrl(), qubits[2], qubits[4], qubits[1])
         prog.apply(CCNOT, qubits[2], qubits[4], qubits[1])
-        prog.apply(U(0, 3.14, 3.14), qubits[3])
-        prog.apply(U(3.14, 3.14, 3.14), qubits[3])
+        prog.apply(U2(3.14, 3.14), qubits[3])
+        prog.apply(U3(3.14, 3.14, 3.14), qubits[3])
+        prog.apply(R(3.14, 3.14), qubits[3])
+        prog.apply(MS(3.14, 3), qubits[1], qubits[2], qubits[3])
+
         for i in range(5):
             prog.measure(qubits[i], cbits[4 - i])
+
         expected = prog.to_circ()
+
         self.assertEqual(len(result.ops), len(expected.ops))
-        for i in range(len(result.ops)):
-            res_op = result.ops[i]
-            exp_op = expected.ops[i]
+        for res_op, exp_op in zip(result.ops, expected.ops):
             if res_op.type == OpType.MEASURE:
                 self.assertEqual(res_op, exp_op)
                 continue
             result_gate_name, result_gate_params = extract_syntax(
                 result.gateDic[res_op.gate], result.gateDic
             )
-            # print("got gate {} with params {} on qbits {}"
-            #      .format(result_gate_name, result_gate_params,
-            #              res_op.qbits))
+            LOGGER.debug("got gate {} with params {} on qbits {}".format(
+                result_gate_name, result_gate_params, res_op.qbits))
+
             expected_gate_name, expected_gate_params = extract_syntax(
                 expected.gateDic[exp_op.gate], expected.gateDic
             )
-            # print("expected gate {} with params {} on qbits {}"
-            #      .format(expected_gate_name, expected_gate_params,
-            #              exp_op.qbits))
+            LOGGER.debug("expected gate {} with params {} on qbits {}"
+                         .format(expected_gate_name, expected_gate_params,
+                                 exp_op.qbits))
+
             self.assertEqual(expected_gate_name, result_gate_name)
             self.assertEqual(expected_gate_params, result_gate_params)
             self.assertEqual(exp_op.qbits, res_op.qbits)
 
-    def test_invalid_gate(self):
-        qreg = QuantumRegister(5)
-        ocirc = QuantumCircuit(qreg)
+        LOGGER.debug("\nResults obtained:")
+        qpu = BackendToQPU()
+        result_job = result.to_job(nbshots=1024)
+        qiskit_result = qpu.submit(result_job)
+        for entry in qiskit_result.raw_data:
+            LOGGER.debug("State: {}\t probability: {}".format(
+                entry.state, entry.probability))
+
+        LOGGER.debug("\nResults expected:")
+        expected_job = expected.to_job(nbshots=1024)
+        qlm_result = qpu.submit(expected_job)
+        for entry in qlm_result.raw_data:
+            LOGGER.debug("State: {}\t probability: {}".format(
+                entry.state, entry.probability))
+
+        self.assertEqual(len(qiskit_result.raw_data), len(qlm_result.raw_data))
+        states_expected = [str(entry.state) for entry in qlm_result.raw_data]
+        for entry in qiskit_result.raw_data:
+            self.assertTrue(str(entry.state) in states_expected)
+
+    def test1_abstract_variables(self):
+        """
+        Tests the conversion of Parameter objects from Qiskit into
+        abstract Variable objects in QLM via qiskit_to_qlm.
+        """
+        qreg = QuantumRegister(1)
+        circ = QuantumCircuit(qreg)
+        param0 = Parameter("param0")
+        param1 = Parameter("param1")
+        param2 = Parameter("param2")
+        param3 = Parameter("param3")
+        param0.expr = 1
+        param1.expr = 3.14
+        param4 = param0 + param1 + param2 - param3
+        param5 = param0 * param1 * (param2 + 4.54) * param3
+        param6 = param5 * param4
+        param7 = param4 / (param2 - 7)
+        circ.rx(param0, 0)
+        circ.rx(param1, 0)
+        circ.rx(param2, 0)
+        circ.rx(param3, 0)
+        circ.rx(param4, 0)
+        circ.rx(param5, 0)
+        circ.rx(param6, 0)
+        circ.rx(param7, 0)
+        qlm_circ = qiskit_to_qlm(circ)
+        i = 0
+        for _, params, _ in qlm_circ.iterate_simple():
+            for param in params:
+                LOGGER.debug(param.to_thrift())
+                if i == 0:
+                    self.assertEqual(param.to_thrift(), "param0")
+                if i == 1:
+                    self.assertEqual(param.to_thrift(), "param1")
+                if i == 2:
+                    self.assertEqual(param.to_thrift(), "param2")
+                if i == 3:
+                    self.assertEqual(param.to_thrift(), "param3")
+                if i == 4:
+                    self.assertEqual(param.to_thrift(),
+                                     "+ + + param0 param1 param2 * "
+                                     + "-1.0 param3")
+                if i == 5:
+                    self.assertEqual(param.to_thrift(),
+                                     "* * * param0 param1 param3 + "
+                                     + "4.54 param2")
+                if i == 6:
+                    self.assertEqual(param.to_thrift(),
+                                     "* * * * param0 param1 param3 + "
+                                     + "4.54 param2 + + + param0 param1 "
+                                     + "param2 * -1.0 param3")
+                if i == 7:
+                    self.assertEqual(param.to_thrift(),
+                                     "* ^ + -7.0 param2 -1.0 + + + "
+                                     + "param0 param1 param2 * -1.0 param3")
+            i += 1
+
+        prog = Program()
+        qubits = prog.qalloc(1)
+        var0 = prog.new_var(float, "param0")
+        var1 = prog.new_var(float, "param1")
+        var2 = prog.new_var(float, "param2")
+        var3 = prog.new_var(float, "param3")
+        var0.set(1)
+        var1.set(3.14)
+        var4 = var0 + var1 + var2 - var3
+        var5 = var0 * var1 * (var2 + 4.54) * var3
+        var6 = var5 * var4
+        var7 = var4 / (var2 - 7)
+        prog.apply(RX(var0), qubits[0])
+        prog.apply(RX(var1), qubits[0])
+        prog.apply(RX(var2), qubits[0])
+        prog.apply(RX(var3), qubits[0])
+        prog.apply(RX(var4), qubits[0])
+        prog.apply(RX(var5), qubits[0])
+        prog.apply(RX(var6), qubits[0])
+        prog.apply(RX(var7), qubits[0])
+        qlm_circ_expected = prog.to_circ()
+        for _, params, _ in qlm_circ_expected.iterate_simple():
+            for param in params:
+                LOGGER.debug(param.to_thrift())
 
 
 if __name__ == "__main__":
