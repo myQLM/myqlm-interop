@@ -15,7 +15,7 @@
                     Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
 
 
-For converting a qiskit circuit into a qlm circuit, or the opposite
+For converting a Qiskit circuit into a QLM circuit, or the opposite,
 one can use :
 
 .. code-block:: python
@@ -49,7 +49,7 @@ def _get_qindex(circ, name, index):
     Find the qubit index.
 
     Args:
-        circ: The qiskit QuantumCircuit in question
+        circ: The Qiskit QuantumCircuit in question
         name: The name of the quantum register
         index: The qubit's relative index inside the register
 
@@ -70,7 +70,7 @@ def _get_cindex(circ, name, index):
     Find the classical bit index.
 
     Args:
-        circ: The qiskit QuantumCircuit in question
+        circ: The Qiskit QuantumCircuit in question
         name: The name of the classical register
         index: The qubit's relative index inside the register
 
@@ -341,10 +341,10 @@ def get_gate(gate, params):
 
 def qiskit_to_qlm(qiskit_circuit, sep_measures=False, **kwargs):
     """
-    Converts a qiskit circuit into a qlm circuit.
+    Converts a Qiskit circuit into a QLM circuit.
 
     Args:
-        qiskit_circuit: The qiskit circuit to convert
+        qiskit_circuit: The Qiskit circuit to convert
         sep_measures: If set to True measures won't be included in the
                 resulting circuits, qubits to be measured will be put in a
                 list, the resulting measureless circuit and this list will
@@ -586,7 +586,7 @@ def _arith_expr_list_to_parameter_expression(
 
 def qlm_to_qiskit(qlm_circuit):
     """
-    Converts a QLM circuit to a qiskit circuit. Not all gates are
+    Converts a QLM circuit to a Qiskit circuit. Not all gates are
     supported so exceptions will be raised if the gate isn't supported.
 
         List of supported gates :
@@ -597,7 +597,7 @@ def qlm_to_qiskit(qlm_circuit):
         qlm_circuit: The input QLM circuit to convert
 
     Returns:
-        A QuantumCircuit qiskit object resulting from the conversion
+        A QuantumCircuit Qiskit object resulting from the conversion
     """
     qreg = QuantumRegister(qlm_circuit.nbqbits)
     creg = None
@@ -625,7 +625,7 @@ def qlm_to_qiskit(qlm_circuit):
                         param_list, arith_expr_list, param)
             if (nbctrls > 0 and name not in SUPPORTED_CTRLS):
                 raise ValueError(
-                    "Controlled gates aren't supported by qiskit"
+                    "Controlled gates aren't supported by Qiskit"
                 )
             try:
                 if name == "MS":
@@ -634,7 +634,7 @@ def qlm_to_qiskit(qlm_circuit):
                     dic[name](* params + [qreg[i] for i in gate_op.qbits])
             except KeyError:
                 raise ValueError(
-                    "Gate {} not supported by qiskit API".format(name)
+                    "Gate {} not supported by Qiskit API".format(name)
                 )
         elif gate_op.type == OpType.MEASURE:
             for index in range(len(gate_op.qbits)):
@@ -648,7 +648,7 @@ def qlm_to_qiskit(qlm_circuit):
 
 def job_to_qiskit_circuit(qlm_job):
     """
-    Converts the circuit inside a QLM job into a qiskit circuit.
+    Converts the circuit inside a QLM job into a Qiskit circuit.
     This is only a helper function, parameters such as nbshots should
     be extracted from qlm_job alongside this function's call.
 
@@ -656,7 +656,7 @@ def job_to_qiskit_circuit(qlm_job):
         qlm_job: The QLM job containing the circuit to convert
 
     Returns:
-        A QuantumCircuit qiskit object resulting from the conversion
+        A QuantumCircuit Qiskit object resulting from the conversion
     """
     return qlm_to_qiskit(qlm_job.circuit)
 
