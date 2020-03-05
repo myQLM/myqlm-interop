@@ -569,7 +569,7 @@ class QiskitJob:
         """
         Dumps the :class:`~qat.core.Batch` object used for creating the job into a
         binary file. This file should late be used with
-        :function:`~qat.interop.qiskit.providers.AsyncBackendToQPU.retrieve_job`.
+        :func:`~qat.interop.qiskit.providers.AsyncBackendToQPU.retrieve_job`.
 
         Args:
             file_name: Name of the binary file to create
