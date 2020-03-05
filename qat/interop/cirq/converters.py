@@ -23,7 +23,7 @@ Or
 
 .. code-block:: python
 
-    google_circ = to_cirq_circ(your_qlm_circ)
+    google_circ = qlm_to_cirq(your_qlm_circ)
 
 Note:
     when mixing LineQubit and GridQubit, all grid\
