@@ -2,19 +2,21 @@
 # -*- coding: utf-8 -*-
 
 """
-@brief
-@file qat/interop/qiskit/converters.py
-@namespace qat.interop.qiskit.converters
-@authors Reda Drissi <mohamed-reda.drissi@atos.net>
-         Cyprien Lambert <cyprien.lambert@atos.net>
-@copyright 2019-2020 Bull S.A.S.  -  All rights reserved.
-                This is not Free or Open Source software.
-                Please contact Bull SAS for details about its license.
-                Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
+.. copyright
+
+    @brief
+    @file qat/interop/qiskit/converters.py
+    @namespace qat.interop.qiskit.converters
+    @authors Reda Drissi <mohamed-reda.drissi@atos.net>
+             Cyprien Lambert <cyprien.lambert@atos.net>
+    @copyright 2019-2020 Bull S.A.S.  -  All rights reserved.
+                    This is not Free or Open Source software.
+                    Please contact Bull SAS for details about its license.
+                    Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
 
 
-Converts qiskit circuit into a qlm circuit object, or the opposite
-you can use :
+For converting a qiskit circuit into a qlm circuit, or the opposite
+one can use :
 
 .. code-block:: python
 
@@ -589,7 +591,6 @@ def qlm_to_qiskit(qlm_circuit):
 
         List of supported gates :
         H, X, Y, Z, SWAP, I, S, D-S, T, D-T, RX, RY, RZ, C-H, CNOT,
-
         C-Y, CSIGN, C-RZ, CCNOT, C-SWAP, U, RXX, RZZ, R, MS
 
     Args:
