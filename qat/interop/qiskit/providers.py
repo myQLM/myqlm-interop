@@ -206,11 +206,12 @@ class QLMJob(BaseJob):
     def set_results(self, qlm_result, qobj_id, headers):
         """
         Sets the results of the Job.
-            Args:
-                qlm_result: :class:`~qat.core.wrappers.result.Result` object
-                qobj_id: Identifier of the initial Qobj structure
-                headers: List of the experiments' headers, gotten from
-                        the initial Qobj structure's experiments
+
+        Args:
+            qlm_result: :class:`~qat.core.wrappers.result.Result` object
+            qobj_id: Identifier of the initial Qobj structure
+            headers: List of the experiments' headers, gotten from
+                    the initial Qobj structure's experiments
         """
         self._results = _qlm_to_qiskit_result(
             self._backend._configuration.backend_name,
