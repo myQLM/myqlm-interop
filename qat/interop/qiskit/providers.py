@@ -13,6 +13,7 @@
                     Please contact Bull SAS for details about its license.
                     Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
 
+
 Classes and methods for providers, including:
 * :class:`~qat.interop.qiskit.providers.BackendToQPU`
   - Synchronous QPU, capable of running in a Qiskit backend
@@ -326,7 +327,7 @@ class QPUToBackend(BaseBackend):
             qobj: Qiskit batch of circuits to run
 
         Returns:
-            Returns a :class:`~qat.interop.qiskit.QLMJob` object containing
+            Returns a :class:`~qat.interop.qiskit.providers.QLMJob` object containing
             the results of the QLM qpu execution after being converted into
             qiskit results
         """
@@ -477,11 +478,10 @@ def _wrap_results(qlm_batch, results):
 
     Args:
         qlm_batch: QLM Batch which results are to be wrapped
-        results: list of qat.core.wrappers.Result object to be wrapped
+        results: list of Result object to be wrapped
 
     Returns:
-        qat.core.wrappers.Result object or
-        qat.core.wrappers.BatchResult object if the batch submitted
+        Result or BatchResult object if the batch submitted
         contains several jobs
     """
     for i in range(len(qlm_batch.jobs)):
@@ -589,9 +589,11 @@ class AsyncBackendToQPU(QPUHandler):
     """
     Wrapper around any qiskit simulator/quantum chip connection.
     Unlike the other wrapper, this one is asynchronous, and submitting
-    a job returns a :class:`~qat.async.asyncqpu.QiskitJob` which is a
-    wrapper around any queries qiskit jobs offer, but with the exact same
-    interface as the QLM's Asyncjob. Does not support plugins.
+    a job returns a :class:`~qat.interop.qiskit.providers.QiskitJob` which
+    is a wrapper around any queries qiskit jobs offer, but with the exact
+    same interface as the QLM's Asyncjob. Does not support plugins. If
+    plugin support is required, use
+    :class:`~qat.interop.qiskit.providers.BackendToQPU`.
 
     Parameters:
         backend: The Backend qiskit object that is supposed to execute
@@ -654,7 +656,7 @@ class AsyncBackendToQPU(QPUHandler):
             qlm_job: The QLM Job object to be executed
 
         Returns:
-            A :class:`~qat.interop.qiskit.QiskitJob` object with the same
+            A :class:`~qat.interop.qiskit.providers.QiskitJob` object with the same
             interface as a job derived from BaseJob for the user to have
             information on their job execution
         """
@@ -675,7 +677,7 @@ class AsyncBackendToQPU(QPUHandler):
                     If a single job is provided, a batch is created
                     from this job.
         Returns:
-            :class:`~qat.interop.qiskit.QiskitJob` object with the same
+            :class:`~qat.interop.qiskit.providers.QiskitJob` object with the same
             interface as a job derived from BaseJob for the user to have
             information on their job execution
         """
@@ -701,7 +703,7 @@ class AsyncBackendToQPU(QPUHandler):
             file_name: Name of the binary file
 
         Returns:
-            :class:`~qat.interop.qiskit.QiskitJob` object
+            :class:`~qat.interop.qiskit.providers.QiskitJob` object
         """
         qlm_batch = Batch.load(file_name)
         async_job = self.backend.retrieve_job(qlm_batch.meta_data['job_id'])
