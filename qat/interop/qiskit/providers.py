@@ -533,8 +533,8 @@ class QiskitJob:
         Returns the result if available.
 
         Returns:
-            :class:`~qat.core.wrappers.result.Result object or
-            :class: `~qat.core.wrappers.result.BatchResult` object
+            :class:`~qat.core.wrappers.result.Result` object or
+            :class:`~qat.core.wrappers.result.BatchResult` object
             if the batch submitted contains several jobs
         """
         if self.status() == 'DONE':
