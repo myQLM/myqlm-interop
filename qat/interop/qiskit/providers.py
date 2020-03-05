@@ -568,7 +568,7 @@ class QiskitJob:
     def dump(self, file_name):
         """
         Dumps the :class:`~qat.core.Batch` object used for creating the job into a
-        binary file. This file should late be used with
+        binary file. This file should later be used with AsyncBackendToQPU's
         :func:`~qat.interop.qiskit.providers.AsyncBackendToQPU.retrieve_job`.
 
         Args:
@@ -587,8 +587,8 @@ class QiskitJob:
 
 class AsyncBackendToQPU(QPUHandler):
     """
-    Wrapper around any Qiskit simulator/quantum chip connection.
-    :class:`~qat.interop.qiskit.providers.BackendToQPU`, this one is
+    Wrapper around any Qiskit simulator/quantum chip connection. Contrary
+    to :class:`~qat.interop.qiskit.providers.BackendToQPU`, this one is
     asynchronous, and submitting a job returns a
     :class:`~qat.interop.qiskit.providers.QiskitJob` which
     is a wrapper around a Qiskit job. This implements
