@@ -295,6 +295,12 @@ _QLM_BACKEND = BackendConfiguration(**_QLM_PARAMS)
 class QPUToBackend(BaseBackend):
     """
     Basic connector implementing a Qiskit Backend, plugable on a QLM QPU.
+
+    Parameters:
+        qpu: :class:`~qat.core.qpu.QPUHandler` object
+        configuration: BackendConfiguration object, leave default value for
+                standard uses
+        provider: Provider responsible for this backend
     """
 
     def __init__(self, qpu=None, configuration=_QLM_BACKEND, provider=None):
@@ -411,7 +417,8 @@ class BackendToQPU(QPUHandler):
             if token is None:
                 token = os.getenv("QISKIT_TOKEN")
             if token is not None:
-                if IBMQ.stored_account()['token'] != token:
+                if 'token' not in IBMQ.stored_account().keys() or \
+                        IBMQ.stored_account()['token'] != token:
                     IBMQ.save_account(token, overwrite=True)
 
                 provider = IBMQ.load_account()
@@ -639,7 +646,8 @@ class AsyncBackendToQPU(QPUHandler):
             if token is None:
                 token = os.getenv("QISKIT_TOKEN")
             if token is not None:
-                if IBMQ.stored_account()['token'] != token:
+                if 'token' not in IBMQ.stored_account().keys() or \
+                        IBMQ.stored_account()['token'] != token:
                     IBMQ.save_account(token, overwrite=True)
 
                 provider = IBMQ.load_account()
