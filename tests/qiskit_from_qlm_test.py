@@ -23,11 +23,14 @@ Overview
 
 import unittest
 import logging
+from qat.comm.exceptions.ttypes import QPUException
+from qat.core import Observable
 from qat.lang.AQASM import Program, QRoutine
 from qat.lang.AQASM.gates import H, X, Y, Z, SWAP, I, S, \
         T, RX, RY, RZ, CNOT, CCNOT
-from qat.interop.qiskit import qlm_to_qiskit, U2, U3, RXX, RZZ, R, MS
-from qiskit import QuantumRegister, QuantumCircuit, ClassicalRegister
+from qat.interop.qiskit import qlm_to_qiskit, U2, U3, RXX, RZZ, R, MS, \
+                               BackendToQPU
+from qiskit import QuantumRegister, QuantumCircuit, ClassicalRegister, Aer
 from qiskit.circuit import Parameter
 
 LOGGER = logging.getLogger()
@@ -317,6 +320,38 @@ class TestQLM2QiskitConversion(unittest.TestCase):
         for gotten, expected in zip(qiskit_circ.data, circ.data):
             self.assertEqual(str(gotten[0]._params[0]),
                              str(expected[0]._params[0]))
+
+    def test3_subset_of_qubits(self):
+        """
+        Checks if measuring a subset of qubits is working
+        """
+        prog = Program()
+        qbits = prog.qalloc(2)
+        prog.apply(X, qbits[0])
+        circ = prog.to_circ()
+
+        qpu = BackendToQPU(Aer.get_backend('qasm_simulator'))
+        res = qpu.submit(circ.to_job(nbshots=1))
+        self.assertEqual(res[0].state.int, 0b01)
+
+        res = qpu.submit(circ.to_job(nbshots=1, qubits=[0]))
+        self.assertEqual(res[0].state.int, 0b1)
+
+        res = qpu.submit(circ.to_job(nbshots=1, qubits=[1]))
+        self.assertEqual(res[0].state.int, 0b0)
+
+    def test4_cannot_measure_observable(self):
+        """
+        Checks if measuring an Observable raises an error
+        """
+        prog = Program()
+        qbits = prog.qalloc(1)
+        prog.apply(X, qbits)
+        circ = prog.to_circ()
+
+        qpu = BackendToQPU(Aer.get_backend('qasm_simulator'))
+        self.assertRaises(QPUException, qpu.submit,
+                          circ.to_job("OBS", observable=Observable(1)))
 
 
 if __name__ == "__main__":

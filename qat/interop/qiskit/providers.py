@@ -453,7 +453,7 @@ class BackendToQPU(QPUHandler):
         results = generate_qlm_list_results(qiskit_result)
         new_results = []
         for result in results:
-            new_results.append(WResult(result))
+            new_results.append(WResult.from_thrift(result))
         return _wrap_results(qlm_batch, new_results)
 
     def submit_job(self, qlm_job):
@@ -548,7 +548,7 @@ class QiskitJob:
             results = generate_qlm_list_results(self._handler.result())
             new_results = []
             for result in results:
-                new_results.append(WResult(result))
+                new_results.append(WResult.from_thrift(result))
             batch_result = _wrap_results(self._qlm_batch, new_results)
             if not batch_result.results or len(batch_result.results) == 1:
                 return batch_result.results[0]
