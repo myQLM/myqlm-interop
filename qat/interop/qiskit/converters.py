@@ -40,8 +40,10 @@ from qat.lang.AQASM import Program, QRoutine
 from qat.lang.AQASM.gates import AbstractGate, H, X, Y, Z, SWAP, I, S, \
         T, RX, RY, RZ
 from qat.core.util import extract_syntax
+from qat.core.assertion import assert_qpu
 from qat.core.variables import Variable, ArithExpression
 from qat.comm.datamodel.ttypes import OpType
+from qat.comm.shared.ttypes import ProcessingType
 
 
 def _get_qindex(circ, name, index):
@@ -584,7 +586,7 @@ def _arith_expr_list_to_parameter_expression(
     return value
 
 
-def qlm_to_qiskit(qlm_circuit):
+def qlm_to_qiskit(qlm_circuit, qubits=None):
     """
     Converts a QLM circuit to a Qiskit circuit. Not all gates are
     supported so exceptions will be raised if the gate isn't supported.
@@ -595,15 +597,20 @@ def qlm_to_qiskit(qlm_circuit):
 
     Args:
         qlm_circuit: The input QLM circuit to convert
+        qubits (list<int>, optional): measured qubits
 
     Returns:
         A QuantumCircuit Qiskit object resulting from the conversion
     """
+    # Init measured qubits
+    if qubits is None:
+        qubits = list(range(qlm_circuit.nbqbits))
+
     qreg = QuantumRegister(qlm_circuit.nbqbits)
     creg = None
     param_list = []
     if qlm_circuit.nbcbits > 0:
-        creg = ClassicalRegister(qlm_circuit.nbcbits)
+        creg = ClassicalRegister(max(qlm_circuit.nbcbits, len(qubits)))
         q_circ = QuantumCircuit(qreg, creg)
     else:
         q_circ = QuantumCircuit(qreg)
@@ -641,8 +648,8 @@ def qlm_to_qiskit(qlm_circuit):
                 q_circ.measure(gate_op.qbits[index], gate_op.cbits[index])
 
     # Adding measures to unify the interface
-    for qbit, cbit in zip(qreg, creg):
-        q_circ.measure(qbit, cbit)
+    for qbit_index, cbit in zip(qubits, creg):
+        q_circ.measure(qreg[qbit_index], cbit)
     return q_circ
 
 
@@ -658,7 +665,13 @@ def job_to_qiskit_circuit(qlm_job):
     Returns:
         A QuantumCircuit Qiskit object resulting from the conversion
     """
-    return qlm_to_qiskit(qlm_job.circuit)
+    # Check processing type
+    assert_qpu(qlm_job.type == ProcessingType.SAMPLE,
+               "Only jobs having a SAMPLE processing type "
+               "could be translated into Qiskit circuits")
+
+    # Convert
+    return qlm_to_qiskit(qlm_job.circuit, qlm_job.qubits)
 
 
 def to_qlm_circ(qiskit_circuit, sep_measures=False, **kwargs):
