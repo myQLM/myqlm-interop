@@ -260,7 +260,7 @@ class TestQiskit2QLMConversion(unittest.TestCase):
                                      + "param2 * -1.0 param3")
                 if i == 7:
                     self.assertEqual(param.to_thrift(),
-                                     "* ^ + -7.0 param2 -1.0 + + + "
+                                     "* ** + -7.0 param2 -1.0 + + + "
                                      + "param0 param1 param2 * -1.0 param3")
             i += 1
 
@@ -270,8 +270,6 @@ class TestQiskit2QLMConversion(unittest.TestCase):
         var1 = prog.new_var(float, "param1")
         var2 = prog.new_var(float, "param2")
         var3 = prog.new_var(float, "param3")
-        var0.set(1)
-        var1.set(3.14)
         var4 = var0 + var1 + var2 - var3
         var5 = var0 * var1 * (var2 + 4.54) * var3
         var6 = var5 * var4
@@ -285,6 +283,8 @@ class TestQiskit2QLMConversion(unittest.TestCase):
         prog.apply(RX(var6), qubits[0])
         prog.apply(RX(var7), qubits[0])
         qlm_circ_expected = prog.to_circ()
+        qlm_circ_expected(var0=1)
+        qlm_circ_expected(var1=3.14)
         for _, params, _ in qlm_circ_expected.iterate_simple():
             for param in params:
                 LOGGER.debug(param.to_thrift())

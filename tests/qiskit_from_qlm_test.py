@@ -267,18 +267,14 @@ class TestQLM2QiskitConversion(unittest.TestCase):
         """
         prog = Program()
         qubits = prog.qalloc(1)
-        var0 = prog.new_var(float, "param0")
-        var1 = prog.new_var(float, "param1")
         var2 = prog.new_var(float, "param2")
         var3 = prog.new_var(float, "param3")
-        var0.set(1)
-        var1.set(3.14)
-        var4 = var0 + var1 + var2 - var3
-        var5 = var0 * var1 * (var2 + 4.54) * var3
+        var4 = 1.0 + 3.14 + var2 - var3
+        var5 = 1.0 * 3.14 * (var2 + 4.54) * var3
         var6 = var5 * var4
         var7 = var4 / (var2 - 7)
-        prog.apply(RX(var0), qubits[0])
-        prog.apply(RX(var1), qubits[0])
+        prog.apply(RX(1.0), qubits[0])
+        prog.apply(RX(3.14), qubits[0])
         prog.apply(RX(var2), qubits[0])
         prog.apply(RX(var3), qubits[0])
         prog.apply(RX(var4), qubits[0])
@@ -294,18 +290,14 @@ class TestQLM2QiskitConversion(unittest.TestCase):
 
         qreg = QuantumRegister(1)
         circ = QuantumCircuit(qreg)
-        param0 = Parameter("param0")
-        param1 = Parameter("param1")
         param2 = Parameter("param2")
         param3 = Parameter("param3")
-        param0.expr = 1
-        param1.expr = 3.14
-        param4 = param0 + param1 + param2 - param3
-        param5 = param0 * param1 * (param2 + 4.54) * param3
+        param4 = 1.0 + 3.14 + param2 - param3
+        param5 = 1.0 * 3.14 * (param2 + 4.54) * param3
         param6 = param5 * param4
         param7 = param4 / (param2 - 7.0)
-        circ.rx(param0, 0)
-        circ.rx(param1, 0)
+        circ.rx(1.0, 0)
+        circ.rx(3.14, 0)
         circ.rx(param2, 0)
         circ.rx(param3, 0)
         circ.rx(param4, 0)

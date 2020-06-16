@@ -239,7 +239,7 @@ def analyze_distance(distance):
     return max(distance.values())
 
 
-def test_algorithm(circuit, iterations=(1024*1024)):
+def test_algorithm(circuit, iterations=(1000000)):
     """
     Tests a circuit by submitting it to both qasm_simulator and PyLinalg.
     """

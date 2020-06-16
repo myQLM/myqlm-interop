@@ -85,10 +85,14 @@ def print_aq(circuit):
 
 
 class TestQLM2PyquilConversion(unittest.TestCase):
-    """ Tests the function converting qlm circuit
-        to pyquil circuit"""
+    """
+    Tests the function converting qlm circuit to pyquil circuit
+    We have to manually add measure in pyquil circuit because qlm does it
+    automatically
+    """
 
     def test_default_gates(self):
+        # Create qlm program
         prog = Program()
         qreg = prog.qalloc(3)
 
@@ -101,10 +105,11 @@ class TestQLM2PyquilConversion(unittest.TestCase):
         prog.apply(CCNOT, qreg[0], qreg[1], qreg[2])
 
         qlm_circuit = prog.to_circ()
-        # print_aq(qlm_circuit)
         result = qlm_to_pyquil(qlm_circuit)
-        # print(result)
+
+        # Create pyquil program
         expected = Prg()
+        expected_creg = expected.declare("ro", "BIT", 3)
         for op in quil_1qb:
             expected += op(0)
         for op in quil_params:
@@ -116,12 +121,15 @@ class TestQLM2PyquilConversion(unittest.TestCase):
             expected += op(1).controlled(0)
         for op in quil_ctrl_prm:
             expected += op(3.14, 1).controlled(0)
-
         expected += pg.CCNOT(0, 1, 2)
-        # print(expected)
-        self.assertEqual(str(result).split("\n", 1)[1], str(expected))
+        expected += pg.MEASURE(0, expected_creg[0])
+        expected += pg.MEASURE(1, expected_creg[1])
+        expected += pg.MEASURE(2, expected_creg[2])
+
+        self.assertEqual(str(result), str(expected))
 
     def test_recursive_ctrl_and_dagger(self):
+        # Create qlm program
         prog = Program()
         qreg = prog.qalloc(5)
         prog.apply(
@@ -130,25 +138,30 @@ class TestQLM2PyquilConversion(unittest.TestCase):
         )
         qlm_circuit = prog.to_circ()
         result = qlm_to_pyquil(qlm_circuit)
+
+        # Create pyquil program
         expected = Prg()
-        expected = (
+        expected_creg = expected.declare("ro", "BIT", 5)
+        expected += (
             pg.Y(4).controlled(0).controlled(1).controlled(2).controlled(3).dagger()
         )
-        self.assertEqual(str(result).split("\n", 1)[1][:-1], str(expected))
+        for qbit, cbit in enumerate(expected_creg):
+            expected += pg.MEASURE(qbit, cbit)
+
+        self.assertEqual(str(result), str(expected))
 
     def test_measures(self):
+        # Create qlm program
         prog = Program()
         qreg = prog.qalloc(3)
-        creg = prog.calloc(3)
 
         prog.apply(H, qreg[0])
         prog.apply(H, qreg[1])
         prog.apply(H, qreg[2])
 
-        prog.measure(qreg, creg)
-
         result = qlm_to_pyquil(prog.to_circ())
 
+        # Create pyquil program
         expected = Prg()
         cbs = expected.declare("ro", "BIT", 3)
         expected += pg.H(0)
@@ -158,9 +171,7 @@ class TestQLM2PyquilConversion(unittest.TestCase):
         expected += pg.MEASURE(1, cbs[1])
         expected += pg.MEASURE(2, cbs[2])
 
-        # print(result)
-        # print(expected)
-        self.assertEqual(result, expected)
+        self.assertEqual(str(result), str(expected))
 
 
 if __name__ == "__main__":
