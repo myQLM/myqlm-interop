@@ -24,7 +24,7 @@ setup(
     license="Atos myQLM EULA",
     packages=find_namespace_packages(include=["qat.*"]),
     scripts=["bin/oqasm2circ"],
-    install_requires=["thrift==0.10", "qat-lang>=0.0.6", "numpy", "ply"],
+    install_requires=["qat-lang>=0.0.6", "numpy", "ply"],
     extras_require={
         "qiskit_binder": ["qiskit==0.19.2", "qiskit-terra==0.14.1",
                           "qiskit-aqua==0.7.1", "qiskit-ignis==0.3.0",
