@@ -244,7 +244,7 @@ def test_algorithm(circuit, iterations=(1000000)):
     Tests a circuit by submitting it to both qasm_simulator and PyLinalg.
     """
     linalg = PyLinalg()
-    qlm_circ = qiskit_to_qlm(circuit)
+    qlm_circ, _ = qiskit_to_qlm(circuit, sep_measures=True)
     test_job = qlm_circ.to_job(nbshots=0, aggregate_data=False)
     expected = linalg.submit(test_job)
 
