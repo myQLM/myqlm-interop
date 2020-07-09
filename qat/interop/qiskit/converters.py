@@ -543,7 +543,7 @@ def _variable_to_parameter(param_list, variable=None, variable_name=""):
 
     # look if the parameter has already been defined
     for x_param in param_list:
-        if x_param.name == variable.name:
+        if variable is not None and x_param.name == variable.name:
             param = x_param
             # look if the expression of the parameter has already been defined
             if hasattr(param, "expr"):
@@ -613,6 +613,10 @@ def _arith_expr_list_to_parameter_expression(
 
         raise SyntaxError("Power operation is not supported by Qiskit for "
                           + "abstract variable expressions.")
+
+    if arg == "UMINUS":
+        return -_arith_expr_list_to_parameter_expression(
+            param_list, arith_expr_list, root_expr)
 
     # if it is not an operation, it is either a variable or a value
     if arg in root_expr.get_variables():
