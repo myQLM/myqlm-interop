@@ -270,7 +270,7 @@ class TestQLM2QiskitConversion(unittest.TestCase):
         var3 = prog.new_var(float, "param3")
         var4 = 1.0 + 3.14 + var2 - var3
         var5 = 1.0 * 3.14 * (var2 + 4.54) * var3
-        var6 = var5 * var4
+        var6 = -var5 * var4
         var7 = var4 / (var2 - 7)
         prog.apply(RX(1.0), qubits[0])
         prog.apply(RX(3.14), qubits[0])
@@ -293,7 +293,7 @@ class TestQLM2QiskitConversion(unittest.TestCase):
         param3 = Parameter("param3")
         param4 = 1.0 + 3.14 + param2 - param3
         param5 = 1.0 * 3.14 * (param2 + 4.54) * param3
-        param6 = param5 * param4
+        param6 = -param5 * param4
         param7 = param4 / (param2 - 7.0)
         circ.rx(1.0, 0)
         circ.rx(3.14, 0)
