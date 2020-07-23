@@ -17,9 +17,10 @@
     under the License.
 """
 
-import os, sys
-from setuptools import setup, find_namespace_packages
-from setuptools.command.test import test as TestCommand
+import os, sys
+from setuptools import setup, find_namespace_packages
+from setuptools.command.test import test as TestCommand
+
 
 class PyTest(TestCommand):
     def initialize_options(self):
