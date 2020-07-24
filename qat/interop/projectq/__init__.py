@@ -29,8 +29,8 @@ from pkg_resources import parse_version
 import projectq
 import warnings
 
-if parse_version(projectq.__version__) > parse_version('0.4.2'):
-    warnings.warn("projectq version {} is not tested, use version 0.4.2"
+if parse_version(projectq.__version__) > parse_version('0.5.1'):
+    warnings.warn("projectq version {} is not tested, use version 0.5.1"
                   .format(projectq.__version__))
 
 
