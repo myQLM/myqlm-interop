@@ -120,7 +120,7 @@ class TestProjectq2QLMConversion(unittest.TestCase):
             prog.apply(op, qubits[3], qubits[1])
         prog.apply(SWAP, qubits[1], qubits[3])
         prog.apply(SWAP.ctrl(), qubits[4], qubits[0], qubits[2])
-        prog.apply(CCNOT, qubits[0], qubits[4], qubits[2])
+        prog.apply(X.ctrl().ctrl(), qubits[0], qubits[4], qubits[2])
         for i in range(5):
             prog.measure(qubits[i], cbits[i])
         expected = prog.to_circ()
