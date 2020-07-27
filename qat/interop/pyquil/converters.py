@@ -153,15 +153,21 @@ def build_cregs(prog, pyquil_prog):
 
 
 def pyquil_to_qlm(pyquil_prog, sep_measures=False, **kwargs):
-    """ Converts a pyquil circuit into a qlm circuit\
+    """ Converts a pyquil circuit into a qlm circuit
 
     Args:
         pyquil_prog: the pyquil circuit to convert
-        sep_measures: if set to True measures won't be included in the resulting circuits, qubits to be measured will be put in a list, the resulting measureless circuit and this list will be returned in a tuple : (resulting_circuit, list_qubits). If set to False, measures will be converted normally\
- (Default set to False)
-        kwargs: these are the options that you would use on a regular \
-        to_circ function, to generate a QLM circuit from a PyAQASM program\
- these are added for more flexibility, for advanced users
+        sep_measures: Separates measures from the
+            circuit:
+
+             - if set to :code:`True` measures won't be included in the resulting circuits,
+               qubits to be measured will be put in a list, the resulting measureless
+               circuit and this list will be returned in a tuple : (resulting_circuit, list_qubits)
+             - if set to :code:`False`, measures will be converted normally (Default set to False)
+
+        kwargs: these are the options that you would use on a regular
+            to_circ function, to generate a QLM circuit from a PyAQASM program
+            these are added for more flexibility, for advanced users
 
 
     Returns:
