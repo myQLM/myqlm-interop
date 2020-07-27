@@ -169,20 +169,20 @@ def process_ZZ(exp):
 
 
 def process_H(exp):
-    if abs(exp) == 1.0:
+    if exp.__abs__() == 1.0:
         return H
     if exp != int(exp):
         raise ValueError(
             "H gate doesn't support arbitrary powers\n"
             + "Only integer values are supported"
         )
-    if abs(exp) % 2:
+    if exp.__abs__() % 2:
         return H
     else:
         return "none"
 
 def process_X(exp):
-    if abs(exp) == 1.0:
+    if exp.__abs__() == 1.0:
         return X
     else:
         return RX(pi * exp)
@@ -198,11 +198,11 @@ def process_Y(exp):
 
 
 def process_Z(exp):
-    if abs(exp) == 1.0:
+    if exp.__abs__() == 1.0:
         return Z
-    elif abs(exp) == 0.5:
+    elif exp.__abs__() == 0.5:
         return process_S(exp * 2)
-    elif abs(exp) == 0.25:
+    elif exp.__abs__() == 0.25:
         return process_T(exp * 4)
     else:
         return RZ(pi * exp)
@@ -239,9 +239,9 @@ def process_RZ(exp):
 
 
 def process_SWAP(exp):
-    if abs(exp) == 1.0:
+    if exp.__abs__() == 1.0:
         return SWAP
-    elif abs(exp) == 0.5:
+    elif exp.__abs__() == 0.5:
         return SQRTSWAP
     elif exp == int(exp):
         if exp % 2:
@@ -265,17 +265,17 @@ def process_ISWAP(exp):
     if exp != int(exp):
         raise ValueError("Non integer powers aren't supported \
                          for iSWAP gate")
-    if abs(exp) % 4 == 1:
+    if exp.__abs__() % 4 == 1:
         if exp < 0:
             return ISWAP.dag()
         else:
             return ISWAP
-    elif abs(exp) % 4 == 2:
+    elif exp.__abs__() % 4 == 2:
         if exp < 0:
             return iSWAP3().dag()
         else:
             return iSWAP3()
-    elif abs(exp) % 4 == 3:
+    elif exp.__abs__() % 4 == 3:
         if exp < 0:
             return SWAP.dag()
         else:
@@ -322,6 +322,7 @@ gate_dic = {
     cirq.ops.parity_gates.XXPowGate: process_XX,
     cirq.ops.parity_gates.YYPowGate: process_YY,
     cirq.ops.parity_gates.ZZPowGate: process_ZZ,
+    cirq.contrib.acquaintance.permutation.SwapPermutationGate: process_SWAP,
 }
 
 # gets a cirq gate object and outputs corresponding pyaqasm gate
@@ -347,7 +348,7 @@ def _get_gate(gate):
 
 
 # master function converting cirq object to pyaqasm circuit object
-def cirq_to_qlm(cirq, sep_measures=False, **kwargs):
+def cirq_to_qlm(circ, sep_measures=False, **kwargs):
     """ Converts a google cirq circuit to a qlm circuit
 
     Args:
@@ -373,12 +374,12 @@ def cirq_to_qlm(cirq, sep_measures=False, **kwargs):
     """
     # building a qubit map to use correct qubits
     qubits = ops.QubitOrder.as_qubit_order(ops.QubitOrder.DEFAULT).order_for(
-        cirq.all_qubits()
+        circ.all_qubits()
     )
     qmap = {qbit: i for i, qbit in enumerate(qubits)}
 
     # extracting operations
-    operations = tuple(ops.flatten_op_tree(cirq.all_operations()))
+    operations = tuple(ops.flatten_op_tree(circ.all_operations()))
 
     # pyaqasm initialization
     prog = Program()
@@ -390,10 +391,10 @@ def cirq_to_qlm(cirq, sep_measures=False, **kwargs):
         qbs = []
         for qb in op.qubits:
             qbs.append(qreg[qmap[qb]])
-            if (ops.MeasurementGate.is_measurement(cast(ops.GateOperation, op)) 
+            if (cirq.is_measurement(cast(ops.GateOperation, op))
             and sep_measures):
                 to_measure.append(qmap[qb])
-        if ops.MeasurementGate.is_measurement(cast(ops.GateOperation, op)):
+        if cirq.is_measurement(cast(ops.GateOperation, op)):
             if not sep_measures:
                 prog.measure(qbs, qbs)
         elif isinstance(_get_gate(op.gate), str) and _get_gate(op.gate) == "none":
@@ -410,9 +411,9 @@ QLM_GATE_DIC = {
     'X': common_gates.XPowGate,
     'Y': common_gates.YPowGate,
     'Z': common_gates.ZPowGate,
-    'RX': common_gates.Rx,
-    'RY': common_gates.Ry,
-    'RZ': common_gates.Rz,
+    'RX': cirq.rx,
+    'RY': cirq.ry,
+    'RZ': cirq.rz,
     'S': common_gates.S,
     'T': common_gates.T,
     'SWAP': common_gates.SWAP,
@@ -459,11 +460,11 @@ def qlm_to_cirq(qlm_circuit):
 
         elif op.type == 1:
             for qb in op.qbits:
-                cirq_circ.append(common_gates.measure(qreg[qb]))
+                cirq_circ.append(cirq.measure(qreg[qb]))
 
     # to unify the interface adding measures here
     for qbit in qreg:
-        cirq_circ.append(common_gates.measure(qbit))
+        cirq_circ.append(cirq.measure(qbit))
     return cirq_circ
 
 
