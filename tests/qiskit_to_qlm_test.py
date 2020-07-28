@@ -28,7 +28,7 @@ from qat.interop.qiskit import qiskit_to_qlm, RXX, RZZ, MS, \
         U2, U3, R, BackendToQPU
 from qat.lang.AQASM import Program
 from qat.lang.AQASM.gates import H, X, Y, Z, SWAP, I, S, \
-        T, RX, RY, RZ, CNOT, CCNOT
+        T, RX, RY, RZ, CNOT
 
 from qat.core.util import extract_syntax
 from qat.comm.datamodel.ttypes import OpType
@@ -155,7 +155,7 @@ class TestQiskit2QLMConversion(unittest.TestCase):
             prog.apply(gate_op, qubits[3], qubits[1])
 
         prog.apply(SWAP.ctrl(), qubits[2], qubits[4], qubits[1])
-        prog.apply(CCNOT, qubits[2], qubits[4], qubits[1])
+        prog.apply(X.ctrl().ctrl(), qubits[2], qubits[4], qubits[1])
         prog.apply(U2(3.14, 3.14), qubits[3])
         prog.apply(U3(3.14, 3.14, 3.14), qubits[3])
         prog.apply(R(3.14, 3.14), qubits[3])
