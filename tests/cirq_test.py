@@ -177,7 +177,7 @@ class TestGcirq2QLMConversion(unittest.TestCase):
         for op in pygates_2qb:
             prog.apply(op.dag(), qubits[3], qubits[1])
 
-        prog.apply(CCNOT, qubits[0], qubits[4], qubits[2])
+        prog.apply(X.ctrl().ctrl(), qubits[0], qubits[4], qubits[2])
         prog.apply(SWAP.ctrl(), qubits[0], qubits[4], qubits[2])
         prog.apply(Z.ctrl().ctrl(), qubits[0], qubits[4], qubits[2])
 
