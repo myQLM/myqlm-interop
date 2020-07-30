@@ -127,7 +127,7 @@ def qlm_to_pyquil(qlm_circuit, program_pragma=None):
     Returns:
         Pyquil circuit
     """
-    if program_pragma != None:
+    if program_pragma is not None:
         p = Program(program_pragma)
     else:
         p = Program()

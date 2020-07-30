@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-@file ...
-@namespace ...
+@file qat/interop/cirq/plugins.py
+@namespace qat.interop.cirq.plugins
 @authors Léo HUIN <leo.huin@atos.net>
 @copyright  2019-2020 Bull S.A.S.  -  All rights reserved.
             This is not Free or Open Source software.
@@ -37,14 +37,14 @@ def get_coupling_list_from_specs_cirq(specs: HardwareSpecs, nbqbits=None):
     """
     coupling_list = []
     if specs.topology.type == TopologyType.ALL_TO_ALL:
-        assert nbqbits != None, "nbqbits not specified"
+        assert nbqbits is not None, "nbqbits not specified"
         for i in range(nbqbits):
             for j in range(nbqbits):
                 if j > i:
                     coupling_list.append([cirq.LineQubit(i), cirq.LineQubit(j)])
         description = "ALL_TO_ALL"
     elif specs.topology.type == TopologyType.LNN:
-        assert nbqbits != None, "nbqbits not specified"
+        assert nbqbits is not None, "nbqbits not specified"
         for i in range(1, nbqbits):
             coupling_list.append([cirq.LineQubit(i - 1), cirq.LineQubit(i)])
         description = "LNN"

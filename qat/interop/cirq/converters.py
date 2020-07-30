@@ -169,20 +169,20 @@ def process_ZZ(exp):
 
 
 def process_H(exp):
-    if exp.__abs__() == 1.0:
+    if isinstance(exp, (int, float)) and abs(exp) == 1.0:
         return H
     if exp != int(exp):
         raise ValueError(
             "H gate doesn't support arbitrary powers\n"
             + "Only integer values are supported"
         )
-    if exp.__abs__() % 2:
+    if isinstance(exp, (int, float)) and abs(exp) % 2:
         return H
     else:
         return "none"
 
 def process_X(exp):
-    if exp.__abs__() == 1.0:
+    if isinstance(exp, (int, float)) and abs(exp) == 1.0:
         return X
     else:
         return RX(pi * exp)
@@ -198,11 +198,11 @@ def process_Y(exp):
 
 
 def process_Z(exp):
-    if exp.__abs__() == 1.0:
+    if isinstance(exp, (int, float)) and abs(exp) == 1.0:
         return Z
-    elif exp.__abs__() == 0.5:
+    elif isinstance(exp, (int, float)) and abs(exp) == 0.5:
         return process_S(exp * 2)
-    elif exp.__abs__() == 0.25:
+    elif isinstance(exp, (int, float)) and abs(exp) == 0.25:
         return process_T(exp * 4)
     else:
         return RZ(pi * exp)
@@ -239,9 +239,9 @@ def process_RZ(exp):
 
 
 def process_SWAP(exp):
-    if exp.__abs__() == 1.0:
+    if isinstance(exp, (int, float)) and abs(exp) == 1.0:
         return SWAP
-    elif exp.__abs__() == 0.5:
+    elif isinstance(exp, (int, float)) and abs(exp) == 0.5:
         return SQRTSWAP
     elif exp == int(exp):
         if exp % 2:
@@ -265,17 +265,17 @@ def process_ISWAP(exp):
     if exp != int(exp):
         raise ValueError("Non integer powers aren't supported \
                          for iSWAP gate")
-    if exp.__abs__() % 4 == 1:
+    if isinstance(exp, (int, float)) and abs(exp) % 4 == 1:
         if exp < 0:
             return ISWAP.dag()
         else:
             return ISWAP
-    elif exp.__abs__() % 4 == 2:
+    elif isinstance(exp, (int, float)) and abs(exp) % 4 == 2:
         if exp < 0:
             return iSWAP3().dag()
         else:
             return iSWAP3()
-    elif exp.__abs__() % 4 == 3:
+    elif isinstance(exp, (int, float)) and abs(exp) % 4 == 3:
         if exp < 0:
             return SWAP.dag()
         else:
