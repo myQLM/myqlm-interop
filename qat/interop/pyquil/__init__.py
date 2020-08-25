@@ -29,6 +29,8 @@ from pkg_resources import parse_version
 import pyquil
 import grove
 import warnings
+from .converters import pyquil_to_qlm, qlm_to_pyquil
+from .providers import PyquilQPU
 
 if parse_version(pyquil.__version__) > parse_version('2.20.0'):
     warnings.warn("pyquil version {} is not tested, use version 2.20.0"

@@ -21,7 +21,23 @@
     specific language governing permissions and limitations
     under the License.
 
-Circuit conversion functions for pyquil
+myQLM provides binders to translate quantum circuit from PyQuil to myQLM
+and vice-verse throught functions :func:`~qat.interop.pyquil.pyquil_to_qlm`
+and :func:`~qat.interop.pyquil.qlm_to_pyquil`
+
+.. code-block:: python
+
+    from qat.interop.pyquil import pyquil_to_qlm
+
+    qlm_circuit = pyquil_to_qlm(your_pyquil_circuit)
+
+Or
+
+.. code-block:: python
+
+    from qat.interop.pyquil import qlm_to_pyquil
+
+    pyquil_circuit = qlm_to_pyquil(your_qlm_circuit)
 """
 
 import warnings

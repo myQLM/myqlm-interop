@@ -21,7 +21,27 @@
     specific language governing permissions and limitations
     under the License.
 
-Providers functions and classes for pyquil
+myQLM can be used to connect to a PyQuil QVM. This module is composed of a main
+class :class:`~qat.interop.pyquil.PyquilQPU` used to wrap a QVM into a myQLM QPU.
+
+In this section, we assume a QVM is running locally and that this QVM is listenning
+to the port 15011. The following code defines a myQLM QPU wrapping the PyQuil QVM:
+
+.. code-block:: python
+
+    from pyquil.api import QVMConnection
+    from qat.interop.pyquil import PyquilQPU
+
+    # Define port and ip
+    IP   = "127.0.0.1"
+    PORT = "15011"
+
+    # Define a QPU
+    qvm = QVMConnection(endpoint="http://{ip}:{port}".format(ip=IP, port=PORT))
+    qpu = PyquilQPU(qvm)
+
+    # Submit a job to the QVM
+    result = qpu.submit(qlm_job)
 """
 
 from pyquil import get_qc
@@ -113,4 +133,3 @@ class PyquilQPU(QPUHandler):
             for job in qlm_batch.jobs:
                 results.append(self.submit_job(job))
             return results
-

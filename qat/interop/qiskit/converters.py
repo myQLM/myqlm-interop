@@ -22,7 +22,7 @@
     under the License.
 
 myQLM provides binders to translate quantum circuit from Qiskit to
-myQLM and vice-versa throw functions :func:`~qat.interop.qiskit.qiskit_to_qlm`
+myQLM and vice-versa throught functions :func:`~qat.interop.qiskit.qiskit_to_qlm`
 and :func:`~qat.interop.qiskit.qlm_to_qiskit`
 
 .. code-block:: python
