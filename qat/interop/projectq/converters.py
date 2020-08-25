@@ -21,22 +21,30 @@
     specific language governing permissions and limitations
     under the License.
 
-Converts a projectq circuit into a qlm circuit,
-this one is tricky, since projectq handles gates dynamically
-we created a new class inheriting from their MainEngine,
-so you should use this engine instead, then code as you would 
-code your projectq circuit : Example :
+myQLM provides binders to tanslate ProjectQ circuit into a
+myQLM circuit thought classes :class:`~qat.interop.projectq.AqasmPrinter`
+and :class:`~qat.interop.projectq.AqasmEngine`
 
-.. code-block:: python
+.. run-block:: python
 
+    from projectq.ops import X, H, CNOT
+    from projectq.cengines import MainEngine
+    from qat.interop.projectq import AqasmPrinter, AqasmEngine
+
+    # Define AQASM engine
     aq = AqasmPrinter(MainEngine)
     eng = AqasmEngine(aq, engine_list=[aq])
+
+    # Create a ProjectQ circuit
     q = eng.allocate_qureg(2)
     X | q[0]
     H | q[0]
     CNOT | (q[0], q[1])
-    # then recover your generated qlm circuit with
-    circ=eng.projectq_to_qlm()
+
+    # Then recover your generated qlm circuit with
+    circ = eng.projectq_to_qlm()
+    print("The circuit is composed of the gates:",
+          list(circ.iterate_simple()))
 """
 import warnings
 from math import pi
@@ -158,27 +166,31 @@ class AqasmEngine(MainEngine):
     
     def projectq_to_qlm(self, sep_measure=False, **kwargs):
         """ 
-    Generates the QLM circuit corresponding to all projectq
-    commands we sent to the engine
+        Generates the QLM circuit corresponding to all projectq
+        commands we sent to the engine
 
-    Args:
-        sep_measure: if set to True measures won't be included in the\
-        resulting circuits, qubits to be measured will be put in a list,\
-        the resulting measureless circuit and this list will be returned\
-        in a tuple: (resulting_circuit, list_qubits).\
-        If set to False, measures will be converted normally
-        kwargs: these are the options that you would use on a regular \
-        to_circ function, these are added for more flexibility, for\
-        advanced users
+        Args:
+            sep_measures: Separates measures from the
+                circuit:
 
-    Returns:
-        if sep_measure is True a tuple of two elements will be returned,
-        first one is the QLM resulting circuit with no measures, and the
-        second element of the returned tuple is a list of all qubits that
-        should be measured.
-        if sep_measure is False, the QLM resulting circuit is returned
-        directly
-    """
+                 - if set to :code:`True` measures won't be included in the resulting circuits,
+                   qubits to be measured will be put in a list, the resulting measureless
+                   circuit and this list will be returned in a tuple : (resulting_circuit, list_qubits)
+                 - if set to :code:`False`, measures will be converted normally (Default set to False)
+
+            kwargs: these are the options that you would use on a regular
+                to_circ function, these are added for more flexibility, for
+                advanced users
+
+        Returns:
+            :code:`tuple` or :class:`~qat.core.Circuit`: If :code:`sep_measures` is set
+            to:
+
+             - :code:`True`: the result is a tuple composed of a
+               :class:`~qat.core.Circuit` and a list of qubits that should be
+               measured
+             - :code:`False`: the result is a :class:`~qat.core.Circuit`
+        """
         # this is only for backwards compatibility with old arch
         try:
             qreg_list = []

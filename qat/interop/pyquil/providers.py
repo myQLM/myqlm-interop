@@ -90,8 +90,8 @@ def generate_qlm_result(pyquil_result):
 
 class PyquilQPU(QPUHandler):
     """
-        QPU wrapper over pyquil, to run a QLM circuit on a pyquil
-        simulator or rigetti's quantum chip
+    QPU wrapper over pyquil, to run a QLM circuit on a pyquil
+    simulator or rigetti's quantum chip
 
     Args:
         qpu: the instance of pyquil's simulator/connection to real

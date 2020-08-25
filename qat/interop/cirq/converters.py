@@ -21,11 +21,13 @@
     specific language governing permissions and limitations
     under the License.
 
-Converts a Google cirq circuit object into a qlm circuit
-object, you can directly use :
-
+myQLM provides binders to translate quantum circuit from Google Cirq
+to myQLM and vice-versa throught functions :func:`~qat.interop.cirq.cirq_to_qlm`
+and :func:`~qat.interop.cirq.qlm_to_cirq`
 
 .. code-block:: python
+
+    from qat.interop.cirq import cirq_to_qlm
 
     qlm_circ = cirq_to_qlm(your_google_circ)
 
@@ -33,13 +35,14 @@ Or
 
 .. code-block:: python
 
+    from qat.interop.cirq import qlm_to_cirq
+
     google_circ = qlm_to_cirq(your_qlm_circ)
 
-Note:
-    when mixing LineQubit and GridQubit, all grid\
-    qubits will be allocated first, then all line qubits.\
+.. note::
+    when mixing LineQubit and GridQubit, all grid
+    qubits will be allocated first, then all line qubits.
     The order will follow coordinates.
-
 """
 import warnings
 from qat.lang.AQASM import *
@@ -353,24 +356,27 @@ def cirq_to_qlm(circ, sep_measures=False, **kwargs):
 
     Args:
         cirq: the cirq circuit to convert
-        sep_measures: if set to True measures won't be included in the\
-        resulting circuits, qubits to be measured will be put in a list,\
-        the resulting measureless circuit and this list will be returned\
-        in a tuple: (resulting_circuit, list_qubits).\
-        If set to False, measures will be converted normally(Defaults to\
- False)
-        kwargs: these are the options that you would use on a regular \
-        to_circ function, to generate a QLM circuit from a PyAQASM program\
- these are added for more flexibility, for advanced users
+        sep_measures: Separates measures from the
+            circuit:
+
+             - if set to :code:`True` measures won't be included in the resulting circuits,
+               qubits to be measured will be put in a list, the resulting measureless
+               circuit and this list will be returned in a tuple : (resulting_circuit, list_qubits)
+             - if set to :code:`False`, measures will be converted normally (Default set to False)
+
+        kwargs: these are the options that you would use on a regular
+            to_circ function, to generate a QLM circuit from a PyAQASM program
+            these are added for more flexibility, for advanced users
 
 
     Returns:
-        if sep_measures is True a tuple of two elements will be returned,
-        first one is the QLM resulting circuit with no measures, and the
-        second element of the returned tuple is a list of all qubits that
-        should be measured.
-        if sep_measures is False, the QLM resulting circuit is returned
-        directly
+        :code:`tuple` or :class:`~qat.core.Circuit`: If :code:`sep_measures` is set
+        to:
+
+         - :code:`True`: the result is a tuple composed of a
+           :class:`~qat.core.Circuit` and a list of qubits that should be
+           measured
+         - :code:`False`: the result is a :class:`~qat.core.Circuit`
     """
     # building a qubit map to use correct qubits
     qubits = ops.QubitOrder.as_qubit_order(ops.QubitOrder.DEFAULT).order_for(
@@ -425,6 +431,7 @@ QLM_GATE_DIC = {
 }
 def qlm_to_cirq(qlm_circuit):
     """ Converts a QLM circuit to a cirq circuit.
+
     Args:
         qlm_circuit: the input QLM circuit to convert
 

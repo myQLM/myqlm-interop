@@ -192,12 +192,13 @@ def pyquil_to_qlm(pyquil_prog, sep_measures=False, **kwargs):
 
 
     Returns:
-        if sep_measures is True a tuple of two elements will be returned,
-        first one is the QLM resulting circuit with no measures, and the
-        second element of the returned tuple is a list of all qubits that
-        should be measured.
-        if sep_measures is False, the QLM resulting circuit is returned
-        directly
+        :code:`tuple` or :class:`~qat.core.Circuit`: If :code:`sep_measures` is set
+        to:
+
+         - :code:`True`: the result is a tuple composed of a
+           :class:`~qat.core.Circuit` and a list of qubits that should be
+           measured
+         - :code:`False`: the result is a :class:`~qat.core.Circuit`
     """
     from qat.lang.AQASM import Program as QlmProgram
     prog = QlmProgram()

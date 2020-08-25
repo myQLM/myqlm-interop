@@ -28,6 +28,8 @@ __path__ = extend_path(__path__, __name__)
 from pkg_resources import parse_version
 import cirq
 import warnings
+from .converters import qlm_to_cirq, cirq_to_qlm
+
 if parse_version(cirq.__version__) > parse_version('0.8.2'):
     warnings.warn("cirq version {} is not tested, use version 0.8.2"
                   .format(cirq.__version__))

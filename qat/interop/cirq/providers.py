@@ -64,6 +64,7 @@ def generate_qlm_result(cirq_result):
     ]
     return qlm_result
 
+
 class CirqQPU(QPUHandler):
     def __init__(self, qpu=cirq.Simulator(), plugins=None):
         super(QPUHandler, self).__init__(plugins)
@@ -79,5 +80,3 @@ class CirqQPU(QPUHandler):
         result = generate_qlm_result(self.qpu.run(cirq_circuit,
                                                   repetitions=nbshots))
         return result
-
-
