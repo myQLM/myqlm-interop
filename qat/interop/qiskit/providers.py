@@ -21,12 +21,66 @@
     specific language governing permissions and limitations
     under the License.
 
-Classes and methods for providers, including:
-    BackendToQPU: Synchronous QPU, capable of running in a Qiskit backend
-    AsyncBackendToQPU: Asynchronous QPU, capable of running in a
-            Qiskit Backend
-    QPUToBackend: Implementation of a Qiskit backend, capable of running
-            in a QLM QPU
+
+myQLM can be used to connect to Qiskit Backend. This module is composed of
+three main classes:
+
+ - :class:`~qat.interop.qiskit.BackendToQPU`: Synchronous QPU,
+   capable of running in a Qiskit backend
+
+   .. code-block:: python
+
+       from qat.interop.qiskit import BackendToQPU
+
+       # Declare your IBM token
+       MY_IBM_TOKEN = "..."
+
+       # Wrap a Qiskit backend in a QPU
+       qpu = BackendToQPU(token=MY_IBM_TOKEN, ibmq_backend="ibmq_armonk")
+
+       # Submit a job to IBMQ
+       result = qpu.submit(job)
+
+ - :class:`~qat.interop.qiskit.AsyncBackendToQPU`: Asynchronous QPU,
+   capable of running in a Qiskit Backend. This QPU returns instances
+   of :class:`~qat.interop.qiskit.QiskitJob`
+
+   .. code-block:: python
+
+       import time
+       from qat.interop.qiskit import AsyncBackendToQPU
+
+       # Declare your IBM token
+       MY_IBM_TOKEN = "..."
+
+       # Wrap a Qiskit backend in a QPU
+       async_qpu = AsyncBackendToQPU(token=MY_IBM_TOKEN, ibmq_backend="ibmq_armonk")
+
+       # Submit a job to IBMQ
+       async_result = async_qpu.submit(job)
+
+       # Wait for the result
+       while not async_result.result():
+           time.sleep(1)
+
+       # Get result
+       result = async_result.result()
+
+ - :class:`~qat.interop.qiskit.QPUToBackend`: Qiskit backend,
+   capable of running in a QLM QPU
+
+   .. code-block:: python
+
+       from qat.qpus import PyLinalg
+       from qat.interop.qiskit import QPUToBackend
+       from qiskit import execute
+
+       # Creates a Qiskit Backend
+       qpu = PyLinalg()
+       backend = QPUToBackend(qpu)
+
+       # Returns a qiskit result
+       qiskit_result = execute(qiskit_circuit, backend, shots=15).result()
 """
 
 import os
@@ -339,7 +393,7 @@ class QPUToBackend(BaseBackend):
             qobj: Qiskit batch of circuits to run
 
         Returns:
-            Returns a :class:`~qat.interop.qiskit.providers.QLMJob` object containing
+            Returns a :class:`~qat.interop.qiskit.QLMJob` object containing
             the results of the QLM qpu execution after being converted into
             Qiskit results
         """
@@ -371,24 +425,27 @@ class QPUToBackend(BaseBackend):
 
 class BackendToQPU(QPUHandler):
     """
-        :class:`~qat.interop.qiskit.providers.BackendToQPU` is a
-        wrapper around any Qiskit simulator/ quantum chip connection.
-        To follow how other standard QLM qpus work, this qpu is also
-        synchronous, despite the asynchronous nature of Qiskit's
-        backends.
-        This implements
-        :func:`~qat.interop.qiskit.providers.BackendToQPU.submit_job`.
-        Supports plugins.
-        If you need an Asynchronous Qiskit qpu, then use
-        :class:`~qat.interop.qiskit.providers.AsyncBackendToQPU`.
+    Wrapper around any Qiskit simulator / quantum chip connection.
+    Despite the asynchronous nature of Qiskit's backends, this class
+    defines a synchronous QPU. If you need an asynchronous, please use
+    :class:`~qat.interop.qiskit.AsyncBackendToQPU`
 
-    Parameters:
+    This QPU can be instantiated
+    using:
+
+     - a Qiskit backend: please use the keywork argument :code:`backend`
+     - an IBM token and the name of the backend: please the keyword arguments
+       :code:`token` and :code:`ibmq_backend` (the default backend is
+       :code:`"ibmq_qasm_simulator"`)
+     - *no argument*: the :code:`"qasm_simulator"` is used if no argment is specified
+
+    Args:
         backend: The Backend Qiskit object that is supposed to execute
-                the circuit. If not supplied, BackendToQPU will try logging to
-                IBMQ by using an IBMQ token and the name of an IBMQ backend,
-                if those were provided. If no name have been supplied, it
-                defaults to the "ibmq_qasm_simulator". If no token have been
-                supplied, the backend will be Qiskit's "qasm_simulator".
+            the circuit.
+        plugins (list): linked plugins
+        token (str): Qiskit IBMQ login token. If not supplied, loaded from the environment
+            variable :code:`QISKIT_TOKEN`
+        ibmq_backend (str): name of the backend
     """
     def __init__(self, backend=None, plugins=None, token=None,
                  ibmq_backend='ibmq_qasm_simulator'):
@@ -416,9 +473,6 @@ class BackendToQPU(QPUHandler):
                     variable QISKIT_TOKEN. Only used if backend is None.
             ibmq_backend: Name of the IBM Quantum Experience backend, default
                     value is 'ibmq_qasm_simulator', which goes up to 32qubits
-
-        Returns:
-            None
         """
         if backend is None:
             if token is None:
@@ -471,7 +525,7 @@ class BackendToQPU(QPUHandler):
             qlm_job: :class:`~qat.core.Job` object
 
         Returns:
-            :class:`~qat.core.wrappers.result.Result` object
+            :class:`~qat.core.Result` object
         """
         if self.backend is None:
             raise ValueError("Backend cannot be None")
@@ -494,7 +548,7 @@ def _wrap_results(qlm_batch, results):
         results: list of Result object to be wrapped
 
     Returns:
-        Result or BatchResult object if the batch submitted
+        :class:`~qat.core.Result` or :class:`~qat.core.BatchResult` object if the batch submitted
         contains several jobs
     """
     for i in range(len(qlm_batch.jobs)):
@@ -547,8 +601,8 @@ class QiskitJob:
         Returns the result if available.
 
         Returns:
-            :class:`~qat.core.wrappers.result.Result` object or
-            :class:`~qat.core.wrappers.result.BatchResult` object
+            :class:`~qat.core.Result` object or
+            :class:`~qat.core.BatchResult` object
             if the batch submitted contains several jobs
         """
         if self.status() == 'DONE':
@@ -583,13 +637,10 @@ class QiskitJob:
         """
         Dumps the :class:`~qat.core.Batch` object used for creating the job into a
         binary file. This file should later be used with AsyncBackendToQPU's
-        :func:`~qat.interop.qiskit.providers.AsyncBackendToQPU.retrieve_job`.
+        :func:`~qat.interop.qiskit.AsyncBackendToQPU.retrieve_job`.
 
         Args:
             file_name: Name of the binary file to create
-
-        Returns:
-            None
         """
         if isinstance(self._qlm_batch.meta_data, dict):
             self._qlm_batch.meta_data['job_id'] = self._job_id
@@ -601,23 +652,29 @@ class QiskitJob:
 
 class AsyncBackendToQPU(QPUHandler):
     """
-    Wrapper around any Qiskit simulator/quantum chip connection. Contrary
-    to :class:`~qat.interop.qiskit.providers.BackendToQPU`, this one is
-    asynchronous, and submitting a job returns a
-    :class:`~qat.interop.qiskit.providers.QiskitJob` which
-    is a wrapper around a Qiskit job. This implements
-    :func:`~qat.interop.qiskit.providers.AsyncBackendToQPU.submit` and
-    :func:`~qat.interop.qiskit.providers.AsyncBackendToQPU.submit_job`.
-    Does not support plugins. If plugin support is required, use
-    :class:`~qat.interop.qiskit.providers.BackendToQPU`.
+    Wrapper around any Qiskit simulator / quantum chip connection.
+    This class defines an asynchronous QPU. If you need an synchronous, please use
+    :class:`~qat.interop.qiskit.BackendToQPU`
 
-    Parameters:
+    This asynchronous QPU can be instantiated
+    using:
+
+     - a Qiskit backend: please use the keywork argument :code:`backend`
+     - an IBM token and the name of the backend: please the keyword arguments
+       :code:`token` and :code:`ibmq_backend` (the default backend is
+       :code:`"ibmq_qasm_simulator"`)
+     - *no argument*: the :code:`"qasm_simulator"` is used if no argment is specified
+
+    .. warning::
+
+        Since this QPU is asynchronous, plugins can't be piped to this QPU
+
+    Args:
         backend: The Backend Qiskit object that is supposed to execute
-                the circuit. If not supplied, AsyncBackendToQPU will try
-                logging to IBMQ by using an IBMQ token and the name of an
-                IBMQ backend. If no name have been supplied, it defaults to
-                the "ibmq_qasm_simulator". If no token have been supplied,
-                the backend will be Qiskit's "qasm_simulator".
+            the circuit.
+        token (str): Qiskit IBMQ login token. If not supplied, loaded from the environment
+            variable :code:`QISKIT_TOKEN`
+        ibmq_backend (str): name of the backend
     """
     def __init__(self, backend=None, token=None,
                  ibmq_backend='ibmq_qasm_simulator'):
@@ -645,9 +702,6 @@ class AsyncBackendToQPU(QPUHandler):
                     variable QISKIT_TOKEN. Only used if backend is None
             ibmq_backend: Name of the IBM Quantum Experience backend, default
                     value is 'ibmq_qasm_simulator', which goes up to 32qubits
-
-        Returns:
-            None
         """
         if backend is None:
             if token is None:
@@ -673,7 +727,7 @@ class AsyncBackendToQPU(QPUHandler):
             qlm_job: :class:`~qat.core.Job` object to be executed
 
         Returns:
-            A :class:`~qat.interop.qiskit.providers.QiskitJob` object with the same
+            A :class:`~qat.interop.qiskit.QiskitJob` object with the same
             interface as a job derived from BaseJob for the user to have
             information on their job execution
         """
@@ -694,7 +748,7 @@ class AsyncBackendToQPU(QPUHandler):
                     If a single job is provided, a batch is created
                     from this job.
         Returns:
-            :class:`~qat.interop.qiskit.providers.QiskitJob` object with the same
+            :class:`~qat.interop.qiskit.QiskitJob` object with the same
             interface as a job derived from BaseJob for the user to have
             information on their job execution
         """
@@ -720,7 +774,7 @@ class AsyncBackendToQPU(QPUHandler):
             file_name: Name of the binary file
 
         Returns:
-            :class:`~qat.interop.qiskit.providers.QiskitJob` object
+            :class:`~qat.interop.qiskit.QiskitJob` object
         """
         qlm_batch = Batch.load(file_name)
         async_job = self.backend.retrieve_job(qlm_batch.meta_data['job_id'])

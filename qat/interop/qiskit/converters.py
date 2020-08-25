@@ -21,16 +21,21 @@
     specific language governing permissions and limitations
     under the License.
 
-For converting a Qiskit circuit into a QLM circuit, or the opposite,
-one can use :
+myQLM provides binders to translate quantum circuit from Qiskit to
+myQLM and vice-versa throw functions :func:`~qat.interop.qiskit.qiskit_to_qlm`
+and :func:`~qat.interop.qiskit.qlm_to_qiskit`
 
 .. code-block:: python
+
+    from qat.interop.qiskit import qiskit_to_qlm
 
     qlm_circuit = qiskit_to_qlm(your_qiskit_circuit)
 
 Or
 
 .. code-block:: python
+
+    from qat.interop.qiskit import qlm_to_qiskit
 
     qiskit_circuit = qlm_to_qiskit(your_qlm_circuit)
 """
@@ -347,25 +352,29 @@ def qiskit_to_qlm(qiskit_circuit, sep_measures=False, **kwargs):
 
     Args:
         qiskit_circuit: The Qiskit circuit to convert
-        sep_measures: If set to True measures won't be included in the
-                resulting circuits, qubits to be measured will be put in a
-                list, the resulting measureless circuit and this list will
-                be returned in a tuple : (resulting_circuit, list_qubits).
-                If set to False, measures will be converted normally
-                (Defaults to False)
+        sep_measures: Separates measures from the
+            circuit:
+
+             - if set to :code:`True`, measures won't be included in the resulting
+               circuit, qubits to be measured will be put in a list, the resulting
+               measureless circuit and this list will be returned in a tuple:
+               (resulting_circuit, list_qubits)
+             - if set to :code:`False`, measures will be converted normally
+               (Default, set to False)
+
         kwargs: These are the options that you would use on a regular
                 to_circ function, to generate a QLM circuit from a PyAQASM
                 program these are added for more flexibility,
                 for advanced users
 
-
     Returns:
-        If sep_measures is True a tuple of two elements will be returned,
-        first element is the QLM resulting circuit with no measures, and the
-        second element of the returned tuple is a list of all qubits that
-        should be measured.
-        if sep_measures is False, the QLM resulting circuit is returned
-        directly
+        :code:`tuple` or :class:`~qat.core.Circuit`: If :code:`sep_measures` is set
+        to:
+
+         - :code:`True`: the result is a tuple composed of a
+           :class:`~qat.core.Circuit` and a list of qubits that should be
+           measured
+         - :code:`False`: the result is a :class:`~qat.core.Circuit`
     """
     prog = Program()
     qbits_num = 0
@@ -639,12 +648,15 @@ def _arith_expr_list_to_parameter_expression(
 
 def qlm_to_qiskit(qlm_circuit, qubits=None):
     """
-    Converts a QLM circuit to a Qiskit circuit. Not all gates are
-    supported so exceptions will be raised if the gate isn't supported.
+    Converts a QLM circuit to a Qiskit circuit.
 
-        List of supported gates :
-        H, X, Y, Z, SWAP, I, S, D-S, T, D-T, RX, RY, RZ, C-H, CNOT,
-        C-Y, CSIGN, C-RZ, CCNOT, C-SWAP, U, RXX, RZZ, R, MS
+    The supported translatable gates are:
+    :code:`H`, :code:`X`, :code:`Y`, :code:`Z`, :code:`SWAP`,
+    :code:`I`, :code:`S`, :code:`S.dag()`, :code:`T`, :code:`T.dag()`,
+    :code:`RX`, :code:`RY`, :code:`RZ`, :code:`H.ctrl()`, :code:`CNOT`,
+    :code:`Y.ctrl()`, :code:`CSIGN`, :code:`RZ.ctrl()`, :code:`CCNOT`,
+    :code:`SWAP.ctrl()`, :code:`U`, :code:`RXX`, :code:`RZZ`, :code:`R`,
+    :code:`MS`
 
     Args:
         qlm_circuit: The input QLM circuit to convert
