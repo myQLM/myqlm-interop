@@ -28,7 +28,7 @@ __path__ = extend_path(__path__, __name__)
 from pkg_resources import parse_version
 import cirq
 import warnings
-if parse_version(cirq.__version__) > parse_version('0.4.0'):
-    warnings.warn("cirq version {} is not tested, use version 0.4.0"
+if parse_version(cirq.__version__) > parse_version('0.8.2'):
+    warnings.warn("cirq version {} is not tested, use version 0.8.2"
                   .format(cirq.__version__))
 

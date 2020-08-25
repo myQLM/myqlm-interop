@@ -30,8 +30,8 @@ import pyquil
 import grove
 import warnings
 
-if parse_version(pyquil.__version__) > parse_version('2.7.2'):
-    warnings.warn("pyquil version {} is not tested, use version 2.7.2"
+if parse_version(pyquil.__version__) > parse_version('2.20.0'):
+    warnings.warn("pyquil version {} is not tested, use version 2.20.0"
                   .format(pyquil.__version__))
 
 if parse_version(grove.__version__) > parse_version('1.7.0'):

@@ -21,6 +21,7 @@
 """
 
 import unittest
+import importlib.abc
 import cirq.ops
 import cirq
 from cirq import ControlledGate
@@ -117,22 +118,22 @@ RZZ = AbstractGate("RZZ", [float], arity=2, matrix_generator=gen_RZZ)
 
 
 gates_1qb = [
-    g_ops.X,
-    g_ops.Y,
-    g_ops.Z,
-    g_ops.S,
-    g_ops.T,
-    g_ops.H,
-    g_ops.Rx(3.14),
-    g_ops.Ry(3.14),
-    g_ops.Rz(3.14),
+    cirq.X,
+    cirq.Y,
+    cirq.Z,
+    cirq.S,
+    cirq.T,
+    cirq.H,
+    cirq.rx(3.14),
+    cirq.ry(3.14),
+    cirq.rz(3.14),
 ]
 gates_2qb = [
-    ControlledGate(g_ops.H),
-    g_ops.CNOT,
-    ControlledGate(g_ops.Rz(3.14)),
-    g_ops.SWAP,
-    g_ops.ISWAP,
+    ControlledGate(cirq.H),
+    cirq.CNOT,
+    ControlledGate(cirq.rz(3.14)),
+    cirq.SWAP,
+    cirq.ISWAP,
     cirq.XX,
     cirq.YY,
     cirq.ZZ,
@@ -149,39 +150,37 @@ class TestGcirq2QLMConversion(unittest.TestCase):
 
     def test_default_gates_and_qbit_reorder(self):
         gcirq = cirq.Circuit()
-        qreg1 = [cirq.GridQubit(i, 0) for i in range(2)]
-        qreg2 = [cirq.LineQubit(0)]
-        qreg3 = [cirq.LineQubit(i) for i in range(1, 3)]
+        qreg1 = [cirq.LineQubit(i) for i in range(3)]
         for op in gates_1qb:
-            gcirq.append(op(qreg2[0]) ** -1.0)
+            gcirq.append(op(qreg1[0]) ** -1.0)
         for op in gates_2qb:
-            gcirq.append(op(qreg3[0], qreg1[1]) ** -1.0)
+            gcirq.append(op(qreg1[0], qreg1[1]) ** -1.0)
 
-        gcirq.append(cirq.CCX(qreg1[0], qreg3[1], qreg2[0]))
-        gcirq.append(cirq.CSWAP(qreg1[0], qreg3[1], qreg2[0]))
-        gcirq.append(cirq.CCZ(qreg1[0], qreg3[1], qreg2[0]))
+        gcirq.append(cirq.CCX(qreg1[0], qreg1[1], qreg1[2]))
+        gcirq.append(cirq.CSWAP(qreg1[0], qreg1[1], qreg1[2]))
+        gcirq.append(cirq.CCZ(qreg1[0], qreg1[1], qreg1[2]))
         # Toffoli | (qreg3[1], qreg1[0], qreg2[0])
-        for qbit in qreg1 + qreg2 + qreg3:
+        for qbit in qreg1:
             gcirq.append(cirq.measure(qbit))
         # Generating qlm circuit
         result = cirq_to_qlm(gcirq)
 
         # Generating equivalent qlm circuit
         prog = Program()
-        qubits = prog.qalloc(5)
-        cbits = prog.calloc(5)
+        qubits = prog.qalloc(3)
+        cbits = prog.calloc(3)
 
         for op in pygates_1qb:
-            prog.apply(op.dag(), qubits[2])
+            prog.apply(op.dag(), qubits[0])
 
         for op in pygates_2qb:
-            prog.apply(op.dag(), qubits[3], qubits[1])
+            prog.apply(op.dag(), qubits[0], qubits[1])
 
-        prog.apply(X.ctrl().ctrl(), qubits[0], qubits[4], qubits[2])
-        prog.apply(SWAP.ctrl(), qubits[0], qubits[4], qubits[2])
-        prog.apply(Z.ctrl().ctrl(), qubits[0], qubits[4], qubits[2])
+        prog.apply(X.ctrl().ctrl(), qubits[0], qubits[1], qubits[2])
+        prog.apply(SWAP.ctrl(), qubits[0], qubits[1], qubits[2])
+        prog.apply(Z.ctrl().ctrl(), qubits[0], qubits[1], qubits[2])
 
-        for i in range(5):
+        for i in range(3):
             prog.measure(qubits[i], cbits[i])
         expected = prog.to_circ()
         self.assertEqual(len(result.ops), len(expected.ops))
@@ -194,30 +193,23 @@ class TestGcirq2QLMConversion(unittest.TestCase):
             result_gate_name, result_gate_params = extract_syntax(
                 result.gateDic[res_op.gate], result.gateDic
             )
-            # print("got gate {} with params {} on qbits {}"
-            #      .format(result_gate_name, result_gate_params,
-            #              res_op.qbits))
             expected_gate_name, expected_gate_params = extract_syntax(
                 expected.gateDic[exp_op.gate], expected.gateDic
             )
-            # print("expected gate {} with params {} on qbits {}"
-            #      .format(expected_gate_name, expected_gate_params,
-            #              exp_op.qbits))
             self.assertEqual(expected_gate_name, result_gate_name)
             self.assertEqual(expected_gate_params, result_gate_params)
-            # self.assertEqual(exp_op.qbits, res_op.qbits)
 
     def test_valid_powers(self):
         gcirq = cirq.Circuit()
         qreg = [cirq.LineQubit(i) for i in range(5)]
 
-        gcirq.append(g_ops.X(qreg[0]) ** -3.67)
-        gcirq.append(g_ops.Y(qreg[0]) ** 7.9)
-        gcirq.append(g_ops.Z(qreg[0]) ** sqrt(5))
-        gcirq.append(g_ops.S(qreg[0]) ** -pi)
-        gcirq.append(g_ops.T(qreg[0]) ** (sqrt(7)-pi))
-        gcirq.append(g_ops.SWAP(qreg[0], qreg[1]) ** -0.5)
-        gcirq.append(g_ops.ISWAP(qreg[0], qreg[1]) ** 16.0)
+        gcirq.append(cirq.X(qreg[0]) ** -3.67)
+        gcirq.append(cirq.Y(qreg[0]) ** 7.9)
+        gcirq.append(cirq.Z(qreg[0]) ** sqrt(5))
+        gcirq.append(cirq.S(qreg[0]) ** -pi)
+        gcirq.append(cirq.T(qreg[0]) ** (sqrt(7)-pi))
+        gcirq.append(cirq.SWAP(qreg[0], qreg[1]) ** -0.5)
+        gcirq.append(cirq.ISWAP(qreg[0], qreg[1]) ** 16.0)
 
         result = cirq_to_qlm(gcirq)
         for i, op in enumerate(result.ops):
@@ -240,11 +232,11 @@ class TestGcirq2QLMConversion(unittest.TestCase):
         qreg = [cirq.LineQubit(i) for i in range(5)]
         cirq_to_qlm(gcirq)
         try:
-            gcirq.append(g_ops.H(qreg[0]) ** pi)
+            gcirq.append(cirq.H(qreg[0]) ** pi)
         except ValueError:
             pass
         try:
-            gcirq.append(g_ops.SWAP(qreg[0], qreg[1]) ** pi)
+            gcirq.append(cirq.SWAP(qreg[0], qreg[1]) ** pi)
         except ValueError:
             pass
 

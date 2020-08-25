@@ -114,10 +114,12 @@ def build_gate(dic, ident, qubits):
         return pyquil.quilbase.Gate(basename, params, qubits).dagger()
     else:
         params = [param.double_p for param in qlm_gate.syntax.parameters]
+        if None in params:
+            raise TypeError("Unsupported parameter type")
         return pyquil.quilbase.Gate(basename, params, qubits)
 
 
-def qlm_to_pyquil(qlm_circuit):
+def qlm_to_pyquil(qlm_circuit, program_pragma=None):
     """ Converts a QLM circuit to a pyquil circuit
 
     Args:
@@ -125,7 +127,10 @@ def qlm_to_pyquil(qlm_circuit):
     Returns:
         Pyquil circuit
     """
-    p = Program()
+    if program_pragma is not None:
+        p = Program(program_pragma)
+    else:
+        p = Program()
     creg = p.declare("ro", "BIT", qlm_circuit.nbcbits)
 
     for op in qlm_circuit.ops:
@@ -190,20 +195,31 @@ def pyquil_to_qlm(pyquil_prog, sep_measures=False, **kwargs):
         to_measure = []
     for op in pyquil_prog.instructions:
         if isinstance(op, Gate):
+            ctrls = 0
             if len(op.params) > 0:
                 if op.name == "CPHASE":
-                    gate = aq.PH(*op.params).ctrl()
-                else:
+                    gate = aq.PH(*op.params)
+                    ctrls += 1
+                elif op.name in QLM_GATE_DIC:
                     gate = QLM_GATE_DIC[op.name](*op.params)
+                elif op.name.replace("C", "") in QLM_GATE_DIC:
+                    gate = QLM_GATE_DIC[op.name.replace("C", "")](*op.params)
+                    ctrls += len(op.name) - len(op.name.replace("C", ""))
+                else:
+                    raise ValueError("Gate {} is not supported"
+                                    .format(op.name))
             else:
                 if op.name in QLM_GATE_DIC:
                     gate = QLM_GATE_DIC[op.name]
+                elif op.name.replace("C", "") in QLM_GATE_DIC:
+                    gate = QLM_GATE_DIC[op.name.replace("C", "")]
+                    ctrls += len(op.name) - len(op.name.replace("C", ""))
                 else:
                     raise ValueError("Gate {} is not supported"
                                      .format(op.name))
             if op.modifiers.count('DAGGER')%2 == 1:
                 gate = gate.dag()
-            ctrls = op.modifiers.count('CONTROLLED')
+            ctrls += op.modifiers.count('CONTROLLED')
             qubits = op.qubits
             if ctrls > 0:
                 for _ in range(ctrls):
