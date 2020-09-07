@@ -22,7 +22,7 @@
     under the License.
 
 
-myQLM can be used to connect to Qiskit Backend. This module is composed of
+myQLM can be used to connect to a Qiskit Backend. This module is composed of
 three main classes:
 
  - :class:`~qat.interop.qiskit.BackendToQPU`: Synchronous QPU,
@@ -428,12 +428,12 @@ class BackendToQPU(QPUHandler):
     Wrapper around any Qiskit simulator / quantum chip connection.
     Despite the asynchronous nature of Qiskit's backends, this class
     defines a synchronous QPU. If you need an asynchronous, please use
-    :class:`~qat.interop.qiskit.AsyncBackendToQPU`
+    :class:`~qat.interop.qiskit.AsyncBackendToQPU`.
 
     This QPU can be instantiated
     using:
 
-     - a Qiskit backend: please use the keywork argument :code:`backend`
+     - a Qiskit backend: please use the keyword argument :code:`backend`
      - an IBM token and the name of the backend: please the keyword arguments
        :code:`token` and :code:`ibmq_backend` (the default backend is
        :code:`"ibmq_qasm_simulator"`)
@@ -445,7 +445,7 @@ class BackendToQPU(QPUHandler):
         plugins (list): linked plugins
         token (str): Qiskit IBMQ login token. If not supplied, loaded from the environment
             variable :code:`QISKIT_TOKEN`
-        ibmq_backend (str): name of the backend
+        ibmq_backend (str, optional): name of the backend. Defaults to 'ibmq_qasm_simulator'.
     """
     def __init__(self, backend=None, plugins=None, token=None,
                  ibmq_backend='ibmq_qasm_simulator'):
@@ -464,7 +464,7 @@ class BackendToQPU(QPUHandler):
     def set_backend(self, backend=None, token=None,
                     ibmq_backend='ibmq_qasm_simulator'):
         """
-        Sets the backend that will execute circuits
+        Sets the backend that will execute circuits.
 
         Args:
             backend: The Backend Qiskit object to be wrapped
@@ -653,13 +653,12 @@ class QiskitJob:
 class AsyncBackendToQPU(QPUHandler):
     """
     Wrapper around any Qiskit simulator / quantum chip connection.
-    This class defines an asynchronous QPU. If you need an synchronous, please use
-    :class:`~qat.interop.qiskit.BackendToQPU`
+    This class defines an asynchronous QPU. If you need a synchronous QPU, please use
+    :class:`~qat.interop.qiskit.BackendToQPU`.
 
-    This asynchronous QPU can be instantiated
-    using:
+    This asynchronous QPU can be instantiated using:
 
-     - a Qiskit backend: please use the keywork argument :code:`backend`
+     - a Qiskit backend: please use the keyword argument :code:`backend`
      - an IBM token and the name of the backend: please the keyword arguments
        :code:`token` and :code:`ibmq_backend` (the default backend is
        :code:`"ibmq_qasm_simulator"`)
@@ -674,7 +673,7 @@ class AsyncBackendToQPU(QPUHandler):
             the circuit.
         token (str): Qiskit IBMQ login token. If not supplied, loaded from the environment
             variable :code:`QISKIT_TOKEN`
-        ibmq_backend (str): name of the backend
+        ibmq_backend (str): name of the backend. Defaults to 'ibmq_qasm_simulator'.
     """
     def __init__(self, backend=None, token=None,
                  ibmq_backend='ibmq_qasm_simulator'):

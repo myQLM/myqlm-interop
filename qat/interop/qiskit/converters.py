@@ -21,9 +21,9 @@
     specific language governing permissions and limitations
     under the License.
 
-myQLM provides binders to translate quantum circuit from Qiskit to
-myQLM and vice-versa throught functions :func:`~qat.interop.qiskit.qiskit_to_qlm`
-and :func:`~qat.interop.qiskit.qlm_to_qiskit`
+myQLM provides binders to translate quantum circuits from Qiskit to
+myQLM and vice-versa through the :func:`~qat.interop.qiskit.qiskit_to_qlm`
+and :func:`~qat.interop.qiskit.qlm_to_qiskit` functions:
 
 .. code-block:: python
 
