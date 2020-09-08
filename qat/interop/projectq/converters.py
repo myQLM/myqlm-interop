@@ -21,8 +21,8 @@
     specific language governing permissions and limitations
     under the License.
 
-myQLM provides binders to tanslate ProjectQ circuit into a
-myQLM circuit thought classes :class:`~qat.interop.projectq.AqasmPrinter`
+myQLM provides binders to translate ProjectQ circuits into 
+myQLM circuits through classes :class:`~qat.interop.projectq.AqasmPrinter`
 and :class:`~qat.interop.projectq.AqasmEngine`
 
 .. run-block:: python
