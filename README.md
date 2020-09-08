@@ -1,30 +1,36 @@
 QLM interoperability module
 =============================
 
+This Python package contains some simple binders with other:
+Python-based quantum programming frameworks:
 
-Some simple binders with other python based quantum programing frameworks.
+* IBM Qiskit
 
-installation
+* Google Circ
+
+* Microsoft ProjectQ
+
+* Rigetti Pyquil
+
+
+Installation
 ----------------
 
-It is good practice to install packages inside a virtualenv:
+You can either install a separate package for each platform:
+```bash
+pip install myqlm-interop[qiskit_binder]
+pip install myqlm-interop[projectq_binder]
+pip install myqlm-interop[cirq_binder]
+pip install myqlm-interop[pyquil_binder]
+```
 
-Create a fresh virtual env:
+or install them all at the same time:
+```bash
+pip install myqlm-interop[all]
+```
 
-$ virtualenv qlm_env
 
-Activate the environment:
-
-$ source ./qlm_env/bin/activate
-
-Finally install the package:
-
-$ python3 setup.py install
-
-Running tests
+Documentation
 -------------------
 
-You might want to run tests to check that everything is correctly installed.
-This command will install pytest and run the tests:
-
-$ python3 setup.py test
+Check out [the online documentation] (https://myqlm.github.io/myqlm_specific/interoperability.html).
