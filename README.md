@@ -33,4 +33,4 @@ pip install myqlm-interop[all]
 Documentation
 -------------------
 
-Check out [the online documentation] (https://myqlm.github.io/myqlm_specific/interoperability.html).
+Check out [the online documentation](https://myqlm.github.io/myqlm_specific/interoperability.html).
