@@ -108,9 +108,7 @@ from qat.comm.shared.ttypes import Result as QlmRes
 from qat.core.qpu.qpu import QPUHandler, get_registers
 from qat.core import Batch
 from qat.core.wrappers.result import aggregate_data
-from qat.core.wrappers.result import Result as WResult
-from qat.core.wrappers.result import BatchResult
-from qat.comm.shared.ttypes import Sample as ThriftSample
+from qat.core.wrappers.result import Result as WResult, BatchResult, Sample
 
 
 def to_string(state, nbqbits):
@@ -152,11 +150,11 @@ def generate_qlm_result(qiskit_result):
         if not isinstance(state, int):
             print("State is {}".format(type(state)))
         ret.raw_data.append(
-            ThriftSample(state=state,
-                         probability=freq / nbshots,
-                         err=np.sqrt(
-                             freq / nbshots*(1.-freq/nbshots)/(nbshots-1))
-                         if nbshots > 1 else None)
+            Sample(state=state,
+                   probability=freq / nbshots,
+                   err=np.sqrt(
+                       freq / nbshots*(1.-freq/nbshots)/(nbshots-1))
+                   if nbshots > 1 else None)
         )
     return ret
 
@@ -186,11 +184,11 @@ def generate_qlm_list_results(qiskit_result):
             if not isinstance(state, int):
                 print("State is {}".format(type(state)))
             ret.raw_data.append(
-                ThriftSample(state=state,
-                             probability=freq / nbshots,
-                             err=np.sqrt(
-                                 freq / nbshots*(1.-freq/nbshots)/(nbshots-1))
-                             if nbshots > 1 else None)
+                Sample(state=state,
+                       probability=freq / nbshots,
+                       err=np.sqrt(
+                           freq / nbshots*(1.-freq/nbshots)/(nbshots-1))
+                       if nbshots > 1 else None)
             )
         ret_list.append(ret)
     return ret_list

@@ -48,9 +48,7 @@ from pyquil import get_qc
 
 from qat.interop.pyquil.converters import qlm_to_pyquil
 from qat.core.qpu.qpu import QPUHandler
-from qat.core.wrappers.result import State
-from qat.comm.shared.ttypes import Result as QlmRes
-from qat.comm.shared.ttypes import Sample as ThriftSample
+from qat.core.wrappers.result import Result as QlmRes, State, Sample
 from qat.comm.shared.ttypes import Job
 
 from collections import Counter
@@ -78,11 +76,11 @@ def generate_qlm_result(pyquil_result):
     counts = Counter(measurements)
     qlm_result = QlmRes()
     qlm_result.raw_data = [
-        ThriftSample(state=state,
-                     probability=freq / nbshots,
-                     err=np.sqrt(freq / nbshots*(1.-freq/nbshots)(nbshots-1))
-                     if nbshots > 1 else None
-                    )
+        Sample(state=state,
+               probability=freq / nbshots,
+               err=np.sqrt(freq / nbshots*(1.-freq/nbshots)(nbshots-1))
+               if nbshots > 1 else None
+              )
         for state, freq in counts.items()
     ]
     return qlm_result
