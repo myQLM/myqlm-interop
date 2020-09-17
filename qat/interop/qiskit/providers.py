@@ -506,9 +506,10 @@ class BackendToQPU(QPUHandler):
         for qlm_job in qlm_batch.jobs:
             qiskit_circuit = job_to_qiskit_circuit(qlm_job)
             qiskit_circuits.append(qiskit_circuit)
-        qiskit_result = execute(qiskit_circuits, self.backend,
-                                shots=qlm_batch.jobs[0].nbshots,
-                                coupling_map=None).result()
+        qiskit_result = execute(
+            qiskit_circuits, self.backend,
+            shots=qlm_batch.jobs[0].nbshots or self.backend.configuration().max_shots,
+            coupling_map=None).result()
         results = generate_qlm_list_results(qiskit_result)
         new_results = []
         for result in results:
@@ -529,9 +530,10 @@ class BackendToQPU(QPUHandler):
             raise ValueError("Backend cannot be None")
 
         qiskit_circuit = job_to_qiskit_circuit(qlm_job)
-        qiskit_result = execute(qiskit_circuit, self.backend,
-                                shots=qlm_job.nbshots,
-                                coupling_map=None).result()
+        qiskit_result = execute(
+            qiskit_circuit, self.backend,
+            shots=qlm_job.nbshots or self.backend.configuration().max_shots,
+            coupling_map=None).result()
         result = generate_qlm_result(qiskit_result)
         return result
 
@@ -732,8 +734,10 @@ class AsyncBackendToQPU(QPUHandler):
             raise ValueError("Backend cannot be None")
 
         qiskit_circuit = job_to_qiskit_circuit(qlm_job)
-        async_job = execute(qiskit_circuit, self.backend,
-                            shots=qlm_job.nbshots, coupling_map=None)
+        async_job = execute(
+            qiskit_circuit, self.backend,
+            shots=qlm_job.nbshots or self.backend.configuration().max_shots,
+            coupling_map=None)
         return QiskitJob(qlm_job, async_job)
 
     def submit(self, qlm_batch):
@@ -758,8 +762,10 @@ class AsyncBackendToQPU(QPUHandler):
         for qlm_job in qlm_batch.jobs:
             qiskit_circuit = job_to_qiskit_circuit(qlm_job)
             qiskit_circuits.append(qiskit_circuit)
-        async_job = execute(qiskit_circuits, self.backend,
-                            shots=qlm_batch.jobs[0].nbshots, coupling_map=None)
+        async_job = execute(
+            qiskit_circuits, self.backend,
+            shots=qlm_batch.jobs[0].nbshots or self.backend.configuration().max_shots,
+            coupling_map=None)
         return QiskitJob(qlm_batch, async_job)
 
     def retrieve_job(self, file_name):
