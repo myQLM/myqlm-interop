@@ -45,14 +45,17 @@ Or
     The order will follow coordinates.
 """
 import warnings
-from qat.lang.AQASM import *
 from math import pi
-from numpy import array, complex128, cos, sin, diag
 from typing import cast
+from numpy import array, complex128, cos, sin, diag
+
 import cirq
+from cirq.ops import common_gates, controlled_gate
+from qat.core.util import extract_syntax
+from qat.lang.AQASM import Program, AbstractGate, H, X, Y, Z, S, T, RX, RY, RZ, \
+    SWAP, ISWAP, SQRTSWAP
 
 ops = cirq.ops
-from cirq.ops import common_gates, controlled_gate
 
 
 # Adding parity gates
@@ -105,7 +108,7 @@ def gen_RXX(phi):
 
 
 def gen_RYY(phi):
-    return np.array(
+    return array(
         [
             [cos(phi / 2), 0, 0, sin(phi / 2) * 1.0j],
             [0, cos(phi / 2), -sin(phi / 2) * 1.0j, 0],
@@ -117,7 +120,7 @@ def gen_RYY(phi):
 
 
 def gen_RZZ(phi):
-    return np.array(
+    return array(
         [
             [cos(phi / 2) - sin(phi / 2) * 1.0j, 0, 0, 0],
             [0, cos(phi / 2) + sin(phi / 2) * 1.0j, 0, 0],
@@ -147,28 +150,25 @@ iSWAP3 = AbstractGate("iSWAP3", [], arity=2, matrix_generator=gen_iSWAP3)
 def process_XX(exp):
     if exp == 1.0:
         return XX()
-    elif exp == -1.0:
+    if exp == -1.0:
         return XX().dag()
-    else:
-        return RXX(exp)
+    return RXX(exp)
 
 
 def process_YY(exp):
     if exp == 1.0:
         return YY()
-    elif exp == -1.0:
+    if exp == -1.0:
         return YY().dag()
-    else:
-        return RYY(exp)
+    return RYY(exp)
 
 
 def process_ZZ(exp):
     if exp == 1.0:
         return ZZ()
-    elif exp == -1.0:
+    if exp == -1.0:
         return ZZ().dag()
-    else:
-        return RZZ(exp)
+    return RZZ(exp)
 
 
 def process_H(exp):
@@ -181,52 +181,46 @@ def process_H(exp):
         )
     if isinstance(exp, (int, float)) and abs(exp) % 2:
         return H
-    else:
-        return "none"
+    return "none"
 
 def process_X(exp):
     if isinstance(exp, (int, float)) and abs(exp) == 1.0:
         return X
-    else:
-        return RX(pi * exp)
+    return RX(pi * exp)
 
 
 def process_Y(exp):
     if exp == 1.0:
         return Y
-    elif exp == -1.0:
+    if exp == -1.0:
         return Y.dag()
-    else:
-        return RY(pi * exp)
+    return RY(pi * exp)
 
 
 def process_Z(exp):
     if isinstance(exp, (int, float)) and abs(exp) == 1.0:
         return Z
-    elif isinstance(exp, (int, float)) and abs(exp) == 0.5:
+    if isinstance(exp, (int, float)) and abs(exp) == 0.5:
         return process_S(exp * 2)
-    elif isinstance(exp, (int, float)) and abs(exp) == 0.25:
+    if isinstance(exp, (int, float)) and abs(exp) == 0.25:
         return process_T(exp * 4)
-    else:
-        return RZ(pi * exp)
+    return RZ(pi * exp)
 
 
 def process_S(exp):
     if exp == 1.0:
         return S
-    elif exp == -1.0:
+    if exp == -1.0:
         return S.dag()
-    else:
-        return RZ(pi * exp / 2)
+    return RZ(pi * exp / 2)
 
 
 def process_T(exp):
     if exp == 1.0:
         return T
-    elif exp == -1.0:
+    if exp == -1.0:
         return T.dag()
-    else:
-        return RZ(pi * exp / 4)
+    return RZ(pi * exp / 4)
 
 
 def process_RX(exp):
@@ -244,18 +238,16 @@ def process_RZ(exp):
 def process_SWAP(exp):
     if isinstance(exp, (int, float)) and abs(exp) == 1.0:
         return SWAP
-    elif isinstance(exp, (int, float)) and abs(exp) == 0.5:
+    if isinstance(exp, (int, float)) and abs(exp) == 0.5:
         return SQRTSWAP
-    elif exp == int(exp):
+    if exp == int(exp):
         if exp % 2:
             return SWAP
-        else:
-            return "none"
-    else:
-        raise ValueError(
-            "SWAP gate doesn't support arbitrary powers\n"
-            + "Only integer values and +/- 0.5 are supported"
-        )
+        return "none"
+    raise ValueError(
+        "SWAP gate doesn't support arbitrary powers\n"
+        + "Only integer values and +/- 0.5 are supported"
+    )
 
 
 def process_ISWAP(exp):
@@ -268,23 +260,23 @@ def process_ISWAP(exp):
     if exp != int(exp):
         raise ValueError("Non integer powers aren't supported \
                          for iSWAP gate")
+
     if isinstance(exp, (int, float)) and abs(exp) % 4 == 1:
         if exp < 0:
             return ISWAP.dag()
-        else:
-            return ISWAP
-    elif isinstance(exp, (int, float)) and abs(exp) % 4 == 2:
+        return ISWAP
+
+    if isinstance(exp, (int, float)) and abs(exp) % 4 == 2:
         if exp < 0:
             return iSWAP3().dag()
-        else:
-            return iSWAP3()
-    elif isinstance(exp, (int, float)) and abs(exp) % 4 == 3:
+        return iSWAP3()
+
+    if isinstance(exp, (int, float)) and abs(exp) % 4 == 3:
         if exp < 0:
             return SWAP.dag()
-        else:
-            return SWAP
-    else:
-        return "none"
+        return SWAP
+
+    return "none"
 
 
 def process_CX(exp):
@@ -328,6 +320,7 @@ gate_dic = {
     cirq.contrib.acquaintance.permutation.SwapPermutationGate: process_SWAP,
 }
 
+
 # gets a cirq gate object and outputs corresponding pyaqasm gate
 def _get_gate(gate):
     """ Takes a cirq gate object and returns corresponding
@@ -342,10 +335,12 @@ def _get_gate(gate):
     try:
         if controlled_gate.ControlledGate == type(gate):
             return _get_gate(gate.sub_gate).ctrl()
-        elif gate.exponent == 0.0:
+
+        if gate.exponent == 0.0:
             return "none"
-        else:
-            return gate_dic[type(gate)](gate.exponent)
+
+        return gate_dic[type(gate)](gate.exponent)
+
     except AttributeError:
         return gate_dic[type(gate)](1.0)
 
@@ -407,10 +402,11 @@ def cirq_to_qlm(circ, sep_measures=False, **kwargs):
             continue
         else:
             prog.apply(_get_gate(op.gate), qbs)
+
     if sep_measures:
         return prog.to_circ(**kwargs), list(set(to_measure))
-    else:
-        return prog.to_circ(**kwargs)
+
+    return prog.to_circ(**kwargs)
 
 QLM_GATE_DIC = {
     'H': common_gates.H,
@@ -429,6 +425,8 @@ QLM_GATE_DIC = {
     'CCNOT': ops.three_qubit_gates.CCX,
     'PH': common_gates.ZPowGate
 }
+
+
 def qlm_to_cirq(qlm_circuit):
     """ Converts a QLM circuit to a cirq circuit.
 
@@ -438,7 +436,6 @@ def qlm_to_cirq(qlm_circuit):
     Returns:
         A cirq Circuit object resulting from the conversion
     """
-    from qat.core.util import extract_syntax
     cirq_circ = cirq.Circuit()
     qreg = [cirq.LineQubit(i+1) for i in range(qlm_circuit.nbqbits)]
 
@@ -475,17 +472,21 @@ def qlm_to_cirq(qlm_circuit):
     return cirq_circ
 
 
-def to_qlm_circ(cirq, sep_measures=False, **kwargs):
-    """ Deprecated """
+def to_qlm_circ(cirq_circ, sep_measures=False, **kwargs):
+    """
+    Deprecated function. Please use cirq_to_qlm instead
+    """
     warnings.warn(
         "to_qlm_circ is deprecated, please use cirq_to_qlm",
         FutureWarning,
     )
-    return cirq_to_qlm(cirq, sep_measures, **kwargs)
+    return cirq_to_qlm(cirq_circ, sep_measures, **kwargs)
 
 
 def to_cirq_circ(qlm_circuit):
-    """ Deprecated """
+    """
+    Deprecated function. Please use qlm_to_cirq instead
+    """
     warnings.warn(
         "to_cirq_circ is deprecated, please use qlm_to_cirq",
         FutureWarning,
