@@ -210,15 +210,15 @@ class AqasmEngine(MainEngine):
         except AttributeError:
             pass
         if sep_measure:
-            circuit =  self.prog.to_circ(**kwargs)
+            circuit = self.prog.to_circ(**kwargs)
             for qreg in circuit.qregs:
                 if qreg.length == 0:
                     del qreg
             return circuit, self.to_measure
         else:
-            for qbit in self.to_measure:
-                self.prog.measure(qbit, qbit)
-            circuit =  self.prog.to_circ(**kwargs)
+            for qbit, cbit in zip(self.to_measure, self.prog.calloc(len(self.to_measure))):
+                self.prog.measure([qbit], [cbit])
+            circuit = self.prog.to_circ(**kwargs)
             try:
                 for qreg in circuit.qregs:
                     if qreg.length == 0:
