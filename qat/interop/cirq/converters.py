@@ -49,17 +49,19 @@ from math import pi
 from typing import cast
 from numpy import array, complex128, cos, sin, diag
 
-import cirq
-from cirq.ops import common_gates, controlled_gate
 from qat.core.util import extract_syntax
 from qat.lang.AQASM import Program, AbstractGate, H, X, Y, Z, S, T, RX, RY, RZ, \
     SWAP, ISWAP, SQRTSWAP
 
+import cirq
+from cirq.ops import common_gates, controlled_gate
 ops = cirq.ops
 
 
 # Adding parity gates
 def gen_XX():
+    """ Generates the matrix of an XX gate """
+    # pylint: disable=invalid-name
     return array(
         [
             [0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 1.0 + 0.0j],
@@ -72,6 +74,8 @@ def gen_XX():
 
 
 def gen_YY():
+    """ Generates the matrix of an YY gate """
+    # pylint: disable=invalid-name
     return array(
         [
             [0.0 + 0.0j, 0.0 - 0.0j, 0.0 - 0.0j, -1.0 + 0.0j],
@@ -84,6 +88,8 @@ def gen_YY():
 
 
 def gen_ZZ():
+    """ Generates the matrix of a ZZ gate """
+    # pylint: disable=invalid-name
     return array(
         [
             [1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j],
@@ -96,6 +102,8 @@ def gen_ZZ():
 
 
 def gen_RXX(phi):
+    """ Generates the matrix of a RXX gate """
+    # pylint: disable=invalid-name
     return array(
         [
             [cos(phi / 2), 0, 0, -sin(phi / 2) * 1.0j],
@@ -108,6 +116,8 @@ def gen_RXX(phi):
 
 
 def gen_RYY(phi):
+    """ Generates the matrix of a RYY gate """
+    # pylint: disable=invalid-name
     return array(
         [
             [cos(phi / 2), 0, 0, sin(phi / 2) * 1.0j],
@@ -120,6 +130,8 @@ def gen_RYY(phi):
 
 
 def gen_RZZ(phi):
+    """ Generates the matrix of RZZ gate """
+    # pylint: disable=invalid-name
     return array(
         [
             [cos(phi / 2) - sin(phi / 2) * 1.0j, 0, 0, 0],
@@ -132,7 +144,10 @@ def gen_RZZ(phi):
 
 
 def gen_iSWAP3():
-    return diag([ 1, -1, -1, 1]).astype(complex128)
+    """ Generates the matrix of a iSWAP """
+    # pylint: disable=invalid-name
+    return diag([1, -1, -1, 1]).astype(complex128)
+
 
 XX = AbstractGate("XX", [], arity=2, matrix_generator=gen_XX)
 YY = AbstractGate("YY", [], arity=2, matrix_generator=gen_YY)
@@ -148,6 +163,17 @@ iSWAP3 = AbstractGate("iSWAP3", [], arity=2, matrix_generator=gen_iSWAP3)
 
 
 def process_XX(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix XX ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     if exp == 1.0:
         return XX()
     if exp == -1.0:
@@ -156,6 +182,17 @@ def process_XX(exp):
 
 
 def process_YY(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix YY ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     if exp == 1.0:
         return YY()
     if exp == -1.0:
@@ -164,6 +201,17 @@ def process_YY(exp):
 
 
 def process_ZZ(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix ZZ ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     if exp == 1.0:
         return ZZ()
     if exp == -1.0:
@@ -172,6 +220,17 @@ def process_ZZ(exp):
 
 
 def process_H(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix H ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     if isinstance(exp, (int, float)) and abs(exp) == 1.0:
         return H
     if exp != int(exp):
@@ -183,13 +242,36 @@ def process_H(exp):
         return H
     return "none"
 
+
 def process_X(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix X ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     if isinstance(exp, (int, float)) and abs(exp) == 1.0:
         return X
     return RX(pi * exp)
 
 
 def process_Y(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix Y ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     if exp == 1.0:
         return Y
     if exp == -1.0:
@@ -198,6 +280,17 @@ def process_Y(exp):
 
 
 def process_Z(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix Z ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     if isinstance(exp, (int, float)) and abs(exp) == 1.0:
         return Z
     if isinstance(exp, (int, float)) and abs(exp) == 0.5:
@@ -208,6 +301,17 @@ def process_Z(exp):
 
 
 def process_S(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix S ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     if exp == 1.0:
         return S
     if exp == -1.0:
@@ -216,6 +320,17 @@ def process_S(exp):
 
 
 def process_T(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix T ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     if exp == 1.0:
         return T
     if exp == -1.0:
@@ -224,18 +339,62 @@ def process_T(exp):
 
 
 def process_RX(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix RX ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     return RX(pi * exp)
 
 
 def process_RY(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix RY ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     return RY(pi * exp)
 
 
 def process_RZ(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix RZ ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     return RZ(pi * exp)
 
 
 def process_SWAP(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix SWAP ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     if isinstance(exp, (int, float)) and abs(exp) == 1.0:
         return SWAP
     if isinstance(exp, (int, float)) and abs(exp) == 0.5:
@@ -257,6 +416,7 @@ def process_ISWAP(exp):
         3: SWAP
         4: I
     """
+    # pylint: disable=invalid-name
     if exp != int(exp):
         raise ValueError("Non integer powers aren't supported \
                          for iSWAP gate")
@@ -280,22 +440,77 @@ def process_ISWAP(exp):
 
 
 def process_CX(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix CNOT ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     return process_X(exp).ctrl()
 
 
 def process_CCX(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix CCNOT ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     return process_X(exp).ctrl().ctrl()
 
 
 def process_CZ(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix CZ ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     return process_Z(exp).ctrl()
 
 
-def process_CZZ(exp):
+def process_CCZ(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix CCZ ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     return process_Z(exp).ctrl().ctrl()
 
 
 def process_CSWAP(exp):
+    """
+    Generates the myQLM gates corresponding to
+    the matrix CSWAP ** exp
+
+    Args:
+        exp (float): exposant
+
+    Returns:
+        Gate
+    """
+    # pylint: disable=invalid-name
     return process_SWAP(exp).ctrl()
 
 
@@ -313,7 +528,7 @@ gate_dic = {
     common_gates.CZPowGate: process_CZ,
     cirq.ops.three_qubit_gates.CSwapGate: process_CSWAP,
     cirq.ops.three_qubit_gates.CCXPowGate: process_CCX,
-    cirq.ops.three_qubit_gates.CCZPowGate: process_CZZ,
+    cirq.ops.three_qubit_gates.CCZPowGate: process_CCZ,
     cirq.ops.parity_gates.XXPowGate: process_XX,
     cirq.ops.parity_gates.YYPowGate: process_YY,
     cirq.ops.parity_gates.ZZPowGate: process_ZZ,
@@ -384,8 +599,7 @@ def cirq_to_qlm(circ, sep_measures=False, **kwargs):
 
     # pyaqasm initialization
     prog = Program()
-    qreg = prog.qalloc(0)
-    qreg.qbits.extend(prog.qalloc(len(qubits)))
+    qreg = prog.qalloc(len(qubits))
     to_measure = []
     # building operations
     for op in operations:
@@ -393,7 +607,7 @@ def cirq_to_qlm(circ, sep_measures=False, **kwargs):
         for qb in op.qubits:
             qbs.append(qreg[qmap[qb]])
             if (cirq.is_measurement(cast(ops.GateOperation, op))
-            and sep_measures):
+                    and sep_measures):
                 to_measure.append(qmap[qb])
         if cirq.is_measurement(cast(ops.GateOperation, op)):
             if not sep_measures:
@@ -407,6 +621,7 @@ def cirq_to_qlm(circ, sep_measures=False, **kwargs):
         return prog.to_circ(**kwargs), list(set(to_measure))
 
     return prog.to_circ(**kwargs)
+
 
 QLM_GATE_DIC = {
     'H': common_gates.H,
@@ -437,7 +652,7 @@ def qlm_to_cirq(qlm_circuit):
         A cirq Circuit object resulting from the conversion
     """
     cirq_circ = cirq.Circuit()
-    qreg = [cirq.LineQubit(i+1) for i in range(qlm_circuit.nbqbits)]
+    qreg = [cirq.LineQubit(i + 1) for i in range(qlm_circuit.nbqbits)]
 
     for op in qlm_circuit.ops:
         if op.type == 0:
@@ -450,11 +665,11 @@ def qlm_to_cirq(qlm_circuit):
             gate = QLM_GATE_DIC[name.rsplit('-', 1)[-1]]
             if len(params) > 0:
                 if name.rsplit('-', 1)[-1] == 'PH':
-                    gate = gate(exponent=params[0]/pi)
+                    gate = gate(exponent=params[0] / pi)
                 else:
                     gate = gate(*params)
 
-            if dag%2 == 1:
+            if dag % 2 == 1:
                 gate = cirq.inverse(gate)
 
             if nbctrls > 0:
