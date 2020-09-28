@@ -161,7 +161,7 @@ class AqasmEngine(MainEngine):
 
     def allocate_qubit(self, dirty=False):
         self.nbqb += 1
-        self.qb.qbits.extend(self.prog.qalloc(1))
+        self.qb.append(self.prog.qalloc(1))
         return MainEngine.allocate_qubit(self, dirty)
     
     def projectq_to_qlm(self, sep_measure=False, **kwargs):
@@ -245,7 +245,7 @@ class AqasmPrinter(MainEngine):
         engine.__init__(self)
         self.prog = aqsm.Program(**kwargs)
         self.nbqb = 0
-        self.qb = self.prog.qalloc(0)
+        self.qb = list()
         self.to_measure = []
 
     def _out_cmd(self, cmd):
