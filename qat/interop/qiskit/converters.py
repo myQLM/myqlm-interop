@@ -417,6 +417,9 @@ def qiskit_to_qlm(qiskit_circuit, sep_measures=False, **kwargs):
             else:
                 prog.measure([qbits[i] for i in qbit_args],
                              [cbits[i] for i in cbit_args])
+        elif gate_op[0].name == "reset":
+            prog.reset([qbits[i] for i in qbit_args],
+                       [cbits[i] for i in cbit_args])
         else:
             if gate_op[0].name == "ms":
                 # In this case, the process function needs the number of qubits
