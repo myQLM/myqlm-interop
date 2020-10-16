@@ -102,10 +102,10 @@ from qiskit import execute, Aer, IBMQ
 # QLM imports
 from qat.interop.qiskit.converters import qiskit_to_qlm
 from qat.interop.qiskit.converters import job_to_qiskit_circuit
-from qat.comm.datamodel.ttypes import QRegister
 from qat.comm.shared.ttypes import Job
 from qat.comm.shared.ttypes import Result as QlmRes
 from qat.core.qpu.qpu import QPUHandler, get_registers
+from qat.core.bits import DefaultRegister
 from qat.core import Batch
 from qat.core.wrappers.result import aggregate_data
 from qat.core.wrappers.result import Result as WResult, BatchResult, Sample
@@ -563,7 +563,7 @@ def _wrap_results(qlm_batch, results):
             length = 0
             if qlm_job.qubits is not None:
                 length = len(qlm_job.qubits)
-            result.wrap_samples([QRegister(start=0, length=length, type=1)])
+            result.wrap_samples([DefaultRegister(start=0, length=length)])
 
     return BatchResult(results=results, meta_data=qlm_batch.meta_data)
 
