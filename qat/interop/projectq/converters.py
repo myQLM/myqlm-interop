@@ -161,7 +161,7 @@ class AqasmEngine(MainEngine):
 
     def allocate_qubit(self, dirty=False):
         self.nbqb += 1
-        self.qb.qbits.extend(self.prog.qalloc(1))
+        self.qb.append(self.prog.qalloc(1))
         return MainEngine.allocate_qubit(self, dirty)
     
     def projectq_to_qlm(self, sep_measure=False, **kwargs):
@@ -192,33 +192,16 @@ class AqasmEngine(MainEngine):
              - :code:`False`: the result is a :class:`~qat.core.Circuit`
         """
         # this is only for backwards compatibility with old arch
-        try:
-            qreg_list = []
-            for i, qreg in enumerate(self.prog.registers):
-                if qreg.length == 0:
-                    del self.prog.registers[i]
-                    continue
-                qreg_list.append(qreg)
-                break
-            for qreg in self.prog.registers[1:]:
-                if qreg.length == 0:
-                    del qreg
-                    continue
-                qreg_list[0].length += qreg.length
-                qreg_list[0].qbits.extend(qreg.qbits)
-            self.prog.registers = qreg_list
-        except AttributeError:
-            pass
         if sep_measure:
-            circuit =  self.prog.to_circ(**kwargs)
+            circuit = self.prog.to_circ(**kwargs)
             for qreg in circuit.qregs:
                 if qreg.length == 0:
                     del qreg
             return circuit, self.to_measure
         else:
-            for qbit in self.to_measure:
-                self.prog.measure(qbit, qbit)
-            circuit =  self.prog.to_circ(**kwargs)
+            for qbit, cbit in zip(self.to_measure, self.prog.calloc(len(self.to_measure))):
+                self.prog.measure(qbit, [cbit])
+            circuit = self.prog.to_circ(**kwargs)
             try:
                 for qreg in circuit.qregs:
                     if qreg.length == 0:
@@ -245,7 +228,7 @@ class AqasmPrinter(MainEngine):
         engine.__init__(self)
         self.prog = aqsm.Program(**kwargs)
         self.nbqb = 0
-        self.qb = self.prog.qalloc(0)
+        self.qb = list()
         self.to_measure = []
 
     def _out_cmd(self, cmd):
@@ -259,7 +242,7 @@ class AqasmPrinter(MainEngine):
             inp_qb = []
             for reg in cmd.qubits:
                 for qbit in reg:
-                    inp_qb.append(self.qb[int(str(qbit))])
+                    inp_qb.append(self.qb[int(str(qbit))][0])
             self.to_measure.append(inp_qb)
             #self.prog.measure(inp_qb, inp_qb)
 
@@ -268,7 +251,7 @@ class AqasmPrinter(MainEngine):
             inp_qb = []
             for reg in cmd.all_qubits:
                 for qbit in reg:
-                    inp_qb.append(self.qb[int(str(qbit))])
+                    inp_qb.append(self.qb[int(str(qbit))][0])
             self.prog.apply(
                 _get_pyqasm_gate(
                     cmd.gate, targets=len(cmd._qubits), controls=len(controls)

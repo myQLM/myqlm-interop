@@ -102,10 +102,10 @@ from qiskit import execute, Aer, IBMQ
 # QLM imports
 from qat.interop.qiskit.converters import qiskit_to_qlm
 from qat.interop.qiskit.converters import job_to_qiskit_circuit
-from qat.comm.datamodel.ttypes import QRegister
 from qat.comm.shared.ttypes import Job
 from qat.comm.shared.ttypes import Result as QlmRes
 from qat.core.qpu.qpu import QPUHandler, get_registers
+from qat.core.bits import DefaultRegister
 from qat.core import Batch
 from qat.core.wrappers.result import aggregate_data
 from qat.core.wrappers.result import Result as WResult, BatchResult, Sample
@@ -153,7 +153,7 @@ def generate_qlm_result(qiskit_result):
             Sample(state=state,
                    probability=freq / nbshots,
                    err=np.sqrt(
-                       freq / nbshots*(1.-freq/nbshots)/(nbshots-1))
+                       freq / nbshots * (1. - freq / nbshots) / (nbshots - 1))
                    if nbshots > 1 else None)
         )
     return ret
@@ -187,7 +187,7 @@ def generate_qlm_list_results(qiskit_result):
                 Sample(state=state,
                        probability=freq / nbshots,
                        err=np.sqrt(
-                           freq / nbshots*(1.-freq/nbshots)/(nbshots-1))
+                           freq / nbshots * (1. - freq / nbshots) / (nbshots - 1))
                        if nbshots > 1 else None)
             )
         ret_list.append(ret)
@@ -223,8 +223,7 @@ def _qlm_to_qiskit_result(
         job_id,
         success,
         qlm_results,
-        headers
-        ):
+        headers):
     """
     Tranform a QLM result into a Qiskit result structure.
 
@@ -370,7 +369,7 @@ class QPUToBackend(BaseBackend):
                     standard uses
             provider: Provider responsible for this backend
         """
-        super(QPUToBackend, self).__init__(configuration, provider)
+        super().__init__(configuration, provider)
         self.id_counter = 0
         self._qpu = qpu
 
@@ -444,9 +443,11 @@ class BackendToQPU(QPUHandler):
         token (str): Qiskit IBMQ login token. If not supplied, loaded from the environment
             variable :code:`QISKIT_TOKEN`
         ibmq_backend (str, optional): name of the backend. Defaults to 'ibmq_qasm_simulator'.
+        optimization_level (int, optional). Level of optimization: 0: No optimization (Default).
+            1: Light optimization. 2: Heavy optimization. 3: Highest optimization.
     """
     def __init__(self, backend=None, plugins=None, token=None,
-                 ibmq_backend='ibmq_qasm_simulator'):
+                 ibmq_backend='ibmq_qasm_simulator', optimization_level=0):
         """
         Args:
             backend: The Backend Qiskit object to be wrapped
@@ -458,6 +459,7 @@ class BackendToQPU(QPUHandler):
         """
         super().__init__(plugins)
         self.set_backend(backend, token, ibmq_backend)
+        self.optimization_level = optimization_level
 
     def set_backend(self, backend=None, token=None,
                     ibmq_backend='ibmq_qasm_simulator'):
@@ -509,12 +511,14 @@ class BackendToQPU(QPUHandler):
         qiskit_result = execute(
             qiskit_circuits, self.backend,
             shots=qlm_batch.jobs[0].nbshots or self.backend.configuration().max_shots,
-            coupling_map=None).result()
+            coupling_map=None,
+            optimization_level=self.optimization_level
+                                ).result()
         results = generate_qlm_list_results(qiskit_result)
         new_results = []
         for result in results:
             new_results.append(WResult.from_thrift(result))
-        return _wrap_results(qlm_batch, new_results)
+        return _wrap_results(qlm_batch, new_results, self.backend.configuration().max_shots)
 
     def submit_job(self, qlm_job):
         """
@@ -538,7 +542,7 @@ class BackendToQPU(QPUHandler):
         return result
 
 
-def _wrap_results(qlm_batch, results):
+def _wrap_results(qlm_batch, results, max_shots=0):
     """
     Wrap a Result structure using the corresponding Job's information
     This is mainly to provide a cleaner/higher level interface for the user
@@ -551,9 +555,7 @@ def _wrap_results(qlm_batch, results):
         :class:`~qat.core.Result` or :class:`~qat.core.BatchResult` object if the batch submitted
         contains several jobs
     """
-    for i in range(len(qlm_batch.jobs)):
-        qlm_job = qlm_batch.jobs[i]
-        result = results[i]
+    for qlm_job, result in zip(qlm_batch.jobs, results):
         qreg_list = None
         if qlm_job.circuit is not None:
             qreg_list = get_registers(qlm_job.circuit.qregs, qlm_job.qubits)
@@ -563,7 +565,9 @@ def _wrap_results(qlm_batch, results):
             length = 0
             if qlm_job.qubits is not None:
                 length = len(qlm_job.qubits)
-            result.wrap_samples([QRegister(start=0, length=length, type=1)])
+            result.wrap_samples([DefaultRegister(start=0, length=length)])
+
+        result.meta_data = {"nbshots": str(qlm_job.nbshots or max_shots)}
 
     return BatchResult(results=results, meta_data=qlm_batch.meta_data)
 
@@ -572,7 +576,7 @@ class QiskitJob:
     """
     Wrapper around Qiskit's asynchronous jobs.
     """
-    def __init__(self, qlm_batch, async_job):
+    def __init__(self, qlm_batch, async_job, max_shots):
         """
         Args:
             qlm_batch: :class:`~qat.core.Batch` or :class:`~qat.core.Job` object.
@@ -580,9 +584,11 @@ class QiskitJob:
                     Batch object
             async_job: Qiskit job instance derived from BaseJob.
                     Result of a previous asynchronous execution of qlm_batch
+            max_shots: Maximal number of shots allowed by the Backend
         """
         self._job_id = async_job.job_id()
         self._handler = async_job
+        self._max_shots = max_shots
         if isinstance(qlm_batch, Job):
             self._qlm_batch = Batch(jobs=[qlm_batch])
         else:
@@ -610,7 +616,7 @@ class QiskitJob:
             new_results = []
             for result in results:
                 new_results.append(WResult.from_thrift(result))
-            batch_result = _wrap_results(self._qlm_batch, new_results)
+            batch_result = _wrap_results(self._qlm_batch, new_results, self._max_shots)
             if not batch_result.results or len(batch_result.results) == 1:
                 return batch_result.results[0]
             return batch_result
@@ -738,7 +744,7 @@ class AsyncBackendToQPU(QPUHandler):
             qiskit_circuit, self.backend,
             shots=qlm_job.nbshots or self.backend.configuration().max_shots,
             coupling_map=None)
-        return QiskitJob(qlm_job, async_job)
+        return QiskitJob(qlm_job, async_job, self.backend.configuration().max_shots)
 
     def submit(self, qlm_batch):
         """
@@ -766,7 +772,7 @@ class AsyncBackendToQPU(QPUHandler):
             qiskit_circuits, self.backend,
             shots=qlm_batch.jobs[0].nbshots or self.backend.configuration().max_shots,
             coupling_map=None)
-        return QiskitJob(qlm_batch, async_job)
+        return QiskitJob(qlm_batch, async_job, self.backend.configuration().max_shots)
 
     def retrieve_job(self, file_name):
         """
@@ -781,7 +787,7 @@ class AsyncBackendToQPU(QPUHandler):
         """
         qlm_batch = Batch.load(file_name)
         async_job = self.backend.retrieve_job(qlm_batch.meta_data['job_id'])
-        return QiskitJob(qlm_batch, async_job)
+        return QiskitJob(qlm_batch, async_job, self.backend.configuration().max_shots)
 
 
 class QiskitConnector:
@@ -806,12 +812,12 @@ class QiskitConnector:
 
 class Qiskitjob(QiskitJob):
     """ Deprecated, use QiskitJob."""
-    def __init__(self, qlm_job, qobj):
+    def __init__(self, qlm_job, qobj, max_shots=0):
         warnings.warn(
             "Qiskitjob is deprecated, please use QiskitJob.",
             FutureWarning,
         )
-        super(Qiskitjob, self).__init__(qlm_job, qobj)
+        super().__init__(qlm_job, qobj, max_shots)
 
 
 class QLMBackend(QPUToBackend):
@@ -823,7 +829,7 @@ class QLMBackend(QPUToBackend):
             "QLMBackend is deprecated, please use QPUToBackend.",
             FutureWarning,
         )
-        super(QLMBackend, self).__init__(
+        super().__init__(
             qpu=qpu, configuration=configuration, provider=provider)
 
 
@@ -840,8 +846,8 @@ class QiskitQPU(BackendToQPU):
             FutureWarning,
         )
         del url
-        super(QiskitQPU, self).__init__(backend=backend, plugins=plugins,
-                                        token=token, ibmq_backend=ibmq_backend)
+        super().__init__(backend=backend, plugins=plugins,
+                         token=token, ibmq_backend=ibmq_backend)
 
 
 class AsyncQiskitQPU(AsyncBackendToQPU):
@@ -857,8 +863,8 @@ class AsyncQiskitQPU(AsyncBackendToQPU):
             FutureWarning,
         )
         del plugins, url
-        super(AsyncQiskitQPU, self).__init__(backend=backend, token=token,
-                                             ibmq_backend=ibmq_backend)
+        super().__init__(backend=backend, token=token,
+                         ibmq_backend=ibmq_backend)
 
 
 class QLMConnector(QiskitConnector):
