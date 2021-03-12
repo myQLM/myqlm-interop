@@ -668,6 +668,8 @@ def qlm_to_cirq(qlm_circuit):
                     gate = gate(exponent=params[0] / pi)
                 else:
                     gate = gate(*params)
+            else:
+                gate = gate()
 
             if dag % 2 == 1:
                 gate = cirq.inverse(gate)
