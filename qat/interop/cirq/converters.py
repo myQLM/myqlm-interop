@@ -50,6 +50,7 @@ from typing import cast
 from numpy import array, complex128, cos, sin, diag
 
 from qat.core.util import extract_syntax
+import qat.core.variables
 from qat.lang.AQASM import Program, AbstractGate, H, X, Y, Z, S, T, RX, RY, RZ, \
     SWAP, ISWAP, SQRTSWAP
 
@@ -57,6 +58,7 @@ import cirq
 from cirq.ops import common_gates, controlled_gate
 ops = cirq.ops
 
+import sympy
 
 # Adding parity gates
 def gen_XX():
@@ -641,6 +643,21 @@ QLM_GATE_DIC = {
     'PH': common_gates.ZPowGate
 }
 
+def _qat2sympy(ae):
+    """
+    Transforms qat Arithmetic expressions into Sympy
+    
+    Args:
+        ae (qat.core.variables.ArithExpression): Arithmetic expression
+    Returns:
+        Sympy expression
+    """
+    if isinstance(ae, qat.core.variables.ArithExpression):
+        return ae.symbol.evaluator(*[_qat2sympy(c) for c in ae.children])
+    elif isinstance(ae, qat.core.variables.Variable):
+        return sympy.symbols(ae.name)
+    else:
+        return ae
 
 def qlm_to_cirq(qlm_circuit):
     """ Converts a QLM circuit to a cirq circuit.
@@ -664,6 +681,12 @@ def qlm_to_cirq(qlm_circuit):
                 continue
             gate = QLM_GATE_DIC[name.rsplit('-', 1)[-1]]
             if len(params) > 0:
+                for i, p in enumerate(params):
+                    if isinstance(p, qat.core.variables.Variable):
+                        params[i] = sympy.symbols(p.name)
+                    elif isinstance(p, qat.core.variables.ArithExpression):
+                        params[i] = _qat2sympy(p)
+                      
                 if name.rsplit('-', 1)[-1] == 'PH':
                     gate = gate(exponent=params[0] / pi)
                 else:
