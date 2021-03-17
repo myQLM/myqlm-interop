@@ -47,7 +47,7 @@ Or
 import warnings
 from math import pi
 from typing import cast
-from numpy import array, complex128, cos, sin, diag
+from numpy import array, complex128, cos, sin, diag, ufunc
 
 from qat.core.util import extract_syntax
 import qat.core.variables
@@ -646,14 +646,17 @@ QLM_GATE_DIC = {
 def _qat2sympy(ae):
     """
     Transforms qat Arithmetic expressions into Sympy
-    
+
     Args:
         ae (qat.core.variables.ArithExpression): Arithmetic expression
     Returns:
         Sympy expression
     """
     if isinstance(ae, qat.core.variables.ArithExpression):
-        return ae.symbol.evaluator(*[_qat2sympy(c) for c in ae.children])
+        if isinstance(ae.symbol.evaluator, ufunc):
+            return sympy.sympify(ae.symbol.evaluator.__name__)(*[_qat2sympy(c) for c in ae.children])
+        else:
+            return ae.symbol.evaluator(*[_qat2sympy(c) for c in ae.children])
     elif isinstance(ae, qat.core.variables.Variable):
         return sympy.symbols(ae.name)
     else:
@@ -686,7 +689,7 @@ def qlm_to_cirq(qlm_circuit):
                         params[i] = sympy.symbols(p.name)
                     elif isinstance(p, qat.core.variables.ArithExpression):
                         params[i] = _qat2sympy(p)
-                      
+
                 if name.rsplit('-', 1)[-1] == 'PH':
                     gate = gate(exponent=params[0] / pi)
                 else:

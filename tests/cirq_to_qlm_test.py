@@ -27,13 +27,15 @@ from qat.interop.cirq.converters import qlm_to_cirq
 from qat.lang.AQASM import *
 from numpy import pi
 
+from qat.core.variables import cos
+
 import sympy
 
 class TestQLM2GcirqConversion(unittest.TestCase):
     """ Tests the function converting qlm circuit to google cirq circuit
     """
 
-    def test(self):
+    def test_simple_circuit_conversion(self):
         nb_qubits = 5
         datapoints = [1, 0, 1, 0, 0]
 
@@ -63,7 +65,7 @@ class TestQLM2GcirqConversion(unittest.TestCase):
         for op_e, op_r in zip(expected, result):
             self.assertEqual(op_e, op_r)
 
-    def test_parametrized_circuit(self):
+    def test_parametrized_circuit_with_symbolic_variables(self):
         nb_qubits = 3
         symb='a'
 
@@ -72,7 +74,7 @@ class TestQLM2GcirqConversion(unittest.TestCase):
         var_cirq = sympy.symbols(symb)
         for qb in qreg1:
             expected.append(cirq.ry(var_cirq)(qb))
-            expected.append(cirq.rz(4*var_cirq**2)(qb))
+            expected.append(cirq.rz(4*sympy.cos(var_cirq)**2)(qb))
 
         for qbit in qreg1:
             expected.append(cirq.measure(qbit))
@@ -83,7 +85,7 @@ class TestQLM2GcirqConversion(unittest.TestCase):
         variable = prog.new_var(float, symb)
         for qbit in qbits:
             prog.apply(RY(variable),qbit)
-            prog.apply(RZ(4*variable**2),qbit)
+            prog.apply(RZ(4*cos(variable)**2),qbit)
 
         circ = prog.to_circ()
         result = qlm_to_cirq(circ)
