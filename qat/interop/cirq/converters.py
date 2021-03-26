@@ -524,6 +524,11 @@ gate_dic = {
     common_gates.ZPowGate: process_Z,
     common_gates.S: process_S,
     common_gates.T: process_T,
+    type(cirq.X): process_X,
+    type(cirq.Y): process_Y,
+    type(cirq.Z): process_Z,
+    type(cirq.S): process_Z,
+    type(cirq.T): process_Z,
     common_gates.SwapPowGate: process_SWAP,
     common_gates.ISwapPowGate: process_ISWAP,
     common_gates.CNotPowGate: process_CX,
@@ -626,10 +631,10 @@ def cirq_to_qlm(circ, sep_measures=False, **kwargs):
 
 
 QLM_GATE_DIC = {
-    'H': common_gates.H,
-    'X': common_gates.XPowGate,
-    'Y': common_gates.YPowGate,
-    'Z': common_gates.ZPowGate,
+    'H': cirq.H,
+    'X': cirq.X,
+    'Y': cirq.Y,
+    'Z': cirq.Z,
     'RX': cirq.rx,
     'RY': cirq.ry,
     'RZ': cirq.rz,
@@ -694,8 +699,6 @@ def qlm_to_cirq(qlm_circuit):
                     gate = gate(exponent=params[0] / pi)
                 else:
                     gate = gate(*params)
-            else:
-                gate = gate()
 
             if dag % 2 == 1:
                 gate = cirq.inverse(gate)
