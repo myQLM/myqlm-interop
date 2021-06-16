@@ -24,18 +24,5 @@ from pkgutil import extend_path
 # Try to find other QAT packages in other folders
 __path__ = extend_path(__path__, __name__)
 
-
-from pkg_resources import parse_version
-import pyquil
-import grove
-import warnings
 from .converters import pyquil_to_qlm, qlm_to_pyquil
 from .providers import PyquilQPU
-
-if parse_version(pyquil.__version__) > parse_version('2.20.0'):
-    warnings.warn("pyquil version {} is not tested, use version 2.20.0"
-                  .format(pyquil.__version__))
-
-if parse_version(grove.__version__) > parse_version('1.7.0'):
-    warnings.warn("grove version {} is not tested, use version 1.7.0"
-                  .format(grove.__version__))

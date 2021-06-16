@@ -24,14 +24,4 @@ from pkgutil import extend_path
 # Try to find other QAT packages in other folders
 __path__ = extend_path(__path__, __name__)
 
-
-from pkg_resources import parse_version
-import projectq
-import warnings
 from .converters import AqasmPrinter, AqasmEngine
-
-if parse_version(projectq.__version__) > parse_version('0.5.1'):
-    warnings.warn("projectq version {} is not tested, use version 0.5.1"
-                  .format(projectq.__version__))
-
-
