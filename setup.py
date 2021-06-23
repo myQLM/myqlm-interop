@@ -50,7 +50,7 @@ setup(
                           "qiskit-aqua==0.7.1", "qiskit-ignis==0.3.0",
                           "qiskit-aer==0.5.1", "qiskit-ibmq-provider==0.7.1"],
         "projectq_binder": ["projectq==0.5.1"],
-        "cirq_binder": ["cirq==0.8.2"],
+        "cirq_binder": ["cirq==0.10.0"],
         "pyquil_binder": ["pyquil==2.20.0", "quantum-grove==1.7.0"],
         "all": ["qiskit==0.19.2", "qiskit-terra==0.14.1", "qiskit-aqua==0.7.1",
                 "qiskit-ignis==0.3.0", "qiskit-aer==0.5.1",
