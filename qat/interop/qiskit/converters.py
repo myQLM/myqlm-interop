@@ -341,10 +341,11 @@ def get_gate(gate, params, num_ctrl_qubits=None):
         for _ in range(num_ctrl_qubits):
             name = "c" + name
         return get_gate(name, params, num_ctrl_qubits)
-    if len(params) == 0:
-        return GATE_DIC[gate]
 
-    return GATE_DIC[gate](*params)
+    gate_obj = GATE_DIC[gate]
+    if isinstance(gate_obj, AbstractGate) or len(params) > 0:
+        return GATE_DIC[gate](*params)
+    return GATE_DIC[gate]
 
 
 def qiskit_to_qlm(qiskit_circuit, sep_measures=False, **kwargs):
