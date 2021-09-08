@@ -140,7 +140,7 @@ def generate_qlm_result(qiskit_result):
 
     nbshots = qiskit_result.results[0].shots
     try:
-        counts = [vars(result.data.counts) for result in qiskit_result.results]
+        counts = [result.data.counts for result in qiskit_result.results]
     except AttributeError:
         print("No measures, so the result is empty")
         return QlmRes(raw_data=[])
@@ -172,7 +172,7 @@ def generate_qlm_list_results(qiskit_result):
 
     nbshots = qiskit_result.results[0].shots
     try:
-        counts = [vars(result.data.counts) for result in qiskit_result.results]
+        counts = [result.data.counts for result in qiskit_result.results]
     except AttributeError:
         print("No measures, so the result is empty")
         return QlmRes(raw_data=[])
