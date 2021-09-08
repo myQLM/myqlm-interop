@@ -96,7 +96,7 @@ def qiskit_1qb(qc):
     Returns the list of the qiskit gate methods that affect 1 qubit and
     take no parameter.
     """
-    return [qc.x, qc.y, qc.z, qc.iden, qc.s, qc.t, qc.sdg, qc.tdg, qc.h]
+    return [qc.x, qc.y, qc.z, qc.id, qc.s, qc.t, qc.sdg, qc.tdg, qc.h]
 
 
 def qiskit_1qb_1prm(qc):

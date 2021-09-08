@@ -510,7 +510,7 @@ def _get_qiskit_gate_from_name(name):
         'RY': RYGate,
         'RZ': RZGate,
         'C-H': CHGate,
-        'CNOT': CnotGate,
+        'CNOT': CXGate,
         'C-Y': CYGate,
         'CSIGN': CZGate,
         'C-RZ': CRZGate,

@@ -55,7 +55,7 @@ def gen_gates(ocirc):
         ocirc.x,
         ocirc.y,
         ocirc.z,
-        ocirc.iden,
+        ocirc.id,
         ocirc.s,
         ocirc.t,
         ocirc.h,
