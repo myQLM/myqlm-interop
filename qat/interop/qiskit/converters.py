@@ -299,7 +299,8 @@ GATE_DIC = {
     "y": Y,
     "z": Z,
     "swap": SWAP,
-    "iden": I,
+    "i": I,
+    "id": I,
     "s": S,
     "sdg": S.dag(),
     "t": T,
@@ -316,9 +317,9 @@ GATE_DIC = {
     "ms": MS,
     # below: deprecated
     "u0": I,
-    "id": I,
     "U": U,
     "xbase": X,
+    "iden": I,
 }
 
 
@@ -459,7 +460,7 @@ def _gen_qiskit_gateset(q_circ):
         'Y': q_circ.y,
         'Z': q_circ.z,
         'SWAP': q_circ.swap,
-        'I': q_circ.iden,
+        'I': q_circ.id,
         'S': q_circ.s,
         'D-S': q_circ.sdg,
         'T': q_circ.t,
@@ -478,7 +479,7 @@ def _gen_qiskit_gateset(q_circ):
         'U3': q_circ.u3,
         'U2': q_circ.u2,
         'U1': q_circ.u1,
-        'U0': q_circ.iden,
+        'U0': q_circ.id,
         'PH': q_circ.rz,
         'RXX': q_circ.rxx,
         'RZZ': q_circ.rzz,
