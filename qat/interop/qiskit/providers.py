@@ -96,7 +96,7 @@ from qiskit.providers.models.backendconfiguration import (
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 from qiskit.assembler import disassemble
-from qiskit.validation.base import Obj
+from qiskit.qobj import QobjExperimentHeader
 from qiskit import execute, Aer, IBMQ
 
 # QLM imports
@@ -212,7 +212,7 @@ def _generate_experiment_result(qlm_result, head):
         shots=len(qlm_result.raw_data),
         success=True,
         data=data,
-        header=Obj.from_dict(head),
+        header=QobjExperimentHeader.from_dict(head),
     )
 
 
