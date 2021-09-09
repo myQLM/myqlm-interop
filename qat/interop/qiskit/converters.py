@@ -43,7 +43,7 @@ Or
 import warnings
 import operator
 import numpy as np
-from sympy.core import Add, Mul, Pow
+from symengine import Add, Mul, Pow
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit import Parameter, ParameterExpression
 from qiskit.circuit.library.standard_gates import *
