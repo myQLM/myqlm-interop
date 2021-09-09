@@ -407,7 +407,7 @@ def qiskit_to_qlm(qiskit_circuit, sep_measures=False, **kwargs):
                 _get_cindex(qiskit_circuit, carg.register.name, carg.index))
 
         # Get parameters
-        for param in gate_op[0]._params:
+        for param in gate_op[0].params:
             if isinstance(param, (Parameter, ParameterExpression)):
                 prms.append(_qiskit_to_qlm_param(prog, variables, param))
             else:
