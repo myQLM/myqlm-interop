@@ -705,7 +705,7 @@ def qlm_to_qiskit(qlm_circuit, qubits=None):
                 else:
                     if name.endswith("U2"):
                         # u2(phi, lambda) = u(pi/2, phi, lambda)
-                        params = (np.pi, *params)
+                        params = [np.pi] + params
                         name = name[:-1]
                     if (nbctrls > 0 and name not in SUPPORTED_CTRLS):
                         tmp = name
