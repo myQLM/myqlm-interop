@@ -88,7 +88,7 @@ from collections import Counter
 import warnings
 import numpy as np
 
-from qiskit.providers import BackendV1, JobV1
+from qiskit.providers import BackendV1, JobV1, Options
 from qiskit.providers.models.backendconfiguration import (
     BackendConfiguration,
     GateConfig,
@@ -362,6 +362,11 @@ class QPUToBackend(BackendV1):
                 standard uses
         provider: Provider responsible for this backend
     """
+    configuration = _QLM_PARAMS
+
+    @classmethod
+    def _default_options(cls):
+        return Options(shots=1024, memory=False)
 
     def __init__(self, qpu=None, configuration=_QLM_BACKEND, provider=None):
         """
