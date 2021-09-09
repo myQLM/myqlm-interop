@@ -133,8 +133,7 @@ class TestQiskit2QLMConversion(unittest.TestCase):
         for gate_op in gates_3qb_0prm:
             gate_op(qreg2[0], qreg3[1], qreg1[1])
 
-        ocirc.u2(3.14, 3.14, qreg3[0])
-        ocirc.u3(3.14, 3.14, 3.14, qreg3[0])
+        ocirc.u(3.14, 3.14, 3.14, qreg3[0])
         ocirc.r(3.14, 3.14, qreg3[0])
         ocirc.ms(3.14, [qreg1[1], qreg2[0], qreg3[0]])
 

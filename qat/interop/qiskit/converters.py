@@ -311,15 +311,16 @@ GATE_DIC = {
     "rxx": RXX,
     "rzz": RZZ,
     "u1": RZ,
-    "u2": U2,
-    "u3": U3,
     "r": R,
     "ms": MS,
+    "u": U3,
     # below: deprecated
     "u0": I,
     "U": U,
     "xbase": X,
     "iden": I,
+    "u2": U2,
+    "u3": U3,
 }
 
 
@@ -476,8 +477,8 @@ def _gen_qiskit_gateset(q_circ):
         'C-RZ': q_circ.crz,
         'CCNOT': q_circ.ccx,
         'C-SWAP': q_circ.cswap,
-        'U': q_circ.u3,
-        'U3': q_circ.u3,
+        'U': q_circ.u,
+        'U3': q_circ.u,
         'U2': q_circ.u2,
         'U1': q_circ.u1,
         'U0': q_circ.id,
@@ -702,6 +703,10 @@ def qlm_to_qiskit(qlm_circuit, qubits=None):
                 if name == "MS":
                     q_circ.ms(params[0], [qreg[i] for i in gate_op.qbits])
                 else:
+                    if name.endswith("u2"):
+                        # u2(phi, lambda) = u(pi/2, phi, lambda)
+                        params = (np.pi, *params)
+                        name = name[:-1]
                     if (nbctrls > 0 and name not in SUPPORTED_CTRLS):
                         tmp = name
                         count = 0

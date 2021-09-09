@@ -293,8 +293,10 @@ class QLMJob(BaseJob):
 
 
 _QLM_GATE_NAMES = [
+    "i",
     "id",
     "iden",
+    "u",
     "u0",
     "u1",
     "u2",
