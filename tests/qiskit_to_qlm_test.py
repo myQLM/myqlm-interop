@@ -64,7 +64,7 @@ def gen_gates(ocirc):
     ]
     gates_2qb_0prm = [ocirc.ch, ocirc.cx, ocirc.swap]
     gates_1qb_1prm = [ocirc.rx, ocirc.ry, ocirc.rz, ocirc.u1]
-    gates_2qb_1prm = [ocirc.crz, ocirc.cu1, ocirc.rxx, ocirc.rzz]
+    gates_2qb_1prm = [ocirc.crz, ocirc.rxx, ocirc.rzz]
     gates_3qb_0prm = [ocirc.cswap, ocirc.ccx]
     return (
         gates_1qb_0prm,
@@ -95,7 +95,6 @@ PYGATES_2QB = [
     H.ctrl(),
     CNOT,
     SWAP,
-    RZ(3.14).ctrl(),
     RZ(3.14).ctrl(),
     RXX(3.14),
     RZZ(3.14)
@@ -155,7 +154,6 @@ class TestQiskit2QLMConversion(unittest.TestCase):
 
         prog.apply(SWAP.ctrl(), qubits[2], qubits[4], qubits[1])
         prog.apply(X.ctrl().ctrl(), qubits[2], qubits[4], qubits[1])
-        prog.apply(U2(3.14, 3.14), qubits[3])
         prog.apply(U3(3.14, 3.14, 3.14), qubits[3])
         prog.apply(R(3.14, 3.14), qubits[3])
         prog.apply(MS(3.14, 3), qubits[1], qubits[2], qubits[3])

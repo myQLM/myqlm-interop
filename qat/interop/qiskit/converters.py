@@ -310,7 +310,7 @@ GATE_DIC = {
     "rz": RZ,
     "rxx": RXX,
     "rzz": RZZ,
-    "u1": RZ,
+    "p": RZ,
     "r": R,
     "ms": MS,
     "u": U3,
@@ -319,6 +319,7 @@ GATE_DIC = {
     "U": U,
     "xbase": X,
     "iden": I,
+    "u1": RZ,
     "u2": U2,
     "u3": U3,
 }
@@ -479,8 +480,7 @@ def _gen_qiskit_gateset(q_circ):
         'C-SWAP': q_circ.cswap,
         'U': q_circ.u,
         'U3': q_circ.u,
-        'U2': q_circ.u2,
-        'U1': q_circ.u1,
+        'U1': q_circ.p,
         'U0': q_circ.id,
         'PH': q_circ.rz,
         'RXX': q_circ.rxx,
@@ -703,7 +703,7 @@ def qlm_to_qiskit(qlm_circuit, qubits=None):
                 if name == "MS":
                     q_circ.ms(params[0], [qreg[i] for i in gate_op.qbits])
                 else:
-                    if name.endswith("u2"):
+                    if name.endswith("U2"):
                         # u2(phi, lambda) = u(pi/2, phi, lambda)
                         params = (np.pi, *params)
                         name = name[:-1]
