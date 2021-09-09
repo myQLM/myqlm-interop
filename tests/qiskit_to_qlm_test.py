@@ -251,17 +251,15 @@ class TestQiskit2QLMConversion(unittest.TestCase):
                                      "+ + + * -1.0 param3 param2 param0 param1")
                 if i == 5:
                     self.assertEqual(param.to_thrift(),
-                                     "* * * param0 param1 param3 + "
-                                     + "4.54 param2")
+                                     "* * * + 4.54 param2 param0 param1 param3")
                 if i == 6:
                     self.assertEqual(param.to_thrift(),
-                                     "* * * * param0 param1 param3 + "
-                                     + "4.54 param2 + + + param0 param1 "
-                                     + "param2 * -1.0 param3")
+                                     "* + + + param0 param1 param2 * -1.0 param3 "
+                                     + "* * * + 4.54 param2 param0 param1 param3")
                 if i == 7:
                     self.assertEqual(param.to_thrift(),
-                                     "* ** + -7.0 param2 -1.0 + + + "
-                                     + "param0 param1 param2 * -1.0 param3")
+                                     "* + + + param0 param1 param2 * -1.0 param3"
+                                     + " ** + -7.0 param2 -1.0")
             i += 1
 
         prog = Program()
