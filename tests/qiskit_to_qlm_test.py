@@ -248,8 +248,7 @@ class TestQiskit2QLMConversion(unittest.TestCase):
                     self.assertEqual(param.to_thrift(), "param3")
                 if i == 4:
                     self.assertEqual(param.to_thrift(),
-                                     "+ + + param0 param1 param2 * "
-                                     + "-1.0 param3")
+                                     "+ + + * -1.0 param3 param2 param0 param1")
                 if i == 5:
                     self.assertEqual(param.to_thrift(),
                                      "* * * param0 param1 param3 + "
