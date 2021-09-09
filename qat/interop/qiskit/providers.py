@@ -88,7 +88,7 @@ from collections import Counter
 import warnings
 import numpy as np
 
-from qiskit.providers import BaseBackend, BaseJob
+from qiskit.providers import BackendV1, JobV1
 from qiskit.providers.models.backendconfiguration import (
     BackendConfiguration,
     GateConfig,
@@ -252,9 +252,9 @@ def _qlm_to_qiskit_result(
     )
 
 
-class QLMJob(BaseJob):
+class QLMJob(JobV1):
     """
-    QLM Job implement the required BaseJob interface of Qiskit with a
+    QLM Job implement the required JobV1 interface of Qiskit with a
     small twist: everything is computed synchronously (meaning that the
     job is stored at submit and computed at result).
     """
@@ -352,7 +352,7 @@ class NoQpuAttached(Exception):
 _QLM_BACKEND = BackendConfiguration(**_QLM_PARAMS)
 
 
-class QPUToBackend(BaseBackend):
+class QPUToBackend(BackendV1):
     """
     Basic connector implementing a Qiskit Backend, plugable on a QLM QPU.
 
@@ -584,7 +584,7 @@ class QiskitJob:
             qlm_batch: :class:`~qat.core.Batch` or :class:`~qat.core.Job` object.
                     If a QLM Job object is given, it will be converted in a QLM
                     Batch object
-            async_job: Qiskit job instance derived from BaseJob.
+            async_job: Qiskit job instance derived from JobV1.
                     Result of a previous asynchronous execution of qlm_batch
             max_shots: Maximal number of shots allowed by the Backend
         """
@@ -735,7 +735,7 @@ class AsyncBackendToQPU(QPUHandler):
 
         Returns:
             A :class:`~qat.interop.qiskit.QiskitJob` object with the same
-            interface as a job derived from BaseJob for the user to have
+            interface as a job derived from JobV1 for the user to have
             information on their job execution
         """
         if self.backend is None:
@@ -758,7 +758,7 @@ class AsyncBackendToQPU(QPUHandler):
                     from this job.
         Returns:
             :class:`~qat.interop.qiskit.QiskitJob` object with the same
-            interface as a job derived from BaseJob for the user to have
+            interface as a job derived from JobV1 for the user to have
             information on their job execution
         """
         if self.backend is None:
