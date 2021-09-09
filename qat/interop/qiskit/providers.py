@@ -349,7 +349,7 @@ class NoQpuAttached(Exception):
     """
 
 
-_QLM_BACKEND = BackendConfiguration(**_QLM_PARAMS)
+_QLM_BACKEND = BackendConfiguration.from_dict(_QLM_PARAMS)
 
 
 class QPUToBackend(BackendV1):
@@ -362,7 +362,6 @@ class QPUToBackend(BackendV1):
                 standard uses
         provider: Provider responsible for this backend
     """
-    configuration = _QLM_PARAMS
 
     @classmethod
     def _default_options(cls):
@@ -492,7 +491,7 @@ class BackendToQPU(QPUHandler):
                 provider = IBMQ.load_account()
                 self.backend = provider.get_backend(ibmq_backend)
             else:
-                self.backend = Aer.get_backend("qasm_simulator")
+                self.backend = Aer.get_backend("aer_simulator")
         else:
             self.backend = backend
 

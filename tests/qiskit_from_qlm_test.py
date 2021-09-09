@@ -52,7 +52,7 @@ GATE_NAMES = {'x': 'X', 'y': 'Y', 'z': 'Z', 'h': 'H', 'rx': 'RX', 'id': 'I',
               'ry': 'RY', 'rz': 'RZ', 's': 'S', 't': 'T', 'sdg': 'D-S',
               'tdg': 'D-T', 'swap': 'SWAP', 'cx': 'CNOT', 'ccx': 'CCNOT',
               'cy': 'C-Y', 'cz': 'CSIGN', 'ch': 'C-H', 'crz': 'C-RZ',
-              'cswap': 'C-SWAP', 'u2': 'U2', 'u3': 'U3', 'rxx': 'RXX',
+              'cswap': 'C-SWAP', 'u': 'U3', 'u2': 'U2', 'u3': 'U3', 'rxx': 'RXX',
               'rzz': 'RZZ', 'r': 'R', 'ms': 'MS', 'measure': 'measure'}
 
 

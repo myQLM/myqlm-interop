@@ -63,7 +63,7 @@ def gen_gates(ocirc):
         ocirc.tdg,
     ]
     gates_2qb_0prm = [ocirc.ch, ocirc.cx, ocirc.swap]
-    gates_1qb_1prm = [ocirc.rx, ocirc.ry, ocirc.rz, ocirc.u1]
+    gates_1qb_1prm = [ocirc.rx, ocirc.ry, ocirc.rz, ocirc.p]
     gates_2qb_1prm = [ocirc.crz, ocirc.rxx, ocirc.rzz]
     gates_3qb_0prm = [ocirc.cswap, ocirc.ccx]
     return (
