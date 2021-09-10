@@ -408,7 +408,7 @@ class QPUToBackend(BackendV1):
         circuits_metadata = [circuit.metadata for circuit in circuits]
 
         for kwarg in kwargs:
-            if not hasattr(kwarg, self.options):
+            if kwarg not in self.options:
                 raise ValueError(f"'{kwarg}' parameter not supported")
         nbshots = kwargs.get('shots', self.options.shots)
         qobj_id = kwargs.get('qobj_id', self.options.qobj_id)
