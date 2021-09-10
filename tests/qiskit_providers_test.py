@@ -391,7 +391,7 @@ class Test2QPUToBackend(unittest.TestCase):
         qiskit_circuits.append(qiskit_circuit_1)
         qiskit_circuits.append(qiskit_circuit_2)
 
-        result = backend.run(qiskit_circuit).result()
+        result = backend.run(qiskit_circuits).result()
 
         LOGGER.debug(
             "\nQPUToBackend test with a list of QLM jobs sent into a QLM qpu:")
