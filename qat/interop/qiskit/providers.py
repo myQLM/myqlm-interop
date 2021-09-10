@@ -86,17 +86,13 @@ three main classes:
 import os
 from collections import Counter
 import warnings
-import numpy as np
 from uuid import uuid4
+import numpy as np
 
 from qiskit.providers import BackendV1, JobV1, Options
-from qiskit.providers.models.backendconfiguration import (
-    BackendConfiguration,
-    GateConfig,
-)
+from qiskit.providers.models.backendconfiguration import BackendConfiguration
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
-from qiskit.assembler import disassemble
 from qiskit.qobj import QobjExperimentHeader
 from qiskit import execute, Aer, IBMQ
 
@@ -195,13 +191,13 @@ def generate_qlm_list_results(qiskit_result):
     return ret_list
 
 
-def _generate_experiment_result(qlm_result, meta_data):
+def _generate_experiment_result(qlm_result, metadata):
     """
     Generates a Qiskit experiment result.
 
     Args:
         qlm_result: qat.core.wrappers.Result object which data is aggregated
-        meta_data: meta_data of the circuit of the experiment
+        metadata: metadata of the circuit of the experiment
 
     Returns:
         An ExperimentResult structure.
@@ -213,7 +209,7 @@ def _generate_experiment_result(qlm_result, meta_data):
         shots=len(qlm_result.raw_data),
         success=True,
         data=data,
-        header=QobjExperimentHeader(metadata=meta_data),
+        header=QobjExperimentHeader(metadata=metadata),
     )
 
 
@@ -224,7 +220,7 @@ def _qlm_to_qiskit_result(
         job_id,
         success,
         qlm_results,
-        meta_data,
+        metadata,
         qobj_header):
     """
     Tranform a QLM result into a Qiskit result structure.
@@ -236,7 +232,7 @@ def _qlm_to_qiskit_result(
         job_id:
         success:
         qlm_results: List of qat.core.wrappers.Result objects
-        meta_data: List of the circuit's meta_data
+        metadata: List of the circuit's metadata
         qobj_header: user input that will be in the Result
 
     Returns:
@@ -250,7 +246,7 @@ def _qlm_to_qiskit_result(
         success=success,
         results=[
             _generate_experiment_result(result, md)
-            for result, md in zip(qlm_results, meta_data)
+            for result, md in zip(qlm_results, metadata)
         ],
         header=qobj_header,
     )
@@ -263,14 +259,14 @@ class QLMJob(JobV1):
     job is stored at submit and computed at result).
     """
 
-    def set_results(self, qlm_result, qobj_id, meta_data, qobj_header):
+    def set_results(self, qlm_result, qobj_id, metadata, qobj_header):
         """
         Sets the results of the Job.
 
         Args:
             qlm_result: :class:`~qat.core.wrappers.result.Result` object
             qobj_id: Identifier of the initial Qobj structure
-            meta_data: List of the circuit's meta_data
+            metadata: List of the circuit's metadata
             qobj_header: user input that will be in the Result
         """
         self._results = _qlm_to_qiskit_result(
@@ -280,7 +276,7 @@ class QLMJob(JobV1):
             self._job_id,
             True,
             qlm_result,
-            meta_data,
+            metadata,
             qobj_header,
         )
 
@@ -409,7 +405,7 @@ class QPUToBackend(BackendV1):
         if self._qpu is None:
             raise NoQpuAttached("No qpu attached to the QLM connector.")
         circuits = run_input if isinstance(run_input, list) else [run_input]
-        circuits_meta_data = [circuit.meta_data for circuit in circuits]
+        circuits_metadata = [circuit.metadata for circuit in circuits]
 
         for kwarg in kwargs:
             if not hasattr(kwarg, self.options):
@@ -435,7 +431,7 @@ class QPUToBackend(BackendV1):
         # Creating a job that will contain the results
         job = QLMJob(self, str(self.id_counter))
         self.id_counter += 1
-        job.set_results(results, qobj_id, circuits_meta_data, qobj_header)
+        job.set_results(results, qobj_id, circuits_metadata, qobj_header)
         return job
 
 

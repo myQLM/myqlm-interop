@@ -27,7 +27,6 @@ import logging
 import os
 from qiskit import QuantumRegister, QuantumCircuit
 from qiskit import ClassicalRegister, execute, Aer
-from qiskit.compiler import assemble
 from qat.lang.AQASM import Program, H, CNOT
 from qat.pylinalg import PyLinalg
 from qat.core.wrappers import Batch
@@ -363,8 +362,7 @@ class Test2QPUToBackend(unittest.TestCase):
         qiskit_circuit.measure(qreg, creg)
 
         backend = QiskitConnector() | PyLinalg()
-        qobj = assemble(qiskit_circuit)
-        result = backend.run(qobj).result()
+        result = backend.run(qiskit_circuit).result()
 
         LOGGER.debug("\nQPUToBackend test with a QLM job sent into a QLM qpu:")
         LOGGER.debug(result.results)
@@ -393,8 +391,7 @@ class Test2QPUToBackend(unittest.TestCase):
         qiskit_circuits.append(qiskit_circuit_1)
         qiskit_circuits.append(qiskit_circuit_2)
 
-        qobj = assemble(qiskit_circuits)
-        result = backend.run(qobj).result()
+        result = backend.run(qiskit_circuit).result()
 
         LOGGER.debug(
             "\nQPUToBackend test with a list of QLM jobs sent into a QLM qpu:")
