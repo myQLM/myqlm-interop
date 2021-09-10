@@ -325,7 +325,7 @@ _QLM_GATE_NAMES = [
     "r",
 ]
 
-_QLM_GATES = [GateConfig(name="FOO", parameters=[], qasm_def="BAR")]
+_QLM_GATES = [{"name": "FOO", "parameters": [], "qasm_def": "BAR"}]
 
 _QLM_PARAMS = {
     "backend_name": "QiskitConnector",  # Name of the back end
@@ -365,7 +365,7 @@ class QPUToBackend(BackendV1):
 
     @classmethod
     def _default_options(cls):
-        return Options(shots=1024, memory=False)
+        return Options(shots=0, memory=False)
 
     def __init__(self, qpu=None, configuration=_QLM_BACKEND, provider=None):
         """
