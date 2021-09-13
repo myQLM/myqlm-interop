@@ -321,7 +321,7 @@ class TestQLM2QiskitConversion(unittest.TestCase):
         prog.apply(X, qbits[0])
         circ = prog.to_circ()
 
-        qpu = BackendToQPU(Aer.get_backend('qasm_simulator'))
+        qpu = BackendToQPU(Aer.get_backend('aer_simulator'))
         res = qpu.submit(circ.to_job(nbshots=1))
         self.assertEqual(res[0].state.int, 0b01)
 
@@ -340,7 +340,7 @@ class TestQLM2QiskitConversion(unittest.TestCase):
         prog.apply(X, qbits)
         circ = prog.to_circ()
 
-        qpu = BackendToQPU(Aer.get_backend('qasm_simulator'))
+        qpu = BackendToQPU(Aer.get_backend('aer_simulator'))
         self.assertRaises(QPUException, qpu.submit,
                           circ.to_job("OBS", observable=Observable(1)))
 

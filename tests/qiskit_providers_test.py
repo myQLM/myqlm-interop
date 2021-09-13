@@ -72,7 +72,7 @@ class Test0BackendToQPU(unittest.TestCase):
         batch = Batch(jobs=[qlm_job1, qlm_job2])
 
         # a backend is specified
-        backend = Aer.get_backend('qasm_simulator')
+        backend = Aer.get_backend('aer_simulator')
         qpu = BackendToQPU(backend)
 
         results = qpu.submit(batch)
@@ -151,7 +151,7 @@ class Test1AsyncBackendToQPU(unittest.TestCase):
         batch = Batch(jobs=[qlm_job1, qlm_job2])
 
         # a backend is specified
-        backend = Aer.get_backend('qasm_simulator')
+        backend = Aer.get_backend('aer_simulator')
         qpu = AsyncBackendToQPU(backend)
 
         job = qpu.submit(batch)

@@ -451,7 +451,7 @@ class BackendToQPU(QPUHandler):
      - an IBM token and the name of the backend: please the keyword arguments
        :code:`token` and :code:`ibmq_backend` (the default backend is
        :code:`"ibmq_qasm_simulator"`)
-     - *no argument*: the :code:`"qasm_simulator"` is used if no argment is specified
+     - *no argument*: the :code:`"aer_simulator"` is used if no argment is specified
 
     Args:
         backend: The Backend Qiskit object that is supposed to execute
@@ -685,7 +685,7 @@ class AsyncBackendToQPU(QPUHandler):
      - an IBM token and the name of the backend: please the keyword arguments
        :code:`token` and :code:`ibmq_backend` (the default backend is
        :code:`"ibmq_qasm_simulator"`)
-     - *no argument*: the :code:`"qasm_simulator"` is used if no argment is specified
+     - *no argument*: the :code:`"aer_simulator"` is used if no argment is specified
 
     .. warning::
 
@@ -736,7 +736,7 @@ class AsyncBackendToQPU(QPUHandler):
                 provider = IBMQ.load_account()
                 self.backend = provider.get_backend(ibmq_backend)
             else:
-                self.backend = Aer.get_backend("qasm_simulator")
+                self.backend = Aer.get_backend("aer_simulator")
         else:
             self.backend = backend
 
