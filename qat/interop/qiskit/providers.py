@@ -366,7 +366,8 @@ class QPUToBackend(BackendV1):
 
     @classmethod
     def _default_options(cls):
-        return Options(shots=0, qobj_id=str(uuid4()), qobj_header=dict())
+        return Options(shots=0, qobj_id=str(uuid4()), qobj_header=dict(),
+                       parameter_binds=dict())
 
     def __init__(self, qpu=None, configuration=_QLM_BACKEND, provider=None):
         """
@@ -413,6 +414,7 @@ class QPUToBackend(BackendV1):
         nbshots = kwargs.get('shots', self.options.shots)
         qobj_id = kwargs.get('qobj_id', self.options.qobj_id)
         qobj_header = kwargs.get('qobj_header', self.options.qobj_header)
+        # TODO: use parameter_binds for constructing the job
 
         qlm_task = Batch(jobs=[])
         for circuit in circuits:
