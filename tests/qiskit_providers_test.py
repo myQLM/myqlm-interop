@@ -254,7 +254,7 @@ class Test1AsyncBackendToQPU(unittest.TestCase):
         batch = Batch(jobs=[qlm_job1, qlm_job2])
 
         # a backend is specified
-        backend = Aer.get_backend('qasm_simulator')
+        backend = Aer.get_backend('aer_simulator')
         qpu = AsyncBackendToQPU(backend)
         path_to_file = os.path.join(os.path.dirname(__file__), './ibmq_token')
 
