@@ -524,9 +524,6 @@ gate_dic = {
     common_gates.ZPowGate: process_Z,
     common_gates.S: process_S,
     common_gates.T: process_T,
-    common_gates.Rx: process_RX,
-    common_gates.Ry: process_RY,
-    common_gates.Rz: process_RZ,
     type(cirq.X): process_X,
     type(cirq.Y): process_Y,
     type(cirq.Z): process_Z,
@@ -544,6 +541,19 @@ gate_dic = {
     cirq.ops.parity_gates.ZZPowGate: process_ZZ,
     cirq.contrib.acquaintance.permutation.SwapPermutationGate: process_SWAP,
 }
+
+
+try:
+    cirq_latest_version_gates = {
+        common_gates.Rx: process_RX,
+        common_gates.Ry: process_RY,
+        common_gates.Rz: process_RZ,
+    }
+except AttributeError:
+    cirq_latest_version_gates = dict()
+
+
+gate_dic.update(cirq_latest_version_gates)
 
 
 # gets a cirq gate object and outputs corresponding pyaqasm gate
