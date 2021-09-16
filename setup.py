@@ -56,7 +56,7 @@ setup(
         "pyquil_binder": ["pyquil==3.0.0", "quantum-grove==1.7.0"],
         "all": ["qiskit==0.29.1", "qiskit-terra==0.18.2", "qiskit-aqua==0.9.5",
                 "qiskit-ignis==0.6.0", "qiskit-aer==0.8.2",
-                "qiskit-ibmq-provider==0.16.0",
+                "qiskit-ibmq-provider==0.16.0", "symengine",
                 "projectq==0.7.0", "cirq==0.10.0;python_version<'3.9'",
                 "cirq==0.12.0;python_version>='3.10'", "pyquil==3.0.0",
                 "quantum-grove==1.7.0"]
