@@ -48,11 +48,11 @@ setup(
     extras_require={
         "qiskit_binder": ["qiskit==0.30.0", "symengine"],
         "projectq_binder": ["projectq==0.7.0"],
-        "cirq_binder": ["cirq==0.11.1;python_version<'3.8'", "cirq==0.12.0;python_version>='3.8'"],
+        "cirq_binder": ["cirq==0.11.1"],
         "pyquil_binder;python_version>='3.7'": ["pyquil==3.0", "quantum-grove==1.7.0"],
         "all": ["qiskit==0.30.0", "symengine",
                 "projectq==0.7.0",
-                "cirq==0.11.1;python_version<'3.8'", "cirq==0.12.0;python_version>='3.8'",
+                "cirq==0.11.1",
                 "pyquil==3.0.0;python_version>='3.7'", "quantum-grove==1.7.0;python_version>='3.7'"]
     },
     tests_require=["pytest"],
