@@ -636,7 +636,7 @@ def _arith_expr_list_to_parameter_expression(
                           + "abstract variable expressions.")
 
     if arg == "UMINUS":
-        return -_arith_expr_list_to_parameter_expression(
+        return (-1) * _arith_expr_list_to_parameter_expression(
             param_list, arith_expr_list, root_expr)
 
     # if it is not an operation, it is either a variable or a value
