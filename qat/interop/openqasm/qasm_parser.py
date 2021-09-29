@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#pylint: skip-file
+# pylint: skip-file
 
 """
     Licensed to the Apache Software Foundation (ASF) under one
@@ -20,7 +20,7 @@
     under the License.
 """
 
-import math # noqa
+import math  # noqa
 import numpy as np
 import re
 import ply.yacc as yacc
@@ -34,39 +34,43 @@ from qat.core.circuit_builder.matrix_util import default_gate_set
 
 
 class ParsingEOF(Exception):
-    '''
+    """
     Unexpected End Of File
-    '''
+    """
+
     def __str__(self):
         return "Missing END before EOF"
 
 
 class ParsingError(Exception):
-    '''
+    """
     Standard exception for parsing errors.
-    '''
+    """
+
     def __init__(self, m):
         super(ParsingError, self).__init__()
         self.token = m
 
     def __str__(self):
         base = "Line {} : Parsing error around '{}'"
-        return base.format(self.token.lineno,
-                           self.token.value)
+        return base.format(self.token.lineno, self.token.value)
+
 
 class ImplementationError(Exception):
-    '''
+    """
     Exception raised when a feature is not supported
-    '''
+    """
+
     def __init__(self, m):
         super(ImplementationError, self).__init__()
 
 
 class InvalidParameterNumber(Exception):
-    '''
+    """
     Exception raised when some parametrized gates is used
     with the wrong number of parameters.
-    '''
+    """
+
     def __init__(self, name, expected, arg_list, lineno):
         super(InvalidParameterNumber, self).__init__()
         self.expected = expected
@@ -75,42 +79,50 @@ class InvalidParameterNumber(Exception):
         self.lineno = lineno
 
     def __str__(self):
-        return "line {} : {} requires {} arguments ({} given)"\
-            .format(self.lineno, self.name, self.expected, len(self.arg_list))
+        return "line {} : {} requires {} arguments ({} given)".format(
+            self.lineno, self.name, self.expected, len(self.arg_list)
+        )
+
 
 def gen_U(theta, phi, lamda):
-    m11 = (math.e ** (1j*(phi + lamda)/2)) * math.cos(theta/2)
-    m12 = (-1) * (math.e ** (1j*(phi - lamda)/2)) * math.sin(theta/2)
-    m21 = (math.e ** (1j*(phi - lamda)/2)) * math.sin(theta/2)
-    m22 = (math.e ** (1j*(phi + lamda)/2)) * math.cos(theta/2)
-    return np.array([[m11, m12],[m21, m22]], dtype = np.complex128)
+    m11 = (math.e ** (1j * (phi + lamda) / 2)) * math.cos(theta / 2)
+    m12 = (-1) * (math.e ** (1j * (phi - lamda) / 2)) * math.sin(theta / 2)
+    m21 = (math.e ** (1j * (phi - lamda) / 2)) * math.sin(theta / 2)
+    m22 = (math.e ** (1j * (phi + lamda) / 2)) * math.cos(theta / 2)
+    return np.array([[m11, m12], [m21, m22]], dtype=np.complex128)
+
+
 def gen_dummy():
-    return np.matrix([[1,0],[0,1]], dtype = np.complex128)
+    return np.matrix([[1, 0], [0, 1]], dtype=np.complex128)
+
+
 def gen_u1(lamda):
     return gen_U(0, 0, lamda)
 
+
 def gen_u2(phi, lamda):
-    return gen_U(math.pi/2, phi, lamda)
+    return gen_U(math.pi / 2, phi, lamda)
+
 
 def extract_inc(filename):
     """
-        Helper function to inline included files
+    Helper function to inline included files
     """
     ret = None
-    with open(filename, 'r') as main_file:
+    with open(filename, "r") as main_file:
         for line in main_file:
-            res = re.search('^include .*$', line)
+            res = re.search("^include .*$", line)
             if res:
                 incfile = res.group(0).split(" ", 1)[1][1:-2]
                 if incfile == "qelib1.inc":
                     continue
                 incstr = extract_inc(incfile)
-                with open(filename, 'r') as main_split:
+                with open(filename, "r") as main_split:
                     ret = main_split.read().split(line, 1)
                     ret[0] = ret[0] + incstr
                     ret[0] = ret[0] + ret[1]
         if ret is None:
-            with open(filename, 'r') as main_ret:
+            with open(filename, "r") as main_ret:
                 return main_ret.read()
         else:
             return ret[0]
@@ -120,31 +132,33 @@ def eval_exp(rout_params, instr_params, actual_params):
     params_index = []
     eval_params = []
     eval_param_op = []
-    #print("Params we got ")
-    #print(rout_params)
-    #print(instr_params)
-    #print(actual_params)
+    # print("Params we got ")
+    # print(rout_params)
+    # print(instr_params)
+    # print(actual_params)
     for param in instr_params:
         rout_index = 0
         if isinstance(param, str):
-            if param == '+' or param == '-' or param == '*' or param == '/':
+            if param == "+" or param == "-" or param == "*" or param == "/":
                 eval_param_op.append(param)
             else:
                 for k in rout_params:
                     if param == k:
                         # matches each local parameter inside the routine to
                         # the parameter value used in the main function
-                        #print("appending str")
-                        #print(actual_params[rout_index])
-                        #print("pre str eval params")
-                        #print(eval_params)
+                        # print("appending str")
+                        # print(actual_params[rout_index])
+                        # print("pre str eval params")
+                        # print(eval_params)
                         if len(eval_param_op) == 0:
                             eval_param_op.append(actual_params[rout_index])
 
-                        elif eval_param_op[len(eval_param_op)-1] == '+' or\
-                           eval_param_op[len(eval_param_op)-1] == '-' or\
-                           eval_param_op[len(eval_param_op)-1] == '*' or\
-                           eval_param_op[len(eval_param_op)-1] == '/':
+                        elif (
+                            eval_param_op[len(eval_param_op) - 1] == "+"
+                            or eval_param_op[len(eval_param_op) - 1] == "-"
+                            or eval_param_op[len(eval_param_op) - 1] == "*"
+                            or eval_param_op[len(eval_param_op) - 1] == "/"
+                        ):
 
                             eval_param_op.append(actual_params[rout_index])
                             eval_params.append(eval_param_op)
@@ -157,21 +171,23 @@ def eval_exp(rout_params, instr_params, actual_params):
                     rout_index += 1
         elif isinstance(param, list):  # non evaluated expression
             p = eval_exp(rout_params, param, actual_params)
-            #print("recursie params")
-            #print(p)
-            #print("pre list eval params")
-            #print(eval_params)
-            #if len(params_index) == 1:
-                #print("found")
-                #print(p)
+            # print("recursie params")
+            # print(p)
+            # print("pre list eval params")
+            # print(eval_params)
+            # if len(params_index) == 1:
+            # print("found")
+            # print(p)
             if len(eval_param_op) == 0:
                 if len(p) > 0:
                     eval_param_op.append(p[0])
 
-            elif eval_param_op[len(eval_param_op)-1] == '+' or\
-                 eval_param_op[len(eval_param_op)-1] == '-' or\
-                 eval_param_op[len(eval_param_op)-1] == '*' or\
-                 eval_param_op[len(eval_param_op)-1] == '/':
+            elif (
+                eval_param_op[len(eval_param_op) - 1] == "+"
+                or eval_param_op[len(eval_param_op) - 1] == "-"
+                or eval_param_op[len(eval_param_op) - 1] == "*"
+                or eval_param_op[len(eval_param_op) - 1] == "/"
+            ):
                 eval_param_op.append(p[0])
                 eval_params.append(eval_param_op)
                 eval_param_op = []
@@ -180,16 +196,18 @@ def eval_exp(rout_params, instr_params, actual_params):
                 eval_param_op = []
                 if len(p) > 0:
                     eval_param_op.append(p[0])
-            #print("post list eval params")
-            #print(eval_params)
+            # print("post list eval params")
+            # print(eval_params)
         else:
             if len(eval_param_op) == 0:
                 eval_param_op.append(param)
 
-            elif eval_param_op[len(eval_param_op)-1] == '+' or\
-                 eval_param_op[len(eval_param_op)-1] == '-' or\
-                 eval_param_op[len(eval_param_op)-1] == '*' or\
-                 eval_param_op[len(eval_param_op)-1] == '/':
+            elif (
+                eval_param_op[len(eval_param_op) - 1] == "+"
+                or eval_param_op[len(eval_param_op) - 1] == "-"
+                or eval_param_op[len(eval_param_op) - 1] == "*"
+                or eval_param_op[len(eval_param_op) - 1] == "/"
+            ):
                 eval_param_op.append(param)
                 eval_params.append(eval_param_op)
                 eval_param_op = []
@@ -199,26 +217,28 @@ def eval_exp(rout_params, instr_params, actual_params):
                 eval_param_op.append(param)
     if len(eval_param_op) > 0:
         eval_params.append(eval_param_op)
-    #print("eval params")
-    #print(eval_params)
+    # print("eval params")
+    # print(eval_params)
     if True:
-        #print("evals")
-        #print(eval_params)
+        # print("evals")
+        # print(eval_params)
         for ev in eval_params:
             if len(ev) < 2:
                 params_index.append(ev[0])
                 continue
-            if ev[1] == '-':
+            if ev[1] == "-":
                 params_index.append(ev[0] - ev[2])
-            if ev[1] == '+':
+            if ev[1] == "+":
                 params_index.append(ev[0] + ev[2])
-            if ev[1] == '*':
+            if ev[1] == "*":
                 params_index.append(ev[0] * ev[2])
-            if ev[1] == '/':
+            if ev[1] == "/":
                 params_index.append(ev[0] / ev[2])
-    #print("here is ")
-    #print(params_index)
+    # print("here is ")
+    # print(params_index)
     return params_index
+
+
 """
 OPENQASM parser.
 """
@@ -232,14 +252,10 @@ class OqasmParser(object):
         self.format_version = False
         self.lineno = 0
         self.compiler = ASTCircuitBuilder(include_matrices=True)
-        U = AbstractGate('U', [float, float, float], arity=1,
-                         matrix_generator=gen_U)
-        u1 = AbstractGate('U1', [float], arity=1,
-                          matrix_generator=gen_u1)
-        u2 = AbstractGate('U2', [float, float], arity=1,
-                          matrix_generator=gen_u2)
-        u3 = AbstractGate('U3', [float, float, float], arity=1,
-                          matrix_generator=gen_U)
+        U = AbstractGate("U", [float, float, float], arity=1, matrix_generator=gen_U)
+        u1 = AbstractGate("U1", [float], arity=1, matrix_generator=gen_u1)
+        u2 = AbstractGate("U2", [float, float], arity=1, matrix_generator=gen_u2)
+        u3 = AbstractGate("U3", [float, float, float], arity=1, matrix_generator=gen_U)
         gate_set = default_gate_set()
         gate_set.add_signature(U)
         gate_set.add_signature(u1)
@@ -252,28 +268,59 @@ class OqasmParser(object):
         self.lexer.build()
         self.tokens = self.lexer.tokens
         self.precedence = (
-            ('left', '+', '-'),
-            ('left', '*', '/'),
-            ('left', 'negative', 'positive'),
-            ('right', '^'))
+            ("left", "+", "-"),
+            ("left", "*", "/"),
+            ("left", "negative", "positive"),
+            ("right", "^"),
+        )
         self.parse_deb = False
-        self.external_functions = ['sin', 'cos', 'tan', 'exp', 'ln'
-                                   , 'sqrt','acos', 'atan', 'asin']
+        self.external_functions = [
+            "sin",
+            "cos",
+            "tan",
+            "exp",
+            "ln",
+            "sqrt",
+            "acos",
+            "atan",
+            "asin",
+        ]
 
-        self.standard_gates = {"x": "X", "y": "Y", "z": "Z", "s": "S",
-                               "t": "T", "cx": "CNOT", "ccx": "CCNOT",
-                               "sdg": "SDG", "tdg": "TDG", "pH": "PH",
-                               "csign": "CSIGN", "cz": "CSIGN", "rx": "RX",
-                               "ry": "RY", "U": "U", "u1": "U1", "u2": "U2",
-                               "u3": "U3", "cu1": "CU1", "cu2":"CU2","cu3":"CU3"
-                               ,"rz": "RZ", "swap": "SWAP","crz":"CRZ","cswap":"CSWAP",
-                               "h": "H", "ch":"CH", "id": "I"}
+        self.standard_gates = {
+            "x": "X",
+            "y": "Y",
+            "z": "Z",
+            "s": "S",
+            "t": "T",
+            "cx": "CNOT",
+            "ccx": "CCNOT",
+            "sdg": "SDG",
+            "tdg": "TDG",
+            "pH": "PH",
+            "csign": "CSIGN",
+            "cz": "CSIGN",
+            "rx": "RX",
+            "ry": "RY",
+            "U": "U",
+            "u1": "U1",
+            "u2": "U2",
+            "u3": "U3",
+            "cu1": "CU1",
+            "cu2": "CU2",
+            "cu3": "CU3",
+            "rz": "RZ",
+            "swap": "SWAP",
+            "crz": "CRZ",
+            "cswap": "CSWAP",
+            "h": "H",
+            "ch": "CH",
+            "id": "I",
+        }
         self.routines = []
         self.nbcbits = 0
         self.nbqbits = 0
         self.cregs = []
         self.qregs = []
-
 
     def add_creg(self, elem):
         self.cregs.append(elem)
@@ -319,6 +366,7 @@ class OqasmParser(object):
             else:
                 index += qreg.index
         return None
+
     ######################
     #  Helper Functions  #
     ######################
@@ -355,10 +403,12 @@ class OqasmParser(object):
         Args :
             name to check
         """
-        return (name in self.external_functions
-                or self.is_routine(name)
-                or self.qreg_exists(name)
-                or self.creg_exists(name))
+        return (
+            name in self.external_functions
+            or self.is_routine(name)
+            or self.qreg_exists(name)
+            or self.creg_exists(name)
+        )
 
     def is_routine(self, name, args_size=None, params_size=None):
         """
@@ -366,9 +416,9 @@ class OqasmParser(object):
         Args:
             name that needs checking
         """
-        #print(str(len(self.routines)))
+        # print(str(len(self.routines)))
         for i in self.routines:
-            #print("name is "+name+" but we got "+i.name)
+            # print("name is "+name+" but we got "+i.name)
             if i.name == name:
                 return True
         return False
@@ -382,15 +432,15 @@ class OqasmParser(object):
             routine's parameters
         """
         res_routines = []
-        #print("We are getting for this routine")
-        #print(args)
-        #print(params)
+        # print("We are getting for this routine")
+        # print(args)
+        # print(params)
         routine = None
         for i in self.routines:  # let's get the routine first
             if i.name == routine_name:
                 routine = i
-        #print("Glist of routine ")
-        #print(routine.glist)
+        # print("Glist of routine ")
+        # print(routine.glist)
         for instr in routine.glist:
             args_index = []  # each index's value will hold the value of
             # corresponding bit in our main code passed as args
@@ -408,10 +458,10 @@ class OqasmParser(object):
                     rout_index += 1
 
             # same thing for parameters
-            #print("instr.params")
-            #print(instr.params)
-            #print("params")
-            #print(params)
+            # print("instr.params")
+            # print(instr.params)
+            # print("params")
+            # print(params)
             if len(instr.params) > 0:
                 if len(params) > 0:
                     params_index = eval_exp(routine.params, instr.params, params)
@@ -419,59 +469,68 @@ class OqasmParser(object):
                     params_index = eval_exp(routine.params, instr.params, instr.params)
             # we should pass on newly mapped args list
             if self.is_routine(instr.name):
-                res_routines.extend(self.build_routine(
-                                    instr.name, args_index, params_index))
+                res_routines.extend(
+                    self.build_routine(instr.name, args_index, params_index)
+                )
             elif instr.name == "measure":
-                res_routines.append(self.compiler.build_measure(args_index[0], args_index[1]))
+                res_routines.append(
+                    self.compiler.build_measure(args_index[0], args_index[1])
+                )
             elif instr.name == "reset":
-                res_routines.append(self.compiler.build_reset(args_index[0], args_index[0]))
+                res_routines.append(
+                    self.compiler.build_reset(args_index[0], args_index[0])
+                )
             else:
-                if (self.standard_gates[instr.name] == "SDG"
-                     or self.standard_gates[instr.name] == "TDG"
-                     or self.standard_gates[instr.name] == "CU1"
-                     or self.standard_gates[instr.name] == "CU2"
-                     or self.standard_gates[instr.name] == "CU3"
-                     or self.standard_gates[instr.name] == "CH"
-                     or self.standard_gates[instr.name] == "CRZ"
-                     or self.standard_gates[instr.name] == "CSWAP"
-                     or len(params_index) == self.compiler.gate_set[self.standard_gates[instr.name]].nb_args):
+                if (
+                    self.standard_gates[instr.name] == "SDG"
+                    or self.standard_gates[instr.name] == "TDG"
+                    or self.standard_gates[instr.name] == "CU1"
+                    or self.standard_gates[instr.name] == "CU2"
+                    or self.standard_gates[instr.name] == "CU3"
+                    or self.standard_gates[instr.name] == "CH"
+                    or self.standard_gates[instr.name] == "CRZ"
+                    or self.standard_gates[instr.name] == "CSWAP"
+                    or len(params_index)
+                    == self.compiler.gate_set[self.standard_gates[instr.name]].nb_args
+                ):
                     if self.standard_gates[instr.name] == "SDG":
                         ast = GateAST("S", params_index)
-                        ast = GateAST('DAG', ast)
+                        ast = GateAST("DAG", ast)
                     elif self.standard_gates[instr.name] == "TDG":
                         ast = GateAST("T", params_index)
-                        ast = GateAST('DAG', ast)
+                        ast = GateAST("DAG", ast)
                     elif self.standard_gates[instr.name] == "CU1":
                         ast = GateAST("U1", params_index)
-                        ast = GateAST('CTRL', ast)
+                        ast = GateAST("CTRL", ast)
                     elif self.standard_gates[instr.name] == "CU2":
                         ast = GateAST("U2", params_index)
-                        ast = GateAST('CTRL', ast)
+                        ast = GateAST("CTRL", ast)
                     elif self.standard_gates[instr.name] == "CU3":
                         ast = GateAST("U3", params_index)
-                        ast = GateAST('CTRL', ast)
+                        ast = GateAST("CTRL", ast)
                     elif self.standard_gates[instr.name] == "CRZ":
                         ast = GateAST("RZ", params_index)
-                        ast = GateAST('CTRL', ast)
+                        ast = GateAST("CTRL", ast)
                     elif self.standard_gates[instr.name] == "CH":
                         ast = GateAST("H", params_index)
-                        ast = GateAST('CTRL', ast)
+                        ast = GateAST("CTRL", ast)
                     elif self.standard_gates[instr.name] == "CSWAP":
                         ast = GateAST("SWAP", params_index)
-                        ast = GateAST('CTRL', ast)
+                        ast = GateAST("CTRL", ast)
                     else:
-                        ast = GateAST(self.standard_gates[instr.name],
-                                      params_index)
+                        ast = GateAST(self.standard_gates[instr.name], params_index)
                     # We have mapped the corresponding value
                     # for each qubit in the params_index array
-                    res_routines.append(self.compiler.build_op_by_ast(ast
-                                        , args_index))
+                    res_routines.append(self.compiler.build_op_by_ast(ast, args_index))
                 else:
-                    raise InvalidParameterNumber(self.standard_gates[instr.name],
-                                                 self.compiler.gate_set[self.standard_gates[instr.name]].nb_args,
-                                                 params_index, self.lineno)
-        #print("building ")
-        #print(res_routines)
+                    raise InvalidParameterNumber(
+                        self.standard_gates[instr.name],
+                        self.compiler.gate_set[self.standard_gates[instr.name]].nb_args,
+                        params_index,
+                        self.lineno,
+                    )
+        # print("building ")
+        # print(res_routines)
         return res_routines
 
     # ---- Begin the PLY parser ----
@@ -481,7 +540,7 @@ class OqasmParser(object):
     # -----------------------------------------
     def p_main(self, t):
         """
-            main : FORMAT ';' program
+        main : FORMAT ';' program
         """
         t[0] = self.compiler
         self.lineno += 1
@@ -492,46 +551,50 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_program(self, t):
         """
-           program : statement
-             | program statement
+        program : statement
+          | program statement
         """
-        #print(self.compiler.ops)
-    # ----------------------------------------
-    #  statement : decl
-    #            | quantum_op ';'
-    #            | FORMAT ';'
-    #            | IGNORE
-    #            | INCLUDE ';'
-    # ----------------------------------------
-        version = t.stack[1].value.rsplit(' ', 1)[-1]
-        version = version.rsplit('\t', 1)[-1]
-        version = version.rsplit('\n', 1)[-1]
-        if version != '2.0' and not self.format_version :
+        # print(self.compiler.ops)
+        # ----------------------------------------
+        #  statement : decl
+        #            | quantum_op ';'
+        #            | FORMAT ';'
+        #            | IGNORE
+        #            | INCLUDE ';'
+        # ----------------------------------------
+        version = t.stack[1].value.rsplit(" ", 1)[-1]
+        version = version.rsplit("\t", 1)[-1]
+        version = version.rsplit("\n", 1)[-1]
+        if version != "2.0" and not self.format_version:
             self.format_version = True
-            print("WARNING: Version {} not fully supported, only version"
-                  .format(version) + " 2.0 is")
+            print(
+                "WARNING: Version {} not fully supported, only version".format(version)
+                + " 2.0 is"
+            )
+
     def p_statement_0(self, t):
         """
-            statement : quantum_op ';'
+        statement : quantum_op ';'
         """
         self.compiler.ops.extend(t[1])
         self.lineno += 1
 
     def p_statement_1(self, t):
         """
-           statement : decl
-                     | IGNORE
-                     | quantum_op error
-                     | FORMAT error
+        statement : decl
+                  | IGNORE
+                  | quantum_op error
+                  | FORMAT error
         """
-        #print("Started statement {} and {}".format(t[1], t[2] if len(t)>2 else "None"))
+        # print("Started statement {} and {}".format(t[1], t[2] if len(t)>2 else "None"))
         if len(t) > 2:
             if t[2] != ";":
-                raise SyntaxError("Missing ';' at end of statement; "
-                                  + "received "+str(t[2]))
+                raise SyntaxError(
+                    "Missing ';' at end of statement; " + "received " + str(t[2])
+                )
         if len(t) == 6:
-            #print('got inside the include')
-            with open(t[3], 'r') as inc:
+            # print('got inside the include')
+            with open(t[3], "r") as inc:
                 self.parse(inc.read())
         self.lineno += 1
 
@@ -540,15 +603,14 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_indexed_id(self, t):
         """
-           indexed_ID : ID '[' NNINTEGER ']'
-                      | ID '[' NNINTEGER error
-                      | ID '[' error
+        indexed_ID : ID '[' NNINTEGER ']'
+                   | ID '[' NNINTEGER error
+                   | ID '[' error
         """
         if len(t) == 4:
             if not isinstance(t[3], int):
-                raise ValueError("Expecting an integer index; received",
-                                 str(t[3]))
-        if t[4] != ']':
+                raise ValueError("Expecting an integer index; received", str(t[3]))
+        if t[4] != "]":
             raise SyntaxError("Missing ']' in indexed ID", str(t[4]))
         # indexed_ID becomes the name of the structure, and its size
         t[0] = Element()
@@ -563,16 +625,18 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_decl(self, t):
         """
-           decl : qreg_decl ';'
-                | creg_decl ';'
-                | qreg_decl error
-                | creg_decl error
-                | gate_decl
+        decl : qreg_decl ';'
+             | creg_decl ';'
+             | qreg_decl error
+             | creg_decl error
+             | gate_decl
         """
         if len(t) > 2:
-            if t[2] != ';':
-                raise SyntaxError("Missing ';' in qreg or creg declaration."
-                                  " Instead received '" + t[2] + "'")
+            if t[2] != ";":
+                raise SyntaxError(
+                    "Missing ';' in qreg or creg declaration."
+                    " Instead received '" + t[2] + "'"
+                )
         t[0] = t[1]
         self.lineno += 1
 
@@ -581,12 +645,13 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_qreg_decl(self, t):
         """
-           qreg_decl : QREG indexed_ID
+        qreg_decl : QREG indexed_ID
         """
-        #print("we passed here")
+        # print("we passed here")
         if self.is_reserved(t[2].name):
-            raise ValueError("QREG names cannot be reserved words. "
-                             + "Received '" + t[2].name + "'")
+            raise ValueError(
+                "QREG names cannot be reserved words. " + "Received '" + t[2].name + "'"
+            )
         if t[2].index < 1:
             raise ValueError("QREG size must be positive")
 
@@ -596,26 +661,28 @@ class OqasmParser(object):
             raise ValueError("QREG already declared")
 
         self.add_qreg(t[2])
-        #print("Adding :")
-        #print(str(t[2].name)+" and "+str(t[2].index)+" and "+str(t[2].value))
+        # print("Adding :")
+        # print(str(t[2].name)+" and "+str(t[2].index)+" and "+str(t[2].value))
 
     def p_qreg_decl_e(self, t):
         """
-           qreg_decl : QREG error
+        qreg_decl : QREG error
         """
-        raise SyntaxError("Expecting indexed ID (ID[int]) in QREG"
-                          + " declaration; received", t[2])
+        raise SyntaxError(
+            "Expecting indexed ID (ID[int]) in QREG" + " declaration; received", t[2]
+        )
 
     # ----------------------------------------
     #  creg_decl : CREG indexed_ID
     # ----------------------------------------
     def p_creg_decl(self, t):
         """
-           creg_decl : CREG indexed_ID
+        creg_decl : CREG indexed_ID
         """
         if self.is_reserved(t[2].name):
-            raise ValueError("CREG names cannot be reserved words. "
-                             + "Received '" + t[2].name + "'")
+            raise ValueError(
+                "CREG names cannot be reserved words. " + "Received '" + t[2].name + "'"
+            )
         if t[2].index < 1:
             raise ValueError("CREG size must be positive")
 
@@ -628,10 +695,11 @@ class OqasmParser(object):
 
     def p_creg_decl_e(self, t):
         """
-           creg_decl : CREG error
+        creg_decl : CREG error
         """
-        raise SyntaxError("Expecting indexed ID (ID[int]) in CREG"
-                          + " declaration; received", t[2])
+        raise SyntaxError(
+            "Expecting indexed ID (ID[int]) in CREG" + " declaration; received", t[2]
+        )
 
     # ----------------------------------------
     #  primary : ID
@@ -640,44 +708,46 @@ class OqasmParser(object):
     def p_primary(self, t):
         # primaries would be lists to account for entire registers inputed
         """
-           primary : ID
-                   | indexed_ID
+        primary : ID
+                | indexed_ID
         """
         if isinstance(t[1], Element):  # indexed_ID
             if t[1].value is None:  # value is None
-                #print("your qreg")
-                #print(str(t[1].name) + " and " + str(t[1].index) + " and "+str(t[1].value))
+                # print("your qreg")
+                # print(str(t[1].name) + " and " + str(t[1].index) + " and "+str(t[1].value))
                 t[0] = [t[1].name]
                 # if not declared, we return the name instead of
                 # int helps verify later
             elif self.qreg_exists(t[1].name):
                 if t[1].value >= self.nbqbits:
-                    raise IndexError(t[1].name+"["+t[1].index
-                                      + "] is out of bounds")
+                    raise IndexError(
+                        t[1].name + "[" + t[1].index + "] is out of bounds"
+                    )
                 else:
                     t[0] = [t[1].value]
             elif self.creg_exists(t[1].name):
                 if t[1].value >= self.nbcbits:
-                    raise IndexError(t[1].name+"["+t[1].index
-                                      + "] is out of bounds")
+                    raise IndexError(
+                        t[1].name + "[" + t[1].index + "] is out of bounds"
+                    )
                 else:
                     t[0] = [t[1].value]
             else:
-                #print("All according to plan")
+                # print("All according to plan")
                 t[0] = [t[1].value]
         else:  # register
-            #print("A register maybe?")
-            #print(t[1])
+            # print("A register maybe?")
+            # print(t[1])
             # TODO get the offset of the first element of the reg and its size
             reg = self.get_reg(t[1])
             # returns the Element whose name is t[1]
             if not reg:
-                print("WARNING: No such register : "+t[1])
+                print("WARNING: No such register : " + t[1])
             else:
                 offset = self.get_indexed_id(t[1], 0)
                 tab = []
                 for i in range(0, reg.index):
-                    tab.append(offset+i)
+                    tab.append(offset + i)
                 # gets the a[i] value, so that tab contains
                 # the full register's values
                 t[0] = tab
@@ -688,13 +758,13 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_id_list_0(self, t):
         """
-           id_list : ID
+        id_list : ID
         """
         t[0] = [t[1]]
 
     def p_id_list_1(self, t):
         """
-           id_list : id_list ',' ID
+        id_list : id_list ',' ID
         """
         t[0] = t[1]
         t[0].append(t[3])
@@ -706,13 +776,13 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_gate_id_list_0(self, t):
         """
-           gate_id_list : ID
+        gate_id_list : ID
         """
         t[0] = [t[1]]
 
     def p_gate_id_list_1(self, t):
         """
-           gate_id_list : gate_id_list ',' ID
+        gate_id_list : gate_id_list ',' ID
         """
         t[0] = t[1]
         t[0].append(t[3])
@@ -723,13 +793,13 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_bit_list_0(self, t):
         """
-           bit_list : ID
+        bit_list : ID
         """
         t[0] = [t[1]]
 
     def p_bit_list_1(self, t):
         """
-           bit_list : bit_list ',' ID
+        bit_list : bit_list ',' ID
         """
         t[0] = t[1]
         t[0].append(t[3])
@@ -740,20 +810,21 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_primary_list_0(self, t):
         """
-           primary_list : primary
+        primary_list : primary
         """
         t[0] = [t[1]]
 
     def p_primary_list_1(self, t):
         """
-           primary_list : primary_list ',' primary
+        primary_list : primary_list ',' primary
         """
         t[0] = t[1]
         if not isinstance(t[1][0], int) and not isinstance(t[1][0], list):
             raise ValueError("Register " + t[1][0] + " not declared")
         if not isinstance(t[3][0], int):
-            raise ValueError("Register "+t[3][0]+" not declared")
+            raise ValueError("Register " + t[3][0] + " not declared")
         t[1].append(t[3])
+
     # TODO parse routine from standard gates
 
     # ----------------------------------------
@@ -764,60 +835,63 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_gate_decl(self, t):
         """
-           gate_decl : GATE ID gate_scope bit_list gate_body
-                     | GATE ID gate_scope '(' ')' bit_list gate_body
-                     | GATE ID gate_scope '(' gate_id_list ')' bit_list gate_body
+        gate_decl : GATE ID gate_scope bit_list gate_body
+                  | GATE ID gate_scope '(' ')' bit_list gate_body
+                  | GATE ID gate_scope '(' gate_id_list ')' bit_list gate_body
         """
-        #print("Doing gate thingy")
+        # print("Doing gate thingy")
         if self.is_reserved(t[2]):
-            raise ValueError("Cannot use reserved words, "
-                             + "or already declared objects")
+            raise ValueError(
+                "Cannot use reserved words, " + "or already declared objects"
+            )
         elif t[2] in self.standard_gates:
             t[0] = None
         else:
             r = Routine()
             r.name = t[2]
             r.params = t[5] if len(t) == 9 else []
-            r.args = t[len(t)-2]
-            r.glist = t[len(t)-1]
-            #for i in range(0, len(t)):
-                #print("element of t " + str(i) + " is ")
-                #print(t[i])
-            #print("length of t is " + str(len(t)))
-            #print("params")
-            #print("glist")
+            r.args = t[len(t) - 2]
+            r.glist = t[len(t) - 1]
+            # for i in range(0, len(t)):
+            # print("element of t " + str(i) + " is ")
+            # print(t[i])
+            # print("length of t is " + str(len(t)))
+            # print("params")
+            # print("glist")
             # each instruction's args needs to be checked against
             # the routine's args
             for j in r.glist:  # i will be a Gate
-                #print("testing glists")
+                # print("testing glists")
                 for k in j.qblist:
-                    #print("testing qblists")
+                    # print("testing qblists")
                     if k not in r.args:
-                        raise ValueError("Unknown qbit "+k+" for gate "+ j.name)
-                #print("over "+str(len(r.params))+" "+str(len(j.params)))
-                #print("finished qb")
+                        raise ValueError("Unknown qbit " + k + " for gate " + j.name)
+                # print("over "+str(len(r.params))+" "+str(len(j.params)))
+                # print("finished qb")
                 for k in j.params:
-                    #print("testing params")
+                    # print("testing params")
                     if isinstance(k, str) and k not in r.params:
-                        raise ValueError("Unknown parameter "+k+" for "
-                                             + "gate "+j.name)
-                #print("ended g/q/p")
-            #print("ended")
-            #print("adding routine "+r.name)
+                        raise ValueError(
+                            "Unknown parameter " + k + " for " + "gate " + j.name
+                        )
+                # print("ended g/q/p")
+            # print("ended")
+            # print("adding routine "+r.name)
             self.routines.append(r)
-            #for i in self.routines:
-                #print(i.name)
+            # for i in self.routines:
+            # print(i.name)
         self.lineno += 1
 
     def p_gate_decl_e(self, t):
         """
-           gate_decl : GATE ID gate_scope bit_list error
-                     | GATE ID gate_scope '(' ')' bit_list error
-                     | GATE ID gate_scope '(' gate_id_list ')' bit_list error
+        gate_decl : GATE ID gate_scope bit_list error
+                  | GATE ID gate_scope '(' ')' bit_list error
+                  | GATE ID gate_scope '(' gate_id_list ')' bit_list error
         """
+
     def p_gate_scope(self, t):
         """
-           gate_scope :
+        gate_scope :
         """
 
     # ----------------------------------------
@@ -832,13 +906,14 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_gate_body_0(self, t):
         """
-           gate_body : '{' '}'
+        gate_body : '{' '}'
         """
         t[0] = []
+
     # already handled, the build_routine would do nothing
     def p_gate_body_1(self, t):
         """
-           gate_body : '{' gate_op_list '}'
+        gate_body : '{' gate_op_list '}'
         """
         t[0] = t[2]
 
@@ -851,13 +926,13 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_gate_op_list_0(self, t):
         """
-            gate_op_list : gate_op
+        gate_op_list : gate_op
         """
         t[0] = [t[1]]
 
     def p_gate_op_list_1(self, t):
         """
-            gate_op_list : gate_op_list gate_op
+        gate_op_list : gate_op_list gate_op
         """
         t[0] = t[1]
         t[0].append(t[2])
@@ -880,12 +955,12 @@ class OqasmParser(object):
         """
         unitary_op : CX primary ',' primary
         """
-        if (len(t[2]) != len(t[4])):
+        if len(t[2]) != len(t[4]):
             raise ValueError("Registers not of the same size")
         t[0] = []
         for qbit in range(0, len(t[2])):
             quantum_op = Gate()
-            quantum_op.name = 'cx'
+            quantum_op.name = "cx"
             quantum_op.params = []
             quantum_op.qblist = [t[2][qbit], t[4][qbit]]
             # add operation for each qbit in the register
@@ -901,7 +976,7 @@ class OqasmParser(object):
         for qbit in range(0, len(t[5])):
             quantum_op = Gate()
             quantum_op.name = t[1]
-            quantum_op.params =t[3]
+            quantum_op.params = t[3]
             quantum_op.qblist = [qbit]
             t[0].append(quantum_op)
 
@@ -912,16 +987,17 @@ class OqasmParser(object):
                     | ID '(' exp_list ')' primary_list
         """
         if t[1] not in self.tokens:
-            t[2] = t[len(t)-1]
+            t[2] = t[len(t) - 1]
             # put the last element in t[2] to avoid all the if statements
-            #print(t[2])
+            # print(t[2])
             max_len = len(max(t[2], key=len))
             # gets the size of the largest register in the input list
             for i in range(0, len(t[2])):
                 if len(t[2][i]) > 1 and max_len != len(t[2][i]):
-                    raise ValueError("Registers are not of the "
-                                     "same size for operation '"
-                                     + t[1] + "'")
+                    raise ValueError(
+                        "Registers are not of the "
+                        "same size for operation '" + t[1] + "'"
+                    )
                 # if this passes then all registers are of the same size
                 t[0] = []
             for reg in range(0, max_len):
@@ -953,7 +1029,7 @@ class OqasmParser(object):
         gate_op : U '(' exp_list ')' ID ';'
         """
         t[0] = Gate()
-        t[0].name = 'U'  # this needs to go back to U
+        t[0].name = "U"  # this needs to go back to U
         t[0].params = t[3]
         t[0].qblist = [t[5]]
         self.lineno += 1
@@ -962,8 +1038,11 @@ class OqasmParser(object):
         """
         gate_op : U '(' exp_list ')' error
         """
-        raise ValueError("InvalID U inside gate definition. Missing bit"
-                         + "ID or ';' on line :" + str(t.lineno))
+        raise ValueError(
+            "InvalID U inside gate definition. Missing bit"
+            + "ID or ';' on line :"
+            + str(t.lineno)
+        )
 
     def p_gate_op_0e2(self, t):
         """
@@ -976,7 +1055,7 @@ class OqasmParser(object):
         gate_op : CX ID ',' ID ';'
         """
         t[0] = Gate()
-        t[0].name = 'cx'
+        t[0].name = "cx"
         t[0].params = []
         t[0].qblist = [t[2], t[4]]
         self.lineno += 1
@@ -985,17 +1064,23 @@ class OqasmParser(object):
         """
         gate_op : CX error
         """
-        raise SyntaxError("InvalID CNOT inside gate definition. "
-                          + "Expected an ID or ',', received '"
-                          + str(t[2]) + "'")
+        raise SyntaxError(
+            "InvalID CNOT inside gate definition. "
+            + "Expected an ID or ',', received '"
+            + str(t[2])
+            + "'"
+        )
 
     def p_gate_op_1e2(self, t):
         """
         gate_op : CX ID ',' error
         """
-        raise SyntaxError("InvalID CNOT inside gate definition. "
-                          + "Expected an ID or ';', received '"
-                          + str(t[4]) + "'")
+        raise SyntaxError(
+            "InvalID CNOT inside gate definition. "
+            + "Expected an ID or ';', received '"
+            + str(t[4])
+            + "'"
+        )
 
     def p_gate_op_2(self, t):
         """
@@ -1009,21 +1094,23 @@ class OqasmParser(object):
         except:
             if t[1] not in self.tokens:
                 # not recognized by name_gate
-                if not self.is_routine(t[1], len(t[len(t)-2]),
-                                       0 if len(t) < 7 else len(t[3])):
-                    #print(" params : "+str(len(t[3]))+ " and args "+str(len(t[len(t)-2])))
+                if not self.is_routine(
+                    t[1], len(t[len(t) - 2]), 0 if len(t) < 7 else len(t[3])
+                ):
+                    # print(" params : "+str(len(t[3]))+ " and args "+str(len(t[len(t)-2])))
                     raise ValueError("No such gate or routine " + t[1])
             # will be a routine, this might change if we handle
             # routine differently than gates
         t[0].name = t[1]
         t[0].params = [] if len(t) < 7 else t[3]
         # in any case there are no params here
-        t[0].qblist = t[len(t)-2]
+        t[0].qblist = t[len(t) - 2]
 
-            # TODO verify:
-            # ID is declared as a gate in global scope
-            # everything in the id_list is declared as a bit in local scope
+        # TODO verify:
+        # ID is declared as a gate in global scope
+        # everything in the id_list is declared as a bit in local scope
         self.lineno += 1
+
     def p_gate_op_2e0(self, t):
         """
         gate_op : ID  id_list error
@@ -1032,14 +1119,13 @@ class OqasmParser(object):
         """
         if len(t) == 4:
             if t[2] != "(":
-                raise ValueError("InvalID gate invocation inside gate "
-                                 + "definition.")
+                raise ValueError("InvalID gate invocation inside gate " + "definition.")
             else:
-                raise SyntaxError("InvalID bit list inside gate definition"
-                                  + " or missing ';'")
+                raise SyntaxError(
+                    "InvalID bit list inside gate definition" + " or missing ';'"
+                )
         else:
-            raise SyntaxError("Unmatched () for gate invocation inside "
-                              + "gate")
+            raise SyntaxError("Unmatched () for gate invocation inside " + "gate")
 
     def p_gate_op_5(self, t):
         """
@@ -1047,6 +1133,7 @@ class OqasmParser(object):
         """
         # TODO no idea how to deal with this, really should though
         self.lineno += 1
+
     def p_gate_op_5e(self, t):
         """
         gate_op : BARRIER error
@@ -1062,23 +1149,23 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_opaque_0(self, t):
         """
-           opaque : OPAQUE ID gate_scope bit_list
+        opaque : OPAQUE ID gate_scope bit_list
         """
         # TODO: even less of an idea than barrier how to deal with this
 
     def p_opaque_1(self, t):
         """
-           opaque : OPAQUE ID gate_scope '(' ')' bit_list
+        opaque : OPAQUE ID gate_scope '(' ')' bit_list
         """
 
     def p_opaque_2(self, t):
         """
-           opaque : OPAQUE ID gate_scope '(' gate_id_list ')' bit_list
+        opaque : OPAQUE ID gate_scope '(' gate_id_list ')' bit_list
         """
 
     def p_opaque_1e(self, t):
         """
-           opaque : OPAQUE ID gate_scope '(' error
+        opaque : OPAQUE ID gate_scope '(' error
         """
         raise SyntaxError("Poorly formed OPAQUE statement.")
 
@@ -1087,20 +1174,27 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_measure(self, t):
         """
-           measure : MEASURE primary ASSIGN primary
+        measure : MEASURE primary ASSIGN primary
         """
         if len(t[2]) != len(t[4]):
-            raise ValueError("registers are of different sizes '" + t[2]
-                             + "' is of size " + len(t[2]) + " and '"
-                             + t[4] + "' is of size " + len(t[4]))
+            raise ValueError(
+                "registers are of different sizes '"
+                + t[2]
+                + "' is of size "
+                + len(t[2])
+                + " and '"
+                + t[4]
+                + "' is of size "
+                + len(t[4])
+            )
         op = Gate()
-        op.name = 'measure'
+        op.name = "measure"
         op.qblist = [t[2], t[4]]
         t[0] = [op]
 
     def p_measure_e(self, t):
         """
-           measure : MEASURE primary error
+        measure : MEASURE primary error
         """
         raise SyntaxError("Illegal measure statement." + str(t[3]))
 
@@ -1114,6 +1208,7 @@ class OqasmParser(object):
         barrier : BARRIER primary_list
         """
         # TODO implement barriers, or maybe just apply them
+
     # ----------------------------------------
     # reset : RESET primary
     # ----------------------------------------
@@ -1124,9 +1219,10 @@ class OqasmParser(object):
         t[0] = []
         for qbit in range(0, len(t[2])):
             op = Gate()
-            op.name = 'reset'
+            op.name = "reset"
             op.qblist = [t[2][qbit]]
             t[0].append(op)
+
     # TODO might be an error to take a single argument
 
     # ----------------------------------------
@@ -1144,30 +1240,33 @@ class OqasmParser(object):
             | IF '(' ID MATCHES NNINTEGER error
             | IF error
         """
-        new_op = None #For cythonization errors
-        new_ops  =None
+        new_op = None  # For cythonization errors
+        new_ops = None
         if len(t) == 3:
-            raise SyntaxError("Ill-formed IF statement. Perhaps a"
-                              + " missing '('?")
+            raise SyntaxError("Ill-formed IF statement. Perhaps a" + " missing '('?")
         if len(t) == 5:
-            raise SyntaxError("Ill-formed IF statement.  Expected '==', "
-                              + "received '" + str(t[4]))
+            raise SyntaxError(
+                "Ill-formed IF statement.  Expected '==', " + "received '" + str(t[4])
+            )
         if len(t) == 6:
-            raise SyntaxError("Ill-formed IF statement.  Expected a number, "
-                              + "received '" + str(t[5]))
+            raise SyntaxError(
+                "Ill-formed IF statement.  Expected a number, "
+                + "received '"
+                + str(t[5])
+            )
         if len(t) == 7:
             raise SyntaxError("Ill-formed IF statement, unmatched '('")
 
-        if t[7] == 'if':
+        if t[7] == "if":
             raise SyntaxError("Nested IF statements not allowed")
 
-        if t[7] == 'barrier':
+        if t[7] == "barrier":
             raise SyntaxError("barrier not permitted in IF statement")
 
-        if t[7] == 'measure':
+        if t[7] == "measure":
             raise SyntaxError("measure not permitted in IF statement")
 
-        if t[7] == 'reset':
+        if t[7] == "reset":
             raise SyntaxError("reset not permitted in IF statement")
 
         # TODO convert the cregister's value from binary to decimal
@@ -1179,82 +1278,90 @@ class OqasmParser(object):
             raise ValueError("No such classical bit register")
         if 1 << c_size > t[5]:  # creg size must be able to contain the int
             bit = bin(t[5])
-            formula = "AND "*(len(bit)-3)
+            formula = "AND " * (len(bit) - 3)
             # prefix notation, so we'll put all operators in the beginning
-            #print("formula was "+formula+" and index "+str(c_index))
+            # print("formula was "+formula+" and index "+str(c_index))
 
             for i in range(2, len(bit)):
-                formula += "NOT " if bit[i] == '0' else ""
-                formula += str(c_index+i-2)+" "  # OP c[i] NOT c[i+1]
-                #print("then "+str(i)+" formula is "+formula)
+                formula += "NOT " if bit[i] == "0" else ""
+                formula += str(c_index + i - 2) + " "  # OP c[i] NOT c[i+1]
+                # print("then "+str(i)+" formula is "+formula)
 
-            #print("formula is "+formula)
+            # print("formula is "+formula)
             # TODO quantum_op is always empty so replenish it
             # TODO might be better to change IF into a unitary_op/measure/etc
             # TODO since IF needs to know whether to apply the gates or not
             for op in t[7]:
-                if op.name == 'measure':
+                if op.name == "measure":
                     raise ImplementationError("Conditional measures are not supported")
-                elif op.name == 'reset':
+                elif op.name == "reset":
                     raise ImplementationError("Conditional resets are not supported")
                 elif op.name in self.standard_gates:
-                        #print("gate standard "+ self.standard_gates[op.name])
-                        if (self.standard_gates[op.name] == "SDG"
-                            or self.standard_gates[op.name] == "TDG"
-                            or self.standard_gates[op.name] == "CU1"
-                            or self.standard_gates[op.name] == "CU2"
-                            or self.standard_gates[op.name] == "CU3"
-                            or self.standard_gates[op.name] == "CH"
-                            or self.standard_gates[op.name] == "CRZ"
-                            or self.standard_gates[op.name] == "CSWAP"
-                         or len(op.params) == self.compiler.gate_set[self.standard_gates[op.name]].nb_args):
-                            if self.standard_gates[op.name] == "SDG":
-                                ast = GateAST("S", op.params)
-                                ast = GateAST('DAG', ast)
-                            elif self.standard_gates[op.name] == "TDG":
-                                ast = GateAST("T", op.params)
-                                ast = GateAST('DAG', ast)
-                            elif self.standard_gates[op.name] == "CU1":
-                                ast = GateAST("U1", op.params)
-                                ast = GateAST('CTRL', ast)
-                            elif self.standard_gates[op.name] == "CU2":
-                                ast = GateAST("U2", op.params)
-                                ast = GateAST('CTRL', ast)
-                            elif self.standard_gates[op.name] == "CU3":
-                                ast = GateAST("U3", op.params)
-                                ast = GateAST('CTRL', ast)
-                            elif self.standard_gates[op.name] == "CH":
-                                ast = GateAST("H", op.params)
-                                ast = GateAST('CTRL', ast)
-                            elif self.standard_gates[op.name] == "CRZ":
-                                ast = GateAST("RZ", op.params)
-                                ast = GateAST('CTRL', ast)
-                            elif self.standard_gates[op.name] == "CSWAP":
-                                ast = GateAST("SWAP", op.params)
-                                ast = GateAST('CTRL', ast)
-                            else:
-                                ast = GateAST(self.standard_gates[op.name],
-                                              op.params)
-                            new_op = self.compiler.build_op_by_ast(ast, op.qblist)
+                    # print("gate standard "+ self.standard_gates[op.name])
+                    if (
+                        self.standard_gates[op.name] == "SDG"
+                        or self.standard_gates[op.name] == "TDG"
+                        or self.standard_gates[op.name] == "CU1"
+                        or self.standard_gates[op.name] == "CU2"
+                        or self.standard_gates[op.name] == "CU3"
+                        or self.standard_gates[op.name] == "CH"
+                        or self.standard_gates[op.name] == "CRZ"
+                        or self.standard_gates[op.name] == "CSWAP"
+                        or len(op.params)
+                        == self.compiler.gate_set[self.standard_gates[op.name]].nb_args
+                    ):
+                        if self.standard_gates[op.name] == "SDG":
+                            ast = GateAST("S", op.params)
+                            ast = GateAST("DAG", ast)
+                        elif self.standard_gates[op.name] == "TDG":
+                            ast = GateAST("T", op.params)
+                            ast = GateAST("DAG", ast)
+                        elif self.standard_gates[op.name] == "CU1":
+                            ast = GateAST("U1", op.params)
+                            ast = GateAST("CTRL", ast)
+                        elif self.standard_gates[op.name] == "CU2":
+                            ast = GateAST("U2", op.params)
+                            ast = GateAST("CTRL", ast)
+                        elif self.standard_gates[op.name] == "CU3":
+                            ast = GateAST("U3", op.params)
+                            ast = GateAST("CTRL", ast)
+                        elif self.standard_gates[op.name] == "CH":
+                            ast = GateAST("H", op.params)
+                            ast = GateAST("CTRL", ast)
+                        elif self.standard_gates[op.name] == "CRZ":
+                            ast = GateAST("RZ", op.params)
+                            ast = GateAST("CTRL", ast)
+                        elif self.standard_gates[op.name] == "CSWAP":
+                            ast = GateAST("SWAP", op.params)
+                            ast = GateAST("CTRL", ast)
                         else:
-                            raise InvalidParameterNumber(self.standard_gates[op.name], self.compiler.gate_set[self.standard_gates[op.name]].nb_args,
-                                                         op.params,
-                                                        self.lineno)
-                else:
-                    #print(">>>>>>>>We got a gate called "+op.name)
-                    #print("is it true though ? "+str(self.is_routine(op.name)))
-                    if self.is_routine(op.name, len(op.qblist),
-                                       len(op.params)):
-                        new_ops = self.build_routine(op.name, op.qblist,
-                                                     op.params)
+                            ast = GateAST(self.standard_gates[op.name], op.params)
+                        new_op = self.compiler.build_op_by_ast(ast, op.qblist)
                     else:
-                        raise NameError("No such gate or routine, '" + op.name +
-                                        "' or wrong number of arguments or "
-                                        "parameters\nSupported Clifford gates"
-                                        + " are :\nh, cx, ccx, x, y, z, s, "
-                                        + "swap, cz'")
+                        raise InvalidParameterNumber(
+                            self.standard_gates[op.name],
+                            self.compiler.gate_set[
+                                self.standard_gates[op.name]
+                            ].nb_args,
+                            op.params,
+                            self.lineno,
+                        )
+                else:
+                    # print(">>>>>>>>We got a gate called "+op.name)
+                    # print("is it true though ? "+str(self.is_routine(op.name)))
+                    if self.is_routine(op.name, len(op.qblist), len(op.params)):
+                        new_ops = self.build_routine(op.name, op.qblist, op.params)
+                    else:
+                        raise NameError(
+                            "No such gate or routine, '"
+                            + op.name
+                            + "' or wrong number of arguments or "
+                            "parameters\nSupported Clifford gates"
+                            + " are :\nh, cx, ccx, x, y, z, s, "
+                            + "swap, cz'"
+                        )
                 if new_ops is not None:
-                    #print("IF routine gives " + str(len(new_ops)))
+                    # print("IF routine gives " + str(len(new_ops)))
                     for o in new_ops:
                         o.type = OpType.CLASSICCTRL
                         o.formula = formula
@@ -1263,6 +1370,7 @@ class OqasmParser(object):
                     new_op.type = OpType.CLASSICCTRL
                     new_op.formula = formula
                     self.compiler.ops.append(new_op)
+
     # ----------------------------------------
     # These are all the things you can have outside of a gate declaration
     #        quantum_op : unitary_op
@@ -1275,25 +1383,26 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_quantum_op(self, t):
         """
-            quantum_op : unitary_op
-                       | opaque
-                       | measure
-                       | barrier
-                       | reset
-                       | if
+        quantum_op : unitary_op
+                   | opaque
+                   | measure
+                   | barrier
+                   | reset
+                   | if
         """
         t[0] = []
         if t[1] is None:
             return
         for gat in t[1]:
-            if gat.name == 'measure':
+            if gat.name == "measure":
                 op = self.compiler.build_measure(gat.qblist[0], gat.qblist[1])
                 t[0].append(op)
-            elif gat.name == 'reset':
+            elif gat.name == "reset":
                 op = self.compiler.build_reset([gat.qblist[0]], [gat.qblist[0]])
                 t[0].append(op)
             elif gat.name in self.standard_gates:
-                if (self.standard_gates[gat.name] == "SDG"
+                if (
+                    self.standard_gates[gat.name] == "SDG"
                     or self.standard_gates[gat.name] == "TDG"
                     or self.standard_gates[gat.name] == "CU1"
                     or self.standard_gates[gat.name] == "CU2"
@@ -1301,56 +1410,64 @@ class OqasmParser(object):
                     or self.standard_gates[gat.name] == "CH"
                     or self.standard_gates[gat.name] == "CRZ"
                     or self.standard_gates[gat.name] == "CSWAP"
-                    or len(gat.params) == self.compiler.gate_set[self.standard_gates[gat.name]].nb_args):
+                    or len(gat.params)
+                    == self.compiler.gate_set[self.standard_gates[gat.name]].nb_args
+                ):
                     if self.standard_gates[gat.name] == "SDG":
                         ast = GateAST("S", gat.params)
-                        ast = GateAST('DAG', ast)
+                        ast = GateAST("DAG", ast)
                     elif self.standard_gates[gat.name] == "TDG":
                         ast = GateAST("T", gat.params)
-                        ast = GateAST('DAG', ast)
+                        ast = GateAST("DAG", ast)
                     elif self.standard_gates[gat.name] == "CU1":
                         ast = GateAST("U1", gat.params)
-                        ast = GateAST('CTRL', ast)
+                        ast = GateAST("CTRL", ast)
                     elif self.standard_gates[gat.name] == "CU2":
                         ast = GateAST("U2", gat.params)
-                        ast = GateAST('CTRL', ast)
+                        ast = GateAST("CTRL", ast)
                     elif self.standard_gates[gat.name] == "CU3":
                         ast = GateAST("U3", gat.params)
-                        ast = GateAST('CTRL', ast)
+                        ast = GateAST("CTRL", ast)
                     elif self.standard_gates[gat.name] == "CH":
                         ast = GateAST("H", gat.params)
-                        ast = GateAST('CTRL', ast)
+                        ast = GateAST("CTRL", ast)
                     elif self.standard_gates[gat.name] == "CRZ":
                         ast = GateAST("RZ", gat.params)
-                        ast = GateAST('CTRL', ast)
+                        ast = GateAST("CTRL", ast)
                     elif self.standard_gates[gat.name] == "CSWAP":
                         ast = GateAST("SWAP", gat.params)
-                        ast = GateAST('CTRL', ast)
+                        ast = GateAST("CTRL", ast)
                     else:
                         ast = GateAST(self.standard_gates[gat.name], gat.params)
                     op = self.compiler.build_op_by_ast(ast, gat.qblist)
                     t[0].append(op)
                 else:
-                    raise InvalidParameterNumber(self.standard_gates[gat.name],
-                    self.compiler.gate_set[self.standard_gates[gat.name]].nb_args,
-                                                 gat.params, self.lineno)
+                    raise InvalidParameterNumber(
+                        self.standard_gates[gat.name],
+                        self.compiler.gate_set[self.standard_gates[gat.name]].nb_args,
+                        gat.params,
+                        self.lineno,
+                    )
             else:
-                #print(">>>>>>>>We got a gate called "+gat.name)
-                #print("is it true though ? "+str(self.is_routine(gat.name)))
+                # print(">>>>>>>>We got a gate called "+gat.name)
+                # print("is it true though ? "+str(self.is_routine(gat.name)))
                 if self.is_routine(gat.name, len(gat.qblist), len(gat.params)):
-                    ops=self.build_routine(gat.name, gat.qblist,
-                                           gat.params)
-                    #print("routine yields " + str(len(ops)) + " ops")
+                    ops = self.build_routine(gat.name, gat.qblist, gat.params)
+                    # print("routine yields " + str(len(ops)) + " ops")
                     t[0].extend(ops)
                 else:
-                    raise NameError("No such gate or routine, '" + gat.name +
-                                    "' or wrong number of arguments or "
-                                    "parameters\nSupported Clifford gates"
-                                    + " are :\nh, cx, ccx, x, y, z, s, "
-                                    + "swap, cz'")
-            #print("Quantum op has ")
-            #for o in t[0]:
-                #print(o)
+                    raise NameError(
+                        "No such gate or routine, '"
+                        + gat.name
+                        + "' or wrong number of arguments or "
+                        "parameters\nSupported Clifford gates"
+                        + " are :\nh, cx, ccx, x, y, z, s, "
+                        + "swap, cz'"
+                    )
+            # print("Quantum op has ")
+            # for o in t[0]:
+            # print(o)
+
     # ----------------------------------------
     # unary : NNINTEGER
     #       | REAL
@@ -1363,42 +1480,41 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_unary_0(self, t):
         """
-           unary : NNINTEGER
+        unary : NNINTEGER
         """
         t[0] = t[1]
 
     def p_unary_1(self, t):
         """
-           unary : REAL
+        unary : REAL
         """
         t[0] = t[1]
 
     def p_unary_2(self, t):
         """
-           unary : PI
+        unary : PI
         """
         t[0] = math.pi
 
     def p_unary_3(self, t):
         """
-           unary : ID
+        unary : ID
         """
         t[0] = t[1]
 
     def p_unary_4(self, t):
         """
-           unary : '(' expression ')'
+        unary : '(' expression ')'
         """
         t[0] = t[2]
 
     def p_unary_6(self, t):
         """
-           unary : ID '(' expression ')'
+        unary : ID '(' expression ')'
         """
         # note this is a semantic check, not syntactic
         if t[1] not in self.external_functions:
-            raise ValueError("Illegal external function call: ",
-                             str(t[1]))
+            raise ValueError("Illegal external function call: ", str(t[1]))
         else:
             t[0] = self.run(t[1], t[3])
         # TODO call the function
@@ -1409,18 +1525,18 @@ class OqasmParser(object):
 
     def p_expression_1(self, t):
         """
-            expression : '-' expression %prec negative
-                        | '+' expression %prec positive
+        expression : '-' expression %prec negative
+                    | '+' expression %prec positive
         """
         if isinstance(t[2], str):
-            if t[1] == '-':
-                t[0] = [-1, '*', t[2]]
+            if t[1] == "-":
+                t[0] = [-1, "*", t[2]]
             else:
                 t[0] = t[2]
         else:
-            if t[1] == '-':
-                t[0] = t[2]*(-1)
-                #print("value becomes "+str(t[0]))
+            if t[1] == "-":
+                t[0] = t[2] * (-1)
+                # print("value becomes "+str(t[0]))
             else:
                 t[0] = t[2]
 
@@ -1432,8 +1548,12 @@ class OqasmParser(object):
                     | expression '-' expression
                     | expression '^' expression
         """
-        if (isinstance(t[1], str) or isinstance(t[3], str) or
-            isinstance(t[1], list) or isinstance(t[3], list)):
+        if (
+            isinstance(t[1], str)
+            or isinstance(t[3], str)
+            or isinstance(t[1], list)
+            or isinstance(t[3], list)
+        ):
             t[0] = [t[1], t[2], t[3]]
         else:
             if t[2] == "*":
@@ -1449,7 +1569,7 @@ class OqasmParser(object):
 
     def p_expression_2(self, t):
         """
-            expression : unary
+        expression : unary
         """
         t[0] = t[1]
 
@@ -1459,13 +1579,13 @@ class OqasmParser(object):
     # ----------------------------------------
     def p_exp_list_0(self, t):
         """
-           exp_list : expression
+        exp_list : expression
         """
         t[0] = [t[1]]
 
     def p_exp_list_1(self, t):
         """
-           exp_list : exp_list ',' expression
+        exp_list : exp_list ',' expression
         """
         t[0] = t[1]
         t[0].append(t[3])
@@ -1475,10 +1595,8 @@ class OqasmParser(object):
     ##########################
     #      Parser build      #
     ##########################
-    def build(self, write_tables=False,
-              debug=False,
-              tabmodule="oqasm_tab", **kwargs):
-        """ Takes care of building a parser
+    def build(self, write_tables=False, debug=False, tabmodule="oqasm_tab", **kwargs):
+        """Takes care of building a parser
 
         Args:
             debug: whether to activate debug output or not
@@ -1487,12 +1605,17 @@ class OqasmParser(object):
         Returns:
             Nothing
         """
-        self.parser = yacc.yacc(module=self, write_tables=write_tables,
-                                tabmodule=tabmodule, debug=False,
-                                errorlog=yacc.NullLogger(), **kwargs)
+        self.parser = yacc.yacc(
+            module=self,
+            write_tables=write_tables,
+            tabmodule=tabmodule,
+            debug=False,
+            errorlog=yacc.NullLogger(),
+            **kwargs
+        )
 
     def parse(self, string, debug=False):
-        """ Parses a given string of openqasm source code
+        """Parses a given string of openqasm source code
 
         Args:
             string: input string to parse
@@ -1505,9 +1628,10 @@ class OqasmParser(object):
         self.parser.parse(string, debug=debug)
         return 1
 
-    def compile(self, string, write_tables=False, debug=False,
-                tabmodule="oqasm_tab", **kwargs):
-        """ Compiles a chunk of openqasm code sent as a parameter,
+    def compile(
+        self, string, write_tables=False, debug=False, tabmodule="oqasm_tab", **kwargs
+    ):
+        """Compiles a chunk of openqasm code sent as a parameter,
         and returns the corresponding QLM circuit
 
         Args:
@@ -1519,8 +1643,9 @@ class OqasmParser(object):
         Returns:
             Corresponding QLM circuit
         """
-        self.build(write_tables=write_tables, debug=debug,
-                   tabmodule=tabmodule, **kwargs)
+        self.build(
+            write_tables=write_tables, debug=debug, tabmodule=tabmodule, **kwargs
+        )
         self.parse(string, debug=debug)
 
         return self.compiler.gen_circuit()
