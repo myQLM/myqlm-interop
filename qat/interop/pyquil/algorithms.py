@@ -44,6 +44,7 @@ import numpy as np
 
 from grove.simon.simon import Simon, create_1to1_bitmap
 
+
 def get_simon(bitmap=None):
     """ Instanciates and returns the circuit for Simon's algorithm """
     if bitmap is None:
@@ -51,6 +52,7 @@ def get_simon(bitmap=None):
     sm = Simon()
     sm._init_attr(bitmap)
     return sm.simon_circuit
+
 
 def run_simon(qc, bitmap=None, trials=30):
     """
@@ -283,12 +285,14 @@ def QFT3():  # pylint: disable=invalid-name
     prog.measure(2, ro[2])
     return prog
 
+
 def run_qft3(qc, trials=30):
     """"
     Executes and returns measures of a 3-qubit QFT circuit
     in pyquil result format
     """
     return qc.run(QFT3(), trials=trials)
+
 
 def meyer_penny_program():
     """
@@ -318,12 +322,14 @@ def meyer_penny_program():
 
     return prog
 
+
 def run_meyer_penny(qc, trials=30):
     """
     Executes the program that simulates the Meyer-Penny Game
     and returns measures in pyquil result format
     """
     return qc.run(meyer_penny_program(), trials=trials)
+
 
 def quantum_dice(number_of_sides=6):
     """ Generates a quantum program to roll a die of n faces"""
@@ -338,6 +344,7 @@ def quantum_dice(number_of_sides=6):
     for qbit in range(qubits):
         prog += MEASURE(qbit, ro[qbit])
     return prog
+
 
 def run_quantum_dice(qc, trials=30, number_of_sides=6):
     """

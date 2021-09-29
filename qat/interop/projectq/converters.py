@@ -46,6 +46,7 @@ and :class:`~qat.interop.projectq.AqasmEngine`
     print("The circuit is composed of the gates:",
           list(circ.iterate_simple()))
 """
+
 import warnings
 from math import pi
 import projectq
@@ -91,6 +92,7 @@ gate_dic = {
     Ph: aq_gates.PH,
 }
 param_list = [aq_gates.PH, aq_gates.RX, aq_gates.RY, aq_gates.RZ]
+
 
 def QFT(n):  # pylint: disable=invalid-name
     """ Creates and returns an AQASM QFT QRoutine of size n """
@@ -236,8 +238,10 @@ class AqasmPrinter(MainEngine):
 
     def _out_cmd(self, cmd):
         """ Send a command to the engine """
-        if isinstance(cmd.gate,
-            (AllocateQubitGate, DeallocateQubitGate, AllocateDirtyQubitGate)):
+        if isinstance(
+            cmd.gate,
+            (AllocateQubitGate, DeallocateQubitGate, AllocateDirtyQubitGate)
+        ):
             return
         if isinstance(cmd.gate, MeasureGate):
             inp_qb = []
@@ -245,7 +249,7 @@ class AqasmPrinter(MainEngine):
                 for qbit in reg:
                     inp_qb.append(self.qb[int(str(qbit))][0])
             self.to_measure.append(inp_qb)
-            #self.prog.measure(inp_qb, inp_qb)
+            # self.prog.measure(inp_qb, inp_qb)
 
         elif isinstance(cmd.gate, BasicGate):
             controls = cmd.all_qubits[0]

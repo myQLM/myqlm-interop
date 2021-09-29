@@ -50,7 +50,7 @@ from qiskit.circuit.library import standard_gates
 
 from qat.lang.AQASM import Program, QRoutine
 from qat.lang.AQASM.gates import AbstractGate, H, X, Y, Z, SWAP, I, S, \
-        T, RX, RY, RZ
+    T, RX, RY, RZ
 from qat.core.util import extract_syntax
 from qat.core.assertion import assert_qpu
 from qat.core.variables import Variable, ArithExpression

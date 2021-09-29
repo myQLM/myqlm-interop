@@ -535,7 +535,7 @@ class BackendToQPU(QPUHandler):
             shots=qlm_batch.jobs[0].nbshots or self.backend.configuration().max_shots,
             coupling_map=None,
             optimization_level=self.optimization_level
-                                ).result()
+        ).result()
         results = generate_qlm_list_results(qiskit_result)
         new_results = []
         for result in results:

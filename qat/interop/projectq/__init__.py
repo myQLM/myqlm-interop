@@ -24,4 +24,4 @@ from pkgutil import extend_path
 # Try to find other QAT packages in other folders
 __path__ = extend_path(__path__, __name__)
 
-from .converters import AqasmPrinter, AqasmEngine
+from .converters import AqasmPrinter, AqasmEngine  # noqa: F401

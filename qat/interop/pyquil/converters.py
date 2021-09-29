@@ -72,6 +72,7 @@ QLM_GATE_DIC = {
     "ISWAP": aq.ISWAP,
 }
 
+
 def build_qbits(qbits):
     """ Builds a list of pyquil atoms from a list of integers
     Args:
@@ -108,7 +109,7 @@ def build_gate(dic, ident, qubits):
     if nbctrls > 0:
         # build control and targets
         targets = []
-        arity = len(qubits)-nbctrls
+        arity = len(qubits) - nbctrls
         targets = qubits[-arity:]
         controls = list(qubits[:nbctrls])
         # base gate
@@ -163,6 +164,7 @@ def qlm_to_pyquil(qlm_circuit, program_pragma=None):
     for qb, cbit in enumerate(creg):
         program += pg.MEASURE(qb, cbit)
     return program
+
 
 def build_cregs(prog, pyquil_prog):
     """
@@ -240,7 +242,7 @@ def pyquil_to_qlm(pyquil_prog, sep_measures=False, **kwargs):
                     ctrls += len(op.name) - len(op.name.replace("C", ""))
                 else:
                     raise ValueError(f"Gate {op.name} is not supported")
-            if op.modifiers.count('DAGGER')%2 == 1:
+            if op.modifiers.count('DAGGER') % 2 == 1:
                 gate = gate.dag()
             ctrls += op.modifiers.count('CONTROLLED')
             qubits = op.qubits
@@ -265,6 +267,7 @@ def pyquil_to_qlm(pyquil_prog, sep_measures=False, **kwargs):
     if sep_measures:
         return prog.to_circ(**kwargs), list(set(to_measure))
     return prog.to_circ(**kwargs)
+
 
 def job_to_pyquil(qlm_job):
     """ Converts a QLM job's circuit to a pyquil circuit

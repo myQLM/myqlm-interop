@@ -78,9 +78,9 @@ def generate_qlm_result(pyquil_result):
     qlm_result.raw_data = [
         Sample(state=state,
                probability=freq / nbshots,
-               err=np.sqrt(freq / nbshots*(1.-freq/nbshots)(nbshots-1))
+               err=np.sqrt(freq / nbshots * (1. - freq / nbshots)(nbshots - 1))
                if nbshots > 1 else None
-              )
+               )
         for state, freq in counts.items()
     ]
     return qlm_result

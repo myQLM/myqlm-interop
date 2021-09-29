@@ -44,6 +44,7 @@ Or
     qubits will be allocated first, then all line qubits.
     The order will follow coordinates.
 """
+
 import warnings
 from math import pi
 from typing import cast
@@ -52,12 +53,13 @@ import sympy
 
 import cirq
 from cirq.ops import common_gates, controlled_gate
-ops = cirq.ops
 
 from qat.core.util import extract_syntax
 from qat.core.variables import ArithExpression, Variable
 from qat.lang.AQASM import Program, AbstractGate, H, X, Y, Z, S, T, RX, RY, RZ, \
     SWAP, ISWAP, SQRTSWAP
+
+ops = cirq.ops
 
 
 # Adding parity gates
@@ -661,6 +663,7 @@ QLM_GATE_DIC = {
     'PH': common_gates.ZPowGate
 }
 
+
 def _qat2sympy(ae):
     """
     Transforms qat Arithmetic expressions into Sympy
@@ -678,6 +681,7 @@ def _qat2sympy(ae):
     if isinstance(ae, Variable):
         return sympy.symbols(ae.name)
     return ae
+
 
 def qlm_to_cirq(qlm_circuit):
     """ Converts a QLM circuit to a cirq circuit.
