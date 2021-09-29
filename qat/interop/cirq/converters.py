@@ -48,17 +48,17 @@ import warnings
 from math import pi
 from typing import cast
 from numpy import array, complex128, cos, sin, diag, ufunc
+import sympy
+
+import cirq
+from cirq.ops import common_gates, controlled_gate
+ops = cirq.ops
 
 from qat.core.util import extract_syntax
 from qat.core.variables import ArithExpression, Variable
 from qat.lang.AQASM import Program, AbstractGate, H, X, Y, Z, S, T, RX, RY, RZ, \
     SWAP, ISWAP, SQRTSWAP
 
-import cirq
-from cirq.ops import common_gates, controlled_gate
-ops = cirq.ops
-
-import sympy
 
 # Adding parity gates
 def gen_XX():
@@ -550,7 +550,7 @@ try:
         common_gates.Rz: process_RZ,
     }
 except AttributeError:
-    cirq_latest_version_gates = dict()
+    cirq_latest_version_gates = {}
 
 
 gate_dic.update(cirq_latest_version_gates)
@@ -673,12 +673,11 @@ def _qat2sympy(ae):
     if isinstance(ae, ArithExpression):
         if isinstance(ae.symbol.evaluator, ufunc):
             return sympy.sympify(ae.symbol.evaluator.__name__)(*[_qat2sympy(c) for c in ae.children])
-        else:
-            return ae.symbol.evaluator(*[_qat2sympy(c) for c in ae.children])
-    elif isinstance(ae, Variable):
+        return ae.symbol.evaluator(*[_qat2sympy(c) for c in ae.children])
+
+    if isinstance(ae, Variable):
         return sympy.symbols(ae.name)
-    else:
-        return ae
+    return ae
 
 def qlm_to_cirq(qlm_circuit):
     """ Converts a QLM circuit to a cirq circuit.
@@ -702,11 +701,11 @@ def qlm_to_cirq(qlm_circuit):
                 continue
             gate = QLM_GATE_DIC[name.rsplit('-', 1)[-1]]
             if len(params) > 0:
-                for i, p in enumerate(params):
-                    if isinstance(p, Variable):
-                        params[i] = sympy.symbols(p.name)
-                    elif isinstance(p, ArithExpression):
-                        params[i] = _qat2sympy(p)
+                for i, param in enumerate(params):
+                    if isinstance(param, Variable):
+                        params[i] = sympy.symbols(param.name)
+                    elif isinstance(param, ArithExpression):
+                        params[i] = _qat2sympy(param)
 
                 if name.rsplit('-', 1)[-1] == 'PH':
                     gate = gate(exponent=params[0] / pi)

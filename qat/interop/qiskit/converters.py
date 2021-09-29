@@ -46,7 +46,7 @@ import numpy as np
 from symengine import Add, Mul, Pow
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit import Parameter, ParameterExpression
-from qiskit.circuit.library.standard_gates import *
+from qiskit.circuit.library import standard_gates
 
 from qat.lang.AQASM import Program, QRoutine
 from qat.lang.AQASM.gates import AbstractGate, H, X, Y, Z, SWAP, I, S, \
@@ -134,29 +134,28 @@ def _sympy_arg_to_arith_expr(prog, variables, param, arg):
         return arith_expr
 
     # if it is not an expression, but a single value, either abstract or not
-    else:
-        new_param_name = str(arg)
-        var = False
-        if isinstance(param, Parameter):
-            for x_param in param.expr.parameters:
-                if x_param.name == new_param_name:
-                    # gets the variable or creates it
-                    var = _qiskit_to_qlm_param(prog, variables, x_param)
-                    break
-        elif isinstance(param, ParameterExpression):
-            for x_param in param.parameters:
-                if x_param.name == new_param_name:
-                    # gets the variable or creates it
-                    var = _qiskit_to_qlm_param(prog, variables, x_param)
-                    break
+    new_param_name = str(arg)
+    var = False
+    if isinstance(param, Parameter):
+        for x_param in param.expr.parameters:
+            if x_param.name == new_param_name:
+                # gets the variable or creates it
+                var = _qiskit_to_qlm_param(prog, variables, x_param)
+                break
+    elif isinstance(param, ParameterExpression):
+        for x_param in param.parameters:
+            if x_param.name == new_param_name:
+                # gets the variable or creates it
+                var = _qiskit_to_qlm_param(prog, variables, x_param)
+                break
 
-        # if the value is not abstract
-        if not var:
-            try:
-                var = float(new_param_name)
-            except ValueError:
-                string = "Unreliable variable expression in Qiskit Parameter"
-                raise KeyError(string)
+    # if the value is not abstract
+    if not var:
+        try:
+            var = float(new_param_name)
+        except ValueError as err:
+            string = "Unreliable variable expression in Qiskit Parameter"
+            raise KeyError(string) from err
     return var
 
 
@@ -393,7 +392,7 @@ def qiskit_to_qlm(qiskit_circuit, sep_measures=False, **kwargs):
     cbits = prog.calloc(cbits_num)
     variables = []
     for gate_op in qiskit_circuit.data:
-        if gate_op[0].name == "barrier" or gate_op[0].name == "opaque":
+        if gate_op[0].name in ("barrier", "opaque"):
             continue
         qbit_args = []
         cbit_args = []
@@ -432,8 +431,8 @@ def qiskit_to_qlm(qiskit_circuit, sep_measures=False, **kwargs):
             num_ctrl_qubits = None
             try:
                 num_ctrl_qubits = gate_op[0].num_ctrl_qubits
-            except:
-                None
+            except AttributeError:
+                pass
             gate = get_gate(gate_op[0].name, prms, num_ctrl_qubits)
             prog.apply(gate, *[qbits[i] for i in qbit_args][:gate.arity])
     if sep_measures:
@@ -498,40 +497,40 @@ def _get_qiskit_gate_from_name(name):
     Return a qiskit gate that corresponds to the name passed as argument.
     """
     gates = {
-        'H': HGate,
-        'X': XGate,
-        'Y': YGate,
-        'Z': ZGate,
-        'SWAP': SwapGate,
-        'I': IGate,
-        'S': SGate,
-        'D-S': SdgGate,
-        'T': TGate,
-        'D-T': TdgGate,
-        'RX': RXGate,
-        'RY': RYGate,
-        'RZ': RZGate,
-        'C-H': CHGate,
-        'CNOT': CXGate,
-        'C-Y': CYGate,
-        'CSIGN': CZGate,
-        'C-RZ': CRZGate,
-        'CCNOT': CCXGate,
-        'C-SWAP': CSwapGate,
-        'U': U3Gate,
-        'U3': U3Gate,
-        'U2': U2Gate,
-        'U1': U1Gate,
-        'U0': IGate,
-        'PH': RZGate,
-        'RXX': RXXGate,
-        'RZZ': RZZGate,
-        'R': RGate,
-        'MS': MSGate
+        'H': standard_gates.HGate,
+        'X': standard_gates.XGate,
+        'Y': standard_gates.YGate,
+        'Z': standard_gates.ZGate,
+        'SWAP': standard_gates.SwapGate,
+        'I': standard_gates.IGate,
+        'S': standard_gates.SGate,
+        'D-S': standard_gates.SdgGate,
+        'T': standard_gates.TGate,
+        'D-T': standard_gates.TdgGate,
+        'RX': standard_gates.RXGate,
+        'RY': standard_gates.RYGate,
+        'RZ': standard_gates.RZGate,
+        'C-H': standard_gates.CHGate,
+        'CNOT': standard_gates.CXGate,
+        'C-Y': standard_gates.CYGate,
+        'CSIGN': standard_gates.CZGate,
+        'C-RZ': standard_gates.CRZGate,
+        'CCNOT': standard_gates.CCXGate,
+        'C-SWAP': standard_gates.CSwapGate,
+        'U': standard_gates.U3Gate,
+        'U3': standard_gates.U3Gate,
+        'U2': standard_gates.U2Gate,
+        'U1': standard_gates.U1Gate,
+        'U0': standard_gates.IGate,
+        'PH': standard_gates.RZGate,
+        'RXX': standard_gates.RXXGate,
+        'RZZ': standard_gates.RZZGate,
+        'R': standard_gates.RGate,
+        'MS': standard_gates.MSGate
     }
     try:
         gate = gates[name]
-    except:
+    except KeyError:
         gate = None
     return gate
 
@@ -646,9 +645,9 @@ def _arith_expr_list_to_parameter_expression(
     try:
         # try to cast it to float
         value = float(arg)
-    except ValueError:
+    except ValueError as err:
         string = "Unreliable variable expression in ArithExpression"
-        raise KeyError(string)
+        raise KeyError(string) from err
     return value
 
 
@@ -716,25 +715,24 @@ def qlm_to_qiskit(qlm_circuit, qubits=None):
                             tmp = tmp.replace("C-", "", 1)
                             if last == tmp:
                                 raise ValueError(
-                                    "Gate {} not supported by Qiskit API".format(name)
+                                    f"Gate {name} not supported by Qiskit API"
                                 )
-                            else:
-                                count += 1
-                                gate = _get_qiskit_gate_from_name(tmp)
-                                if gate != None:
-                                    gate = gate(*params).control(count)
-                                    break
-                        if gate != None:
+                            count += 1
+                            gate = _get_qiskit_gate_from_name(tmp)
+                            if gate is not None:
+                                gate = gate(*params).control(count)
+                                break
+                        if gate is not None:
                             q_circ.append(gate, [qreg[i] for i in gate_op.qbits])
                     else:
                         dic[name](* params + [qreg[i] for i in gate_op.qbits])
-            except KeyError:
+            except KeyError as err:
                 raise ValueError(
-                    "Gate {} not supported by Qiskit API".format(name)
-                )
+                    f"Gate {name} not supported by Qiskit API"
+                ) from err
         elif gate_op.type == OpType.MEASURE:
-            for index in range(len(gate_op.qbits)):
-                q_circ.measure(gate_op.qbits[index], gate_op.cbits[index])  # pylint:disable=no-member
+            for index, qbit in enumerate(gate_op.qbits):
+                q_circ.measure(qbit, gate_op.cbits[index])  # pylint:disable=no-member
 
     # Adding measures to unify the interface
     for qbit_index, cbit in zip(qubits, creg):

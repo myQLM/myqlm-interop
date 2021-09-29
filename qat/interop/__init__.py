@@ -28,8 +28,8 @@ from pkgutil import extend_path
 __path__ = extend_path(__path__, __name__)
 
 
-from qat.core.version import VERSION
 from pkg_resources import parse_version
+from qat.core.version import VERSION
 
 if parse_version(VERSION) < parse_version('0.0.6'):
     import warnings

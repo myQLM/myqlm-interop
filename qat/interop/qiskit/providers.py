@@ -145,7 +145,7 @@ def generate_qlm_result(qiskit_result):
     ret = QlmRes(raw_data=[])
     for state, freq in counts[0].items():
         if not isinstance(state, int):
-            print("State is {}".format(type(state)))
+            print(f"State is {type(state)}")
         ret.raw_data.append(
             Sample(state=state,
                    probability=freq / nbshots,
@@ -179,7 +179,7 @@ def generate_qlm_list_results(qiskit_result):
         ret = QlmRes(raw_data=[])
         for state, freq in count.items():
             if not isinstance(state, int):
-                print("State is {}".format(type(state)))
+                print("State is {type(state)}")
             ret.raw_data.append(
                 Sample(state=state,
                        probability=freq / nbshots,
@@ -258,6 +258,9 @@ class QLMJob(JobV1):
     small twist: everything is computed synchronously (meaning that the
     job is stored at submit and computed at result).
     """
+    def __init__(self, *args, **kwargs):
+        self._results = None
+        super().__init__(*args, **kwargs)
 
     def set_results(self, qlm_result, qobj_id, metadata, qobj_header):
         """
@@ -366,8 +369,8 @@ class QPUToBackend(BackendV1):
 
     @classmethod
     def _default_options(cls):
-        return Options(shots=0, qobj_id=str(uuid4()), qobj_header=dict(),
-                       parameter_binds=dict())
+        return Options(shots=0, qobj_id=str(uuid4()), qobj_header={},
+                       parameter_binds={})
 
     def __init__(self, qpu=None, configuration=_QLM_BACKEND, provider=None):
         """
@@ -415,6 +418,8 @@ class QPUToBackend(BackendV1):
         qobj_id = kwargs.get('qobj_id', self.options.qobj_id)
         qobj_header = kwargs.get('qobj_header', self.options.qobj_header)
         # TODO: use parameter_binds for constructing the job
+        # this involves not only iterating on the experiments
+        # but also iterating on the parameter sets so provided
 
         qlm_task = Batch(jobs=[])
         for circuit in circuits:
