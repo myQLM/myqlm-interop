@@ -49,15 +49,15 @@ def generate_qlm_result(cirq_result):
         for shot, value in enumerate(entry):
             measurements[shot] += str(int(value[0]))
 
-    measurements = [ int(_, 2) for _ in measurements]
+    measurements = [int(_, 2) for _ in measurements]
     counts = Counter(measurements)
     qlm_result = QlmRes()
     qlm_result.raw_data = [
         Sample(state=state,
                probability=freq / nbshots,
-               err=np.sqrt(freq/nbshots *(1.-freq/nbshots)/(nbshots-1))
+               err=np.sqrt(freq / nbshots * (1. - freq / nbshots) / (nbshots - 1))
                if nbshots > 1 else None
-              )
+               )
         for state, freq in counts.items()
     ]
     return qlm_result

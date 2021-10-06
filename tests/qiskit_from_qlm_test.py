@@ -42,7 +42,7 @@ STREAM_HANDLER.setLevel(logging.DEBUG)
 LOGGER.addHandler(STREAM_HANDLER)
 
 PYGATES_1QB = [X, Y, Z, I, S, T, S.dag(), T.dag(), H,
-               RX(3.14), RY(3.14), RZ(3.14), U2(3.14, 3.14), R(3.14, 3.14),
+               RX(3.14), RY(3.14), RZ(3.14), R(3.14, 3.14),
                U3(3.14, 3.14, 3.14)]
 PYGATES_2QB = [SWAP, CNOT, Y.ctrl(), Z.ctrl(), H.ctrl(), RZ(3.14).ctrl(),
                RXX(3.14), RZZ(3.14)]
@@ -52,7 +52,7 @@ GATE_NAMES = {'x': 'X', 'y': 'Y', 'z': 'Z', 'h': 'H', 'rx': 'RX', 'id': 'I',
               'ry': 'RY', 'rz': 'RZ', 's': 'S', 't': 'T', 'sdg': 'D-S',
               'tdg': 'D-T', 'swap': 'SWAP', 'cx': 'CNOT', 'ccx': 'CCNOT',
               'cy': 'C-Y', 'cz': 'CSIGN', 'ch': 'C-H', 'crz': 'C-RZ',
-              'cswap': 'C-SWAP', 'u2': 'U2', 'u3': 'U3', 'rxx': 'RXX',
+              'cswap': 'C-SWAP', 'u': 'U3', 'u2': 'U2', 'u3': 'U3', 'rxx': 'RXX',
               'rzz': 'RZZ', 'r': 'R', 'ms': 'MS', 'measure': 'measure'}
 
 
@@ -96,7 +96,7 @@ def qiskit_1qb(qc):
     Returns the list of the qiskit gate methods that affect 1 qubit and
     take no parameter.
     """
-    return [qc.x, qc.y, qc.z, qc.iden, qc.s, qc.t, qc.sdg, qc.tdg, qc.h]
+    return [qc.x, qc.y, qc.z, qc.id, qc.s, qc.t, qc.sdg, qc.tdg, qc.h]
 
 
 def qiskit_1qb_1prm(qc):
@@ -112,7 +112,7 @@ def qiskit_1qb_2prm(qc):
     Returns the list of the qiskit gate methods that affect 1 qubit and
     take 2 parameter.
     """
-    return [qc.u2, qc.r]
+    return [qc.r]
 
 
 def qiskit_1qb_3prm(qc):
@@ -120,7 +120,7 @@ def qiskit_1qb_3prm(qc):
     Returns the list of the qiskit gate methods that affect 1 qubit and
     take 3 parameter.
     """
-    return [qc.u3]
+    return [qc.u]
 
 
 def qiskit_2qb(qc):
@@ -321,7 +321,7 @@ class TestQLM2QiskitConversion(unittest.TestCase):
         prog.apply(X, qbits[0])
         circ = prog.to_circ()
 
-        qpu = BackendToQPU(Aer.get_backend('qasm_simulator'))
+        qpu = BackendToQPU(Aer.get_backend('aer_simulator'))
         res = qpu.submit(circ.to_job(nbshots=1))
         self.assertEqual(res[0].state.int, 0b01)
 
@@ -340,7 +340,7 @@ class TestQLM2QiskitConversion(unittest.TestCase):
         prog.apply(X, qbits)
         circ = prog.to_circ()
 
-        qpu = BackendToQPU(Aer.get_backend('qasm_simulator'))
+        qpu = BackendToQPU(Aer.get_backend('aer_simulator'))
         self.assertRaises(QPUException, qpu.submit,
                           circ.to_job("OBS", observable=Observable(1)))
 

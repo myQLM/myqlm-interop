@@ -86,17 +86,14 @@ three main classes:
 import os
 from collections import Counter
 import warnings
+from uuid import uuid4
 import numpy as np
 
-from qiskit.providers import BaseBackend, BaseJob
-from qiskit.providers.models.backendconfiguration import (
-    BackendConfiguration,
-    GateConfig,
-)
+from qiskit.providers import BackendV1, JobV1, Options
+from qiskit.providers.models.backendconfiguration import BackendConfiguration
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
-from qiskit.assembler import disassemble
-from qiskit.validation.base import Obj
+from qiskit.qobj import QobjExperimentHeader
 from qiskit import execute, Aer, IBMQ
 
 # QLM imports
@@ -140,7 +137,7 @@ def generate_qlm_result(qiskit_result):
 
     nbshots = qiskit_result.results[0].shots
     try:
-        counts = [vars(result.data.counts) for result in qiskit_result.results]
+        counts = [result.data.counts for result in qiskit_result.results]
     except AttributeError:
         print("No measures, so the result is empty")
         return QlmRes(raw_data=[])
@@ -148,7 +145,7 @@ def generate_qlm_result(qiskit_result):
     ret = QlmRes(raw_data=[])
     for state, freq in counts[0].items():
         if not isinstance(state, int):
-            print("State is {}".format(type(state)))
+            print(f"State is {type(state)}")
         ret.raw_data.append(
             Sample(state=state,
                    probability=freq / nbshots,
@@ -172,7 +169,7 @@ def generate_qlm_list_results(qiskit_result):
 
     nbshots = qiskit_result.results[0].shots
     try:
-        counts = [vars(result.data.counts) for result in qiskit_result.results]
+        counts = [result.data.counts for result in qiskit_result.results]
     except AttributeError:
         print("No measures, so the result is empty")
         return QlmRes(raw_data=[])
@@ -182,7 +179,7 @@ def generate_qlm_list_results(qiskit_result):
         ret = QlmRes(raw_data=[])
         for state, freq in count.items():
             if not isinstance(state, int):
-                print("State is {}".format(type(state)))
+                print("State is {type(state)}")
             ret.raw_data.append(
                 Sample(state=state,
                        probability=freq / nbshots,
@@ -194,13 +191,13 @@ def generate_qlm_list_results(qiskit_result):
     return ret_list
 
 
-def _generate_experiment_result(qlm_result, head):
+def _generate_experiment_result(qlm_result, metadata):
     """
     Generates a Qiskit experiment result.
 
     Args:
         qlm_result: qat.core.wrappers.Result object which data is aggregated
-        head: Header of the experiment
+        metadata: metadata of the circuit of the experiment
 
     Returns:
         An ExperimentResult structure.
@@ -212,7 +209,7 @@ def _generate_experiment_result(qlm_result, head):
         shots=len(qlm_result.raw_data),
         success=True,
         data=data,
-        header=Obj.from_dict(head),
+        header=QobjExperimentHeader(metadata=metadata),
     )
 
 
@@ -223,7 +220,8 @@ def _qlm_to_qiskit_result(
         job_id,
         success,
         qlm_results,
-        headers):
+        metadata,
+        qobj_header):
     """
     Tranform a QLM result into a Qiskit result structure.
 
@@ -234,7 +232,8 @@ def _qlm_to_qiskit_result(
         job_id:
         success:
         qlm_results: List of qat.core.wrappers.Result objects
-        headers: List of the experiments' headers
+        metadata: List of the circuit's metadata
+        qobj_header: user input that will be in the Result
 
     Returns:
         A qiskit Result structure.
@@ -246,28 +245,32 @@ def _qlm_to_qiskit_result(
         job_id=job_id,
         success=success,
         results=[
-            _generate_experiment_result(result, head)
-            for result, head in zip(qlm_results, headers)
+            _generate_experiment_result(result, md)
+            for result, md in zip(qlm_results, metadata)
         ],
+        header=qobj_header,
     )
 
 
-class QLMJob(BaseJob):
+class QLMJob(JobV1):
     """
-    QLM Job implement the required BaseJob interface of Qiskit with a
+    QLM Job implement the required JobV1 interface of Qiskit with a
     small twist: everything is computed synchronously (meaning that the
     job is stored at submit and computed at result).
     """
+    def __init__(self, *args, **kwargs):
+        self._results = None
+        super().__init__(*args, **kwargs)
 
-    def set_results(self, qlm_result, qobj_id, headers):
+    def set_results(self, qlm_result, qobj_id, metadata, qobj_header):
         """
         Sets the results of the Job.
 
         Args:
             qlm_result: :class:`~qat.core.wrappers.result.Result` object
             qobj_id: Identifier of the initial Qobj structure
-            headers: List of the experiments' headers, gotten from
-                    the initial Qobj structure's experiments
+            metadata: List of the circuit's metadata
+            qobj_header: user input that will be in the Result
         """
         self._results = _qlm_to_qiskit_result(
             self._backend._configuration.backend_name,
@@ -276,7 +279,8 @@ class QLMJob(BaseJob):
             self._job_id,
             True,
             qlm_result,
-            headers,
+            metadata,
+            qobj_header,
         )
 
     def status(self):
@@ -293,8 +297,10 @@ class QLMJob(BaseJob):
 
 
 _QLM_GATE_NAMES = [
+    "i",
     "id",
     "iden",
+    "u",
     "u0",
     "u1",
     "u2",
@@ -323,7 +329,7 @@ _QLM_GATE_NAMES = [
     "r",
 ]
 
-_QLM_GATES = [GateConfig(name="FOO", parameters=[], qasm_def="BAR")]
+_QLM_GATES = [{"name": "FOO", "parameters": [], "qasm_def": "BAR"}]
 
 _QLM_PARAMS = {
     "backend_name": "QiskitConnector",  # Name of the back end
@@ -347,10 +353,10 @@ class NoQpuAttached(Exception):
     """
 
 
-_QLM_BACKEND = BackendConfiguration(**_QLM_PARAMS)
+_QLM_BACKEND = BackendConfiguration.from_dict(_QLM_PARAMS)
 
 
-class QPUToBackend(BaseBackend):
+class QPUToBackend(BackendV1):
     """
     Basic connector implementing a Qiskit Backend, plugable on a QLM QPU.
 
@@ -360,6 +366,11 @@ class QPUToBackend(BaseBackend):
                 standard uses
         provider: Provider responsible for this backend
     """
+
+    @classmethod
+    def _default_options(cls):
+        return Options(shots=0, qobj_id=str(uuid4()), qobj_header={},
+                       parameter_binds={})
 
     def __init__(self, qpu=None, configuration=_QLM_BACKEND, provider=None):
         """
@@ -382,12 +393,13 @@ class QPUToBackend(BaseBackend):
         """
         self._qpu = qpu
 
-    def run(self, qobj):
+    def run(self, run_input, **kwargs):
         """ Convert all the circuits inside qobj into a Batch of
             QLM jobs before sending them into a QLM qpu.
 
         Args:
-            qobj: Qiskit batch of circuits to run
+            run_input (list or QuantumCircuit or Schedule)
+            kwargs: any option that can replace the default ones
 
         Returns:
             Returns a :class:`~qat.interop.qiskit.QLMJob` object containing
@@ -396,9 +408,19 @@ class QPUToBackend(BaseBackend):
         """
         if self._qpu is None:
             raise NoQpuAttached("No qpu attached to the QLM connector.")
-        headers = [exp.header.to_dict() for exp in qobj.experiments]
-        circuits = disassemble(qobj)[0]
-        nbshots = qobj.config.shots
+        circuits = run_input if isinstance(run_input, list) else [run_input]
+        circuits_metadata = [circuit.metadata for circuit in circuits]
+
+        for kwarg in kwargs:
+            if not hasattr(self.options, kwarg):
+                raise ValueError(f"'{kwarg}' parameter not supported")
+        nbshots = kwargs.get('shots', self.options.shots)
+        qobj_id = kwargs.get('qobj_id', self.options.qobj_id)
+        qobj_header = kwargs.get('qobj_header', self.options.qobj_header)
+        # TODO: use parameter_binds for constructing the job
+        # this involves not only iterating on the experiments
+        # but also iterating on the parameter sets so provided
+
         qlm_task = Batch(jobs=[])
         for circuit in circuits:
             qlm_circuit = qiskit_to_qlm(circuit)
@@ -416,7 +438,7 @@ class QPUToBackend(BaseBackend):
         # Creating a job that will contain the results
         job = QLMJob(self, str(self.id_counter))
         self.id_counter += 1
-        job.set_results(results, qobj.qobj_id, headers)
+        job.set_results(results, qobj_id, circuits_metadata, qobj_header)
         return job
 
 
@@ -434,7 +456,7 @@ class BackendToQPU(QPUHandler):
      - an IBM token and the name of the backend: please the keyword arguments
        :code:`token` and :code:`ibmq_backend` (the default backend is
        :code:`"ibmq_qasm_simulator"`)
-     - *no argument*: the :code:`"qasm_simulator"` is used if no argment is specified
+     - *no argument*: the :code:`"aer_simulator"` is used if no argment is specified
 
     Args:
         backend: The Backend Qiskit object that is supposed to execute
@@ -485,7 +507,7 @@ class BackendToQPU(QPUHandler):
                 provider = IBMQ.load_account()
                 self.backend = provider.get_backend(ibmq_backend)
             else:
-                self.backend = Aer.get_backend("qasm_simulator")
+                self.backend = Aer.get_backend("aer_simulator")
         else:
             self.backend = backend
 
@@ -513,7 +535,7 @@ class BackendToQPU(QPUHandler):
             shots=qlm_batch.jobs[0].nbshots or self.backend.configuration().max_shots,
             coupling_map=None,
             optimization_level=self.optimization_level
-                                ).result()
+        ).result()
         results = generate_qlm_list_results(qiskit_result)
         new_results = []
         for result in results:
@@ -582,7 +604,7 @@ class QiskitJob:
             qlm_batch: :class:`~qat.core.Batch` or :class:`~qat.core.Job` object.
                     If a QLM Job object is given, it will be converted in a QLM
                     Batch object
-            async_job: Qiskit job instance derived from BaseJob.
+            async_job: Qiskit job instance derived from JobV1.
                     Result of a previous asynchronous execution of qlm_batch
             max_shots: Maximal number of shots allowed by the Backend
         """
@@ -668,7 +690,7 @@ class AsyncBackendToQPU(QPUHandler):
      - an IBM token and the name of the backend: please the keyword arguments
        :code:`token` and :code:`ibmq_backend` (the default backend is
        :code:`"ibmq_qasm_simulator"`)
-     - *no argument*: the :code:`"qasm_simulator"` is used if no argment is specified
+     - *no argument*: the :code:`"aer_simulator"` is used if no argment is specified
 
     .. warning::
 
@@ -719,7 +741,7 @@ class AsyncBackendToQPU(QPUHandler):
                 provider = IBMQ.load_account()
                 self.backend = provider.get_backend(ibmq_backend)
             else:
-                self.backend = Aer.get_backend("qasm_simulator")
+                self.backend = Aer.get_backend("aer_simulator")
         else:
             self.backend = backend
 
@@ -733,7 +755,7 @@ class AsyncBackendToQPU(QPUHandler):
 
         Returns:
             A :class:`~qat.interop.qiskit.QiskitJob` object with the same
-            interface as a job derived from BaseJob for the user to have
+            interface as a job derived from JobV1 for the user to have
             information on their job execution
         """
         if self.backend is None:
@@ -756,7 +778,7 @@ class AsyncBackendToQPU(QPUHandler):
                     from this job.
         Returns:
             :class:`~qat.interop.qiskit.QiskitJob` object with the same
-            interface as a job derived from BaseJob for the user to have
+            interface as a job derived from JobV1 for the user to have
             information on their job execution
         """
         if self.backend is None:

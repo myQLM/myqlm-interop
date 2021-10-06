@@ -20,6 +20,8 @@
     under the License.
 """
 
+import sys
+import pytest
 from collections import Counter
 
 def compare_results(expected, result, aggregate=True):
@@ -56,6 +58,9 @@ def analyze_distance(distance):
 
 
 if __name__=="__main__":
+    if sys.version_info < (3, 7):
+        pytest.skip("python version < 3.7: skipping pyquil_binder tests", allow_module_level=True)
+
     from qat.interop.pyquil.algorithms import run_simon
     from qat.linalg import LinAlg
     from qat.mps import MPS

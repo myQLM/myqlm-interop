@@ -39,18 +39,23 @@ Some pyquil algorithms taken from rigetti's grove repo
 from math import pi, ceil, log
 
 from pyquil import Program
-from pyquil.gates import *
+from pyquil.gates import I, H, X, CNOT, SWAP, CPHASE, MEASURE
 import numpy as np
 
 from grove.simon.simon import Simon, create_1to1_bitmap
 
-def get_simon(bitmap=create_1to1_bitmap("101")):
+
+def get_simon(bitmap=None):
+    """ Instanciates and returns the circuit for Simon's algorithm """
+    if bitmap is None:
+        bitmap = create_1to1_bitmap("101")
     sm = Simon()
     sm._init_attr(bitmap)
     return sm.simon_circuit
 
-def run_simon(qc, bitmap=create_1to1_bitmap("101"), trials=30):
-    """ 
+
+def run_simon(qc, bitmap=None, trials=30):
+    """
     Runs simon's algorithm with preset parameters, mostly for testing
     the execution process's stability.
 
@@ -60,7 +65,9 @@ def run_simon(qc, bitmap=create_1to1_bitmap("101"), trials=30):
         trials: number of samples
     Returns:
         pyquil result object with measures.
-"""
+    """
+    if bitmap is None:
+        bitmap = create_1to1_bitmap("101")
     circ = get_simon(bitmap)
     return qc.run_and_measure(circ, qubits=list(circ.get_qubits()), trials=trials)
 
@@ -73,7 +80,7 @@ ORACLE_GATE_NAME = "DEUTSCH_JOZSA_ORACLE"
 
 def _gen_bitmap(register_size=5):
     """ Generate a bitmap
-    
+
     Args:
         register_size: register_size for every entry
                        in this map
@@ -103,7 +110,7 @@ def _gen_bitmap(register_size=5):
 DEF_JOSZA_MAP = _gen_bitmap()
 
 
-def run_deutsch_josza(cxn, bitstring_map=DEF_JOSZA_MAP, trials=10):
+def run_deutsch_josza(cxn, bitstring_map=None, trials=10):
     """
     Computes whether bitstring_map represents a constant function,
     given that it is constant or balanced.
@@ -120,6 +127,8 @@ def run_deutsch_josza(cxn, bitstring_map=DEF_JOSZA_MAP, trials=10):
         True if the bitstring_map represented a constant function,
         false otherwise.
     """
+    if bitstring_map is None:
+        bitstring_map = DEF_JOSZA_MAP
     deutsch_jozsa_circuit, computational_qubits = _init_attr(bitstring_map)
     return cxn.run_and_measure(deutsch_jozsa_circuit, computational_qubits, trials)
 
@@ -135,7 +144,7 @@ def deutsch_josza_is_constant_prob(result):
     """
     total = 0
     for res in result:
-        if all([bit == 1 for bit in res]):
+        if all(bit == 1 for bit in res):
             total += 1
     return total / len(result)
 
@@ -233,7 +242,7 @@ def _unitary_function(mappings):
         return np.kron(SWAP_MATRIX, np.identity((1 << (num_qubits - 1))))
 
     # Half of the entries were 0, half 1
-    elif bitsum == (1 << (num_qubits - 1)):
+    if bitsum == (1 << (num_qubits - 1)):
         unitary_funct = np.zeros(shape=((1 << num_qubits), (1 << num_qubits)))
         index_lists = [
             list(range(1 << (num_qubits - 1))),
@@ -248,16 +257,15 @@ def _unitary_function(mappings):
         return np.kron(np.identity(2), unitary_funct)
 
     # Only ones were entered
-    elif bitsum == (1 << num_qubits):
+    if bitsum == (1 << num_qubits):
         x_gate = np.array([[0, 1], [1, 0]])
         return np.kron(SWAP_MATRIX, np.identity(1 << (num_qubits - 1))).dot(
             np.kron(x_gate, np.identity(1 << num_qubits))
         )
-    else:
-        raise ValueError("f(x) must be constant or balanced")
+    raise ValueError("f(x) must be constant or balanced")
 
 
-def QFT3():
+def QFT3():  # pylint: disable=invalid-name
     """ Returns the Quantum Fourier Transform of 3 qubits
         pyquil circuit"""
     prog = Program()
@@ -277,12 +285,14 @@ def QFT3():
     prog.measure(2, ro[2])
     return prog
 
+
 def run_qft3(qc, trials=30):
     """"
     Executes and returns measures of a 3-qubit QFT circuit
     in pyquil result format
     """
     return qc.run(QFT3(), trials=trials)
+
 
 def meyer_penny_program():
     """
@@ -312,12 +322,14 @@ def meyer_penny_program():
 
     return prog
 
+
 def run_meyer_penny(qc, trials=30):
     """
     Executes the program that simulates the Meyer-Penny Game
     and returns measures in pyquil result format
     """
     return qc.run(meyer_penny_program(), trials=trials)
+
 
 def quantum_dice(number_of_sides=6):
     """ Generates a quantum program to roll a die of n faces"""
@@ -332,6 +344,7 @@ def quantum_dice(number_of_sides=6):
     for qbit in range(qubits):
         prog += MEASURE(qbit, ro[qbit])
     return prog
+
 
 def run_quantum_dice(qc, trials=30, number_of_sides=6):
     """

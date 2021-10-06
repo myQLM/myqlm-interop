@@ -46,11 +46,11 @@ import pyquil.gates as pg
 from pyquil import Program
 from pyquil.quilbase import Measurement, Declare, Gate
 import qat.lang.AQASM.gates as aq
+from qat.lang.AQASM import Program as QlmProgram
 try:
     from qat.core.util import extract_syntax
 except ImportError:
     from qat.core.circ import extract_syntax
-import numpy as np
 
 
 QLM_GATE_DIC = {
@@ -71,6 +71,7 @@ QLM_GATE_DIC = {
     "PH": aq.PH,
     "ISWAP": aq.ISWAP,
 }
+
 
 def build_qbits(qbits):
     """ Builds a list of pyquil atoms from a list of integers
@@ -101,12 +102,14 @@ def build_gate(dic, ident, qubits):
 
     nbctrls = name.count("C-")
     dag = name.count("D-")
+
     if basename == "PH":
         basename = "PHASE"
+
     if nbctrls > 0:
         # build control and targets
         targets = []
-        arity = len(qubits)-nbctrls
+        arity = len(qubits) - nbctrls
         targets = qubits[-arity:]
         controls = list(qubits[:nbctrls])
         # base gate
@@ -124,15 +127,16 @@ def build_gate(dic, ident, qubits):
         if dag:
             quil_gate = quil_gate.dagger()
         return quil_gate
-    elif dag:
+
+    if dag:
         params = [param.double_p for param in qlm_gate.syntax.parameters]
         # if it's a pair numbr of times, then it goes back to normal
         return pyquil.quilbase.Gate(basename, params, qubits).dagger()
-    else:
-        params = [param.double_p for param in qlm_gate.syntax.parameters]
-        if None in params:
-            raise TypeError("Unsupported parameter type")
-        return pyquil.quilbase.Gate(basename, params, qubits)
+
+    params = [param.double_p for param in qlm_gate.syntax.parameters]
+    if None in params:
+        raise TypeError("Unsupported parameter type")
+    return pyquil.quilbase.Gate(basename, params, qubits)
 
 
 def qlm_to_pyquil(qlm_circuit, program_pragma=None):
@@ -144,24 +148,31 @@ def qlm_to_pyquil(qlm_circuit, program_pragma=None):
         Pyquil circuit
     """
     if program_pragma is not None:
-        p = Program(program_pragma)
+        program = Program(program_pragma)
     else:
-        p = Program()
-    creg = p.declare("ro", "BIT", qlm_circuit.nbcbits)
+        program = Program()
+    creg = program.declare("ro", "BIT", qlm_circuit.nbcbits)
 
     for op in qlm_circuit.ops:
         if op.type == 0:
             qubits = build_qbits(op.qbits)
-            p += build_gate(qlm_circuit.gateDic, op.gate, qubits)
+            program += build_gate(qlm_circuit.gateDic, op.gate, qubits)
         elif op.type == 1:
             for qb, cb in zip(op.qbits, op.cbits):
-                p += pg.MEASURE(qb, creg[cb])
+                program += pg.MEASURE(qb, creg[cb])
     # Adding measures to unify interface
     for qb, cbit in enumerate(creg):
-        p += pg.MEASURE(qb, cbit)
-    return p
+        program += pg.MEASURE(qb, cbit)
+    return program
+
 
 def build_cregs(prog, pyquil_prog):
+    """
+    Allocates a classical register to a QLM program according to a pyquil program
+
+    Returns: tuple containing the QLM program and the list of pyquil
+             classical registers
+    """
     creg_size = 0
     pq_cregs = []
     for op in pyquil_prog.instructions:
@@ -200,7 +211,6 @@ def pyquil_to_qlm(pyquil_prog, sep_measures=False, **kwargs):
            measured
          - :code:`False`: the result is a :class:`~qat.core.Circuit`
     """
-    from qat.lang.AQASM import Program as QlmProgram
     prog = QlmProgram()
     qreg = prog.qalloc(len(pyquil_prog.get_qubits()))
     creg = None
@@ -223,8 +233,7 @@ def pyquil_to_qlm(pyquil_prog, sep_measures=False, **kwargs):
                     gate = QLM_GATE_DIC[op.name.replace("C", "")](*op.params)
                     ctrls += len(op.name) - len(op.name.replace("C", ""))
                 else:
-                    raise ValueError("Gate {} is not supported"
-                                    .format(op.name))
+                    raise ValueError(f"Gate {op.name} is not supported")
             else:
                 if op.name in QLM_GATE_DIC:
                     gate = QLM_GATE_DIC[op.name]
@@ -232,9 +241,8 @@ def pyquil_to_qlm(pyquil_prog, sep_measures=False, **kwargs):
                     gate = QLM_GATE_DIC[op.name.replace("C", "")]
                     ctrls += len(op.name) - len(op.name.replace("C", ""))
                 else:
-                    raise ValueError("Gate {} is not supported"
-                                     .format(op.name))
-            if op.modifiers.count('DAGGER')%2 == 1:
+                    raise ValueError(f"Gate {op.name} is not supported")
+            if op.modifiers.count('DAGGER') % 2 == 1:
                 gate = gate.dag()
             ctrls += op.modifiers.count('CONTROLLED')
             qubits = op.qubits
@@ -258,8 +266,8 @@ def pyquil_to_qlm(pyquil_prog, sep_measures=False, **kwargs):
                 to_measure.append(op.qubit.index)
     if sep_measures:
         return prog.to_circ(**kwargs), list(set(to_measure))
-    else:
-        return prog.to_circ(**kwargs)
+    return prog.to_circ(**kwargs)
+
 
 def job_to_pyquil(qlm_job):
     """ Converts a QLM job's circuit to a pyquil circuit

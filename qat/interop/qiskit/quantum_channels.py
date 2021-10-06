@@ -26,6 +26,7 @@ import numpy as np
 from qat.comm.quops.ttypes import QuantumChannel, RepresentationType
 from qat.comm.datamodel.ttypes import Matrix, ComplexNumber
 
+
 def array_to_matrix(array):
     """
     Transform a two dimmentional numpy array to a myqlm Matrix.

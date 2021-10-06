@@ -55,7 +55,7 @@ def gen_gates(ocirc):
         ocirc.x,
         ocirc.y,
         ocirc.z,
-        ocirc.iden,
+        ocirc.id,
         ocirc.s,
         ocirc.t,
         ocirc.h,
@@ -63,8 +63,8 @@ def gen_gates(ocirc):
         ocirc.tdg,
     ]
     gates_2qb_0prm = [ocirc.ch, ocirc.cx, ocirc.swap]
-    gates_1qb_1prm = [ocirc.rx, ocirc.ry, ocirc.rz, ocirc.u1]
-    gates_2qb_1prm = [ocirc.crz, ocirc.cu1, ocirc.rxx, ocirc.rzz]
+    gates_1qb_1prm = [ocirc.rx, ocirc.ry, ocirc.rz, ocirc.p]
+    gates_2qb_1prm = [ocirc.crz, ocirc.rxx, ocirc.rzz]
     gates_3qb_0prm = [ocirc.cswap, ocirc.ccx]
     return (
         gates_1qb_0prm,
@@ -95,7 +95,6 @@ PYGATES_2QB = [
     H.ctrl(),
     CNOT,
     SWAP,
-    RZ(3.14).ctrl(),
     RZ(3.14).ctrl(),
     RXX(3.14),
     RZZ(3.14)
@@ -133,8 +132,7 @@ class TestQiskit2QLMConversion(unittest.TestCase):
         for gate_op in gates_3qb_0prm:
             gate_op(qreg2[0], qreg3[1], qreg1[1])
 
-        ocirc.u2(3.14, 3.14, qreg3[0])
-        ocirc.u3(3.14, 3.14, 3.14, qreg3[0])
+        ocirc.u(3.14, 3.14, 3.14, qreg3[0])
         ocirc.r(3.14, 3.14, qreg3[0])
         ocirc.ms(3.14, [qreg1[1], qreg2[0], qreg3[0]])
 
@@ -156,7 +154,6 @@ class TestQiskit2QLMConversion(unittest.TestCase):
 
         prog.apply(SWAP.ctrl(), qubits[2], qubits[4], qubits[1])
         prog.apply(X.ctrl().ctrl(), qubits[2], qubits[4], qubits[1])
-        prog.apply(U2(3.14, 3.14), qubits[3])
         prog.apply(U3(3.14, 3.14, 3.14), qubits[3])
         prog.apply(R(3.14, 3.14), qubits[3])
         prog.apply(MS(3.14, 3), qubits[1], qubits[2], qubits[3])
@@ -248,21 +245,18 @@ class TestQiskit2QLMConversion(unittest.TestCase):
                     self.assertEqual(param.to_thrift(), "param3")
                 if i == 4:
                     self.assertEqual(param.to_thrift(),
-                                     "+ + + param0 param1 param2 * "
-                                     + "-1.0 param3")
+                                     "+ + + * -1.0 param3 param2 param0 param1")
                 if i == 5:
                     self.assertEqual(param.to_thrift(),
-                                     "* * * param0 param1 param3 + "
-                                     + "4.54 param2")
+                                     "* * * + 4.54 param2 param0 param1 param3")
                 if i == 6:
                     self.assertEqual(param.to_thrift(),
-                                     "* * * * param0 param1 param3 + "
-                                     + "4.54 param2 + + + param0 param1 "
-                                     + "param2 * -1.0 param3")
+                                     "* * * * + + + * -1.0 param3 param2 param0 param1 "
+                                     + "+ 4.54 param2 param0 param1 param3")
                 if i == 7:
                     self.assertEqual(param.to_thrift(),
-                                     "* ** + -7.0 param2 -1.0 + + + "
-                                     + "param0 param1 param2 * -1.0 param3")
+                                     "* + + + * -1.0 param3 param2 param0 param1"
+                                     + " ** + -7.0 param2 -1.0")
             i += 1
 
         prog = Program()

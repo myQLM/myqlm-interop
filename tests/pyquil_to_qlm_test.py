@@ -20,14 +20,22 @@
     under the License.
 """
 
+import sys
+import pytest
 import unittest
 from qat.lang.AQASM.gates import *
 from qat.core.util import get_syntax
 from qat.lang.AQASM.program import Program
+import numpy as np
+
+
+if sys.version_info < (3, 7):
+    pytest.skip("python version < 3.7: skipping pyquil_binder tests", allow_module_level=True)
+
+
 from qat.interop.pyquil.converters import qlm_to_pyquil, pyquil_to_qlm
 from pyquil import Program as Prg
 from pyquil import gates as pg
-import numpy as np
 
 
 pygates_1qb = [X, Y, Z, I, S, T, H, RX(3.14), RY(3.14), RZ(3.14), PH(3.14)]

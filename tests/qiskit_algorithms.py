@@ -90,7 +90,7 @@ p cnf 3 5
 1 -2 -3 0
 -1 2 3 0
 """
-#   backend = Aer.get_backend('qasm_simulator')
+#   backend = Aer.get_backend('aer_simulator')
     oracle = SAT(sat_cnf)
     grv = Grover(oracle)
     circ = grv.construct_circuit()
@@ -244,14 +244,14 @@ def analyze_distance(distance):
 
 def test_algorithm(circuit, iterations=(1000000)):
     """
-    Tests a circuit by submitting it to both qasm_simulator and PyLinalg.
+    Tests a circuit by submitting it to both aer_simulator and PyLinalg.
     """
     linalg = PyLinalg()
     qlm_circ, _ = qiskit_to_qlm(circuit, sep_measures=True)
     test_job = qlm_circ.to_job(nbshots=0, aggregate_data=False)
     expected = linalg.submit(test_job)
 
-    qiskit_qpu = BackendToQPU(Aer.get_backend('qasm_simulator'))
+    qiskit_qpu = BackendToQPU(Aer.get_backend('aer_simulator'))
 
     test_job.nbshots = iterations
     result = qiskit_qpu.submit(test_job)

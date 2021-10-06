@@ -21,7 +21,7 @@
     specific language governing permissions and limitations
     under the License.
 
-myQLM provides binders to translate ProjectQ circuits into 
+myQLM provides binders to translate ProjectQ circuits into
 myQLM circuits through classes :class:`~qat.interop.projectq.AqasmPrinter`
 and :class:`~qat.interop.projectq.AqasmEngine`
 
@@ -46,6 +46,7 @@ and :class:`~qat.interop.projectq.AqasmEngine`
     print("The circuit is composed of the gates:",
           list(circ.iterate_simple()))
 """
+
 import warnings
 from math import pi
 import projectq
@@ -92,7 +93,9 @@ gate_dic = {
 }
 param_list = [aq_gates.PH, aq_gates.RX, aq_gates.RY, aq_gates.RZ]
 
-def QFT(n):
+
+def QFT(n):  # pylint: disable=invalid-name
+    """ Creates and returns an AQASM QFT QRoutine of size n """
     qft_routine = aqsm.QRoutine()
     if n == 1:
         qft_routine.apply(aqsm.H, 0)
@@ -115,27 +118,27 @@ def _get_pyqasm_gate(gate, targets=None, controls=0):
         return _get_pyqasm_gate(gate._gate, targets, controls).dag()
     if controls > 0:
         return _get_pyqasm_gate(gate, targets, controls - 1).ctrl()
-    else:
-        try:
-            gate.angle  # the angle needs to be verified before
-            # in version 0.4 this changed from "_angle" to "angle"
-            return gate_dic[type(gate)](gate.angle)
-        except AttributeError:
-            if gate_dic[type(gate)] in param_list:
-                print(vars(gate))
-                raise ValueError("Gate {} needs a param".format(gate))
-            if isinstance(gate, ops._qftgate.QFTGate):
-                return QFT(targets)
-            else:
-                return gate_dic[type(gate)]
-        except KeyError:
-            print("Error " + str(gate))
+
+    try:
+        gate.angle  # the angle needs to be verified before
+        # in version 0.4 this changed from "_angle" to "angle"
+        return gate_dic[type(gate)](gate.angle)
+    except AttributeError as err:
+        if gate_dic[type(gate)] in param_list:
+            print(vars(gate))
+            raise ValueError(f"Gate {gate} needs a param") from err
+        if isinstance(gate, ops._qftgate.QFTGate):
+            return QFT(targets)
+        return gate_dic[type(gate)]
+    except KeyError:
+        print("Error " + str(gate))
+        return None
 
 
 # Overloading measurements
 
 
-def _newbool(self):
+def _newbool(self):  # pylint: disable=missing-function-docstring
     raise ImplementationError(
         "To measure a qubit you need to execute"
         + " the circuit, dynamic measures aren't "
@@ -151,7 +154,9 @@ class AqasmEngine(MainEngine):
     A compiler engine which can print and export commands in AQASM format.
     """
 
-    def __init__(self, aq, engine_list=[], verbose=False):
+    def __init__(self, aq, engine_list=None, verbose=False):
+        if engine_list is None:
+            engine_list = []
         MainEngine.__init__(self, engine_list=engine_list)
         self.prog = aq.prog
         self.qb = aq.qb
@@ -163,9 +168,9 @@ class AqasmEngine(MainEngine):
         self.nbqb += 1
         self.qb.append(self.prog.qalloc(1))
         return MainEngine.allocate_qubit(self, dirty)
-    
+
     def projectq_to_qlm(self, sep_measure=False, **kwargs):
-        """ 
+        """
         Generates the QLM circuit corresponding to all projectq
         commands we sent to the engine
 
@@ -198,17 +203,17 @@ class AqasmEngine(MainEngine):
                 if qreg.length == 0:
                     del qreg
             return circuit, self.to_measure
-        else:
-            for qbit, cbit in zip(self.to_measure, self.prog.calloc(len(self.to_measure))):
-                self.prog.measure(qbit, [cbit])
-            circuit = self.prog.to_circ(**kwargs)
-            try:
-                for qreg in circuit.qregs:
-                    if qreg.length == 0:
-                        del qreg
-            except AttributeError:
-                pass
-            return circuit
+
+        for qbit, cbit in zip(self.to_measure, self.prog.calloc(len(self.to_measure))):
+            self.prog.measure(qbit, [cbit])
+        circuit = self.prog.to_circ(**kwargs)
+        try:
+            for qreg in circuit.qregs:
+                if qreg.length == 0:
+                    del qreg
+        except AttributeError:
+            pass
+        return circuit
 
     def to_qlm_circ(self, sep_measure=False, **kwargs):
         """ Deprecated """
@@ -228,14 +233,14 @@ class AqasmPrinter(MainEngine):
         engine.__init__(self)
         self.prog = aqsm.Program(**kwargs)
         self.nbqb = 0
-        self.qb = list()
+        self.qb = []
         self.to_measure = []
 
     def _out_cmd(self, cmd):
-        if (
-            isinstance(cmd.gate, AllocateQubitGate)
-            or isinstance(cmd.gate, DeallocateQubitGate)
-            or isinstance(cmd.gate, AllocateDirtyQubitGate)
+        """ Send a command to the engine """
+        if isinstance(
+            cmd.gate,
+            (AllocateQubitGate, DeallocateQubitGate, AllocateDirtyQubitGate)
         ):
             return
         if isinstance(cmd.gate, MeasureGate):
@@ -244,7 +249,7 @@ class AqasmPrinter(MainEngine):
                 for qbit in reg:
                     inp_qb.append(self.qb[int(str(qbit))][0])
             self.to_measure.append(inp_qb)
-            #self.prog.measure(inp_qb, inp_qb)
+            # self.prog.measure(inp_qb, inp_qb)
 
         elif isinstance(cmd.gate, BasicGate):
             controls = cmd.all_qubits[0]

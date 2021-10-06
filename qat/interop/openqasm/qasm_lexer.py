@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#pylint: skip-file
+# pylint: skip-file
 
 """
     Licensed to the Apache Software Foundation (ASF) under one
