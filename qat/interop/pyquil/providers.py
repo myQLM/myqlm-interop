@@ -29,7 +29,7 @@ to the port 15011. The following code defines a myQLM QPU wrapping the PyQuil QV
 
 .. code-block:: python
 
-    from pyquil.api import QVMConnection
+    from qat.interop.pyquil import PyquilQPU
     from pyquil import get_qc
 
     # Define port and ip
