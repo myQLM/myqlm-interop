@@ -30,14 +30,15 @@ to the port 15011. The following code defines a myQLM QPU wrapping the PyQuil QV
 .. code-block:: python
 
     from pyquil.api import QVMConnection
-    from qat.interop.pyquil import PyquilQPU
+    from pyquil import get_qc
 
     # Define port and ip
     IP   = "127.0.0.1"
     PORT = "15011"
 
     # Define a QPU
-    qvm = QVMConnection(endpoint="http://{ip}:{port}".format(ip=IP, port=PORT))
+    os.environ["QCS_SETTINGS_APPLICATIONS_PYQUIL_QVM_URL"] = "http://{ip}:{port}".format(ip=IP, port=PORT)
+    qvm = get_qc('9q-qvm')
     qpu = PyquilQPU(qvm)
 
     # Submit a job to the QVM
