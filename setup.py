@@ -51,7 +51,7 @@ setup(
         "cirq_binder": ["cirq==0.11.1;python_version<'3.8'", "cirq==0.12.0;python_version>='3.8'"],
         "pyquil_binder;python_version>='3.7'": ["pyquil==3.0", "quantum-grove==1.7.0"],
         "all": ["qiskit==0.30.0", "symengine",
-                "projectq==0.7.0",
+                "projectq==0.6.1.post0;python_version<'3.9'", "projectq==0.7.0;python_version>='3.9'",
                 "cirq==0.11.1;python_version<'3.8'", "cirq==0.12.0;python_version>='3.8'",
                 "pyquil==3.0.0;python_version>='3.7'", "quantum-grove==1.7.0;python_version>='3.7'"]
     },
