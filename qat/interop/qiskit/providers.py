@@ -430,6 +430,8 @@ class QPUToBackend(BackendV1):
             qlm_task.jobs.append(job)
 
         results = self._qpu.submit(qlm_task)
+        if not isinstance(results, (BatchResult, WResult)):
+            results = results.join()
         for res in results:
             for sample in res.raw_data:
                 sample.intermediate_measures = None
