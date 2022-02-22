@@ -209,7 +209,7 @@ def _generate_experiment_result(qlm_result, metadata):
         shots=len(qlm_result.raw_data),
         success=True,
         data=data,
-        header=QobjExperimentHeader(metadata=metadata),
+        header=QobjExperimentHeader(**metadata),
     )
 
 
@@ -409,7 +409,7 @@ class QPUToBackend(BackendV1):
         if self._qpu is None:
             raise NoQpuAttached("No qpu attached to the QLM connector.")
         circuits = run_input if isinstance(run_input, list) else [run_input]
-        circuits_metadata = [circuit.metadata for circuit in circuits]
+        
 
         for kwarg in kwargs:
             if not hasattr(self.options, kwarg):
@@ -422,8 +422,10 @@ class QPUToBackend(BackendV1):
         # but also iterating on the parameter sets so provided
 
         qlm_task = Batch(jobs=[])
+        circuits_metadata = []
         for circuit in circuits:
             qlm_circuit = qiskit_to_qlm(circuit)
+            circuits_metadata.append({'n_qubits': qlm_circuit.nbqbits, 'memory_slots': qlm_circuit.nbqbits})
             job = qlm_circuit.to_job(aggregate_data=False)
             job.nbshots = nbshots
             job.qubits = list(range(0, qlm_circuit.nbqbits))
@@ -435,7 +437,6 @@ class QPUToBackend(BackendV1):
         for res in results:
             for sample in res.raw_data:
                 sample.intermediate_measures = None
-            res = aggregate_data(res)
 
         # Creating a job that will contain the results
         job = QLMJob(self, str(self.id_counter))
