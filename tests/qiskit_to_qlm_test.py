@@ -33,6 +33,8 @@ from qat.lang.AQASM.gates import H, X, Y, Z, SWAP, I, S, \
 from qat.core.util import extract_syntax
 from qat.comm.datamodel.ttypes import OpType
 
+from hardware import running_python310
+
 LOGGER = logging.getLogger()
 # Set level to logging.DEBUG in order to see more information
 LOGGER.setLevel(logging.WARNING)
