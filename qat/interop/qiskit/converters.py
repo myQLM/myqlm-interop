@@ -187,8 +187,8 @@ def _qiskit_to_qlm_param(prog, variables, param):
 
 def _gen_u(theta, phi, lamda):
     """
-    Generates the U gate matrix.
-    u1/2/3 would be dealt with through setting the appropriate params to 0.
+    Generates the U / U3 gate matrix. The definition of this gate is based on:
+    https://qiskit.org/documentation/stubs/qiskit.circuit.library.U3Gate.html (Sept 08, 2022)
 
     Args:
         theta:
@@ -198,16 +198,19 @@ def _gen_u(theta, phi, lamda):
     Returns:
         numpy.ndarray U gate matrix
     """
-    m11 = (np.e ** (1j * (phi + lamda) / 2)) * np.cos(theta / 2)
-    m12 = (-1) * (np.e ** (1j * (phi - lamda) / 2)) * np.sin(theta / 2)
-    m21 = (np.e ** (1j * (phi - lamda) / 2)) * np.sin(theta / 2)
-    m22 = (np.e ** (1j * (phi + lamda) / 2)) * np.cos(theta / 2)
+    m11 = np.cos(theta / 2)
+    m12 = -np.exp(1j * lamda) * np.sin(theta / 2)
+    m21 = np.exp(1j * phi) * np.sin(theta / 2)
+    m22 = np.exp(1j * (phi + lamda)) * np.cos(theta / 2)
     return np.array([[m11, m12], [m21, m22]], dtype=np.complex128)
 
 
 def _gen_u2(phi, lmbda):
     """
-    Returns the corresponding u2 abstract gate.
+    Generates the U2 gate matrix. The definition of this gate is based on:
+    https://qiskit.org/documentation/stubs/qiskit.circuit.library.U2Gate.html (Sept 08, 2022)
+
+    One can notice: U2(φ, λ) = U3(π/2, φ, λ)  for all (φ, λ)
 
     Args:
         phi:
@@ -216,7 +219,7 @@ def _gen_u2(phi, lmbda):
     Returns:
         numpy.ndarray U2 gate matrix
     """
-    return _gen_u(0, phi, lmbda)
+    return _gen_u(np.pi / 2, phi, lmbda)
 
 
 def _gen_rxx(theta):
