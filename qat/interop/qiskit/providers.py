@@ -104,7 +104,6 @@ from qat.comm.shared.ttypes import Result as QlmRes
 from qat.core.qpu.qpu import QPUHandler, get_registers
 from qat.core.bits import DefaultRegister
 from qat.core import Batch
-from qat.core.wrappers.result import aggregate_data
 from qat.core.wrappers.result import Result as WResult, BatchResult, Sample
 
 
@@ -409,7 +408,6 @@ class QPUToBackend(BackendV1):
         if self._qpu is None:
             raise NoQpuAttached("No qpu attached to the QLM connector.")
         circuits = run_input if isinstance(run_input, list) else [run_input]
-        
 
         for kwarg in kwargs:
             if not hasattr(self.options, kwarg):

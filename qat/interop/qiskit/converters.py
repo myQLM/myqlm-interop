@@ -755,11 +755,6 @@ def job_to_qiskit_circuit(qlm_job):
     Returns:
         A QuantumCircuit Qiskit object resulting from the conversion
     """
-    # Check processing type
-    assert_qpu(qlm_job.type == ProcessingType.SAMPLE,
-               "Only jobs having a SAMPLE processing type "
-               "could be translated into Qiskit circuits")
-
     # Convert
     return qlm_to_qiskit(qlm_job.circuit, qlm_job.qubits)
 

@@ -6,9 +6,9 @@
     to you under the Apache License, Version 2.0 (the
     "License"); you may not use this file except in compliance
     with the License.  You may obtain a copy of the License at
-    
+
     http://www.apache.org/licenses/LICENSE-2.0
-    
+
     Unless required by applicable law or agreed to in writing,
     software distributed under the License is distributed on an
     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -17,7 +17,7 @@
     under the License.
 """
 
-import os, sys
+import sys
 from setuptools import setup, find_namespace_packages
 from setuptools.command.test import test as TestCommand
 
@@ -46,11 +46,11 @@ setup(
     scripts=["bin/oqasm2circ"],
     install_requires=["qat-lang>=0.0.6", "numpy", "ply"],
     extras_require={
-        "qiskit_binder": ["qiskit==0.30.0", "symengine"],
+        "qiskit_binder": ["qiskit>=0.35.0", "qiskit-ibm-runtime>=0.4.0", "symengine"],
         "projectq_binder": ["projectq==0.6.1.post0;python_version<'3.9'", "projectq==0.7.0;python_version>='3.9'"],
         "cirq_binder": ["cirq==0.11.1;python_version<'3.8'", "cirq==0.12.0;python_version>='3.8'"],
         "pyquil_binder;python_version>='3.7'": ["pyquil==3.0", "quantum-grove==1.7.0"],
-        "all": ["qiskit==0.30.0", "symengine",
+        "all": ["qiskit>=0.35.0", "qiskit-ibm-runtime>=0.4.0", "symengine",
                 "projectq==0.6.1.post0;python_version<'3.9'", "projectq==0.7.0;python_version>='3.9'",
                 "cirq==0.11.1;python_version<'3.8'", "cirq==0.12.0;python_version>='3.8'",
                 "pyquil==3.0.0;python_version>='3.7'", "quantum-grove==1.7.0;python_version>='3.7'"]
