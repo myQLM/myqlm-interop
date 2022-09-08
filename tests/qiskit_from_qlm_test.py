@@ -19,7 +19,6 @@
     specific language governing permissions and limitations
     under the License.
 """
-
 import unittest
 import logging
 from qat.comm.exceptions.ttypes import QPUException
@@ -31,6 +30,9 @@ from qat.interop.qiskit import qlm_to_qiskit, U2, U3, RXX, RZZ, R, MS, \
                                BackendToQPU
 from qiskit import QuantumRegister, QuantumCircuit, ClassicalRegister, Aer
 from qiskit.circuit import Parameter
+
+from hardware import running_python310
+
 
 LOGGER = logging.getLogger()
 # Set level to logging.DEBUG in order to see more information
@@ -205,6 +207,7 @@ class TestQLM2QiskitConversion(unittest.TestCase):
             self.assertEqual(r_name, e_name)
             self.assertEqual(r_params, e_params)
 
+    @unittest.skipIf(running_python310(), "Test not supported")
     def test1_abstract_gate(self):
         """
         Tests an AbstractGate translation to Qiskit.
