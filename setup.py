@@ -48,7 +48,7 @@ setup(
     extras_require={
         "qiskit_binder": ["qiskit>=0.35.0", "qiskit-ibm-runtime>=0.4.0", "symengine"],
         "projectq_binder": ["projectq==0.6.1.post0;python_version<'3.9'", "projectq==0.7.0;python_version>='3.9'"],
-        "cirq_binder": ["cirq==0.11.1;python_version<'3.8'", "cirq==0.12.0;python_version>='3.8'"],
+        "cirq_binder": ["cirq==0.11.1;python_version<'3.8'", "cirq>=0.12.0;python_version>='3.8'"],
         "pyquil_binder;python_version>='3.7'": ["pyquil==3.0", "quantum-grove==1.7.0"],
         "all": ["qiskit>=0.35.0", "qiskit-ibm-runtime>=0.4.0", "symengine",
                 "projectq==0.6.1.post0;python_version<'3.9'", "projectq==0.7.0;python_version>='3.9'",
