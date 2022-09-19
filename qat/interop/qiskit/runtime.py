@@ -20,9 +20,44 @@
     specific language governing permissions and limitations
     under the License.
 
-This module provides tools to wrap an IBM QPU into a myQLM QPU. The myQLM
-QPU will use IBM runtime to execute the job (program 'sampler' will be
-used)
+Qiskit Runtime QPUs can be used within myQLM by using the
+:class:`~qat.interop.qiskit.runtime.QiskitRuntimeQPU` class. This class wraps both
+the "Sampler" and the "Estimator" primitives, which means that this QPU can measure
+either:
+
+ - a list of qubits (i.e. sampling mode)
+ - an observable (i.e. an observable)
+
+.. code-block:: python
+
+    from qat.interop.qiskit.runtime import QiskitRuntimeQPU
+
+    # Wraps Qiskit QPU within a myQLM QPU
+    qpu = QiskitRuntimeQPU(backend="ibmq_qasm_simulator")
+
+    # Submit a job to this QPU
+    result = qpu.submit(job)
+
+By default, :class:`~qat.interop.qiskit.runtime.QiskitRuntimeQPU` uses the
+:code:`QiskitRuntimeService` with no parameter. To execute the previous code,
+your credentials must be stored on your computer
+
+.. dropdown:: Saving Qiskit Runtime credentials
+    :icon: code
+
+    Function :code:`QiskitRuntimeService.save_account` can be used to store credentials
+    on your computer. Please refer to the Qiskit documentation to get more information on
+    this function
+
+    .. code-block:: python
+
+        from qiskit_ibm_runtime import QiskitRuntimeService
+
+        # Define your IBM Token
+        MY_IBM_TOKEN = ...
+
+        # Save your credentials
+        QiskitRuntimeService.save_account(channel="ibm_quantum", token=MY_IBM_TOKEN)
 """
 
 # Standard import
@@ -143,10 +178,20 @@ def _observable_to_qiskit(observable: Observable):
     return SparsePauliOp.from_list(qiskit_terms)
 
 
-class IbmQPU(QPUHandler):
+class QiskitRuntimeQPU(QPUHandler):
     """
     IBM Q-Experience QPU. This QPU uses IBM runtime to execute
-    the job (program 'sampler' is used).
+    a quantum job. This QPU wraps both the :code:`Sampler` and
+    :code:`Estimator` primitives, which means that this QPU can measure
+    both:
+
+        - a list of qubits (i.e. sampling mode)
+        - an observable (i.e. observable mode)
+
+    .. warnings::
+
+        If a batch is composed of both sampling jobs and observable jobs,
+        two requests will be done to the Runtime server
 
     Args:
         backend_name (str): Name of the IBM backend used to execute

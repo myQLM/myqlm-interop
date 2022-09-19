@@ -16,7 +16,7 @@ from dataclasses import dataclass
 import pytest
 from qat.core import Batch, Observable
 from qat.lang.AQASM import Program, H, CNOT
-from qat.interop.qiskit.runtime import IbmQPU
+from qat.interop.qiskit.runtime import QiskitRuntimeQPU
 
 
 @dataclass
@@ -145,7 +145,7 @@ def test_sampling_mode(mocker, jobs, number_of_jobs):
     mocker.patch("qat.interop.qiskit.runtime.Sampler", FakeSampler)
 
     # Submit job
-    qpu = IbmQPU(backend="NO BACKEND", service="NO SERVICE")
+    qpu = QiskitRuntimeQPU(backend="NO BACKEND", service="NO SERVICE")
     results = qpu.submit(jobs)
 
     # Check result
@@ -196,7 +196,7 @@ def test_observable_mode(mocker, jobs, number_of_jobs):
     mocker.patch("qat.interop.qiskit.runtime.Estimator", FakeEstimator)
 
     # Submit job
-    qpu = IbmQPU(backend="NO BACKEND", service="NO SERVICE")
+    qpu = QiskitRuntimeQPU(backend="NO BACKEND", service="NO SERVICE")
     results = qpu.submit(jobs)
 
     if number_of_jobs == 1:
