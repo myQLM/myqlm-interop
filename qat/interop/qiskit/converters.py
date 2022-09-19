@@ -46,16 +46,14 @@ import numpy as np
 from symengine import Add, Mul, Pow
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit import Parameter, ParameterExpression
-from qiskit.circuit.library import standard_gates
+from qiskit.circuit.library import standard_gates, generalized_gates
 
 from qat.lang.AQASM import Program, QRoutine
 from qat.lang.AQASM.gates import AbstractGate, H, X, Y, Z, SWAP, I, S, \
     T, RX, RY, RZ
 from qat.core.util import extract_syntax
-from qat.core.assertion import assert_qpu
 from qat.core.variables import Variable, ArithExpression
 from qat.comm.datamodel.ttypes import OpType
-from qat.comm.shared.ttypes import ProcessingType
 
 
 def _get_qindex(circ, name, index):
@@ -529,7 +527,7 @@ def _get_qiskit_gate_from_name(name):
         'RXX': standard_gates.RXXGate,
         'RZZ': standard_gates.RZZGate,
         'R': standard_gates.RGate,
-        'MS': standard_gates.MSGate
+        'MS': generalized_gates.GMS
     }
     try:
         gate = gates[name]
