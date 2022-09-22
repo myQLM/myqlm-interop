@@ -51,7 +51,7 @@ class Test0BackendToQPU(unittest.TestCase):
     Runs a QLM circuit and checks for relevent results.
     """
 
-    @unittest.skipIf(running_python("<=", "3.8.0"), "Test not supported")
+    @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
     def test0_qiskit_qpu_2states(self):
         """
         In the case of a H and a CNOT gate, 2 states are expected in output.
@@ -90,7 +90,7 @@ class Test0BackendToQPU(unittest.TestCase):
             self.assertTrue("|11>" in
                             [str(result.raw_data[i].state) for i in range(2)])
 
-    @unittest.skipIf(running_python("<=", "3.8.0"), "Test not supported")
+    @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
     def test1_qiskit_qpu_4states(self):
         """
         In the case of two H gates, 4 states are expected in output.
@@ -131,7 +131,7 @@ class Test1AsyncBackendToQPU(unittest.TestCase):
     Runs a QLM circuit and checks for relevent results.
     """
 
-    @unittest.skipIf(running_python("<=", "3.8.0"), "Test not supported")
+    @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
     def test0_asyncqiskit_qpu_2states(self):
         """
         In the case of a H and a CNOT gate, 2 states are expected in output.
@@ -182,7 +182,7 @@ class Test1AsyncBackendToQPU(unittest.TestCase):
                 self.assertTrue("|11>" in [str(result.raw_data[i].state)
                                            for i in range(2)])
 
-    @unittest.skipIf(running_python("<=", "3.8.0"), "Test not supported")
+    @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
     def test1_asyncqiskit_qpu_4states(self):
         """
         In the case of two H gates, 4 states are expected in output.
@@ -233,7 +233,7 @@ class Test1AsyncBackendToQPU(unittest.TestCase):
 
         self.assertEqual(4, len(result.raw_data))
 
-    @unittest.skipIf(running_python("<=", "3.8.0"), "Test not supported")
+    @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
     def test2_asyncqiskit_qpu_ibmq_experience(self):
         """
         Same as test0 of the same class, but using ibmq token if it is

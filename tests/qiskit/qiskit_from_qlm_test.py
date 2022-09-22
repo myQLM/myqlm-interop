@@ -315,7 +315,7 @@ class TestQLM2QiskitConversion(unittest.TestCase):
             self.assertEqual(str(gotten[0]._params[0]),
                              str(expected[0]._params[0]))
 
-    @unittest.skipIf(running_python("<=", "3.8.0"), "Test not supported")
+    @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
     def test3_subset_of_qubits(self):
         """
         Checks if measuring a subset of qubits is working
@@ -335,7 +335,7 @@ class TestQLM2QiskitConversion(unittest.TestCase):
         res = qpu.submit(circ.to_job(nbshots=1, qubits=[1]))
         self.assertEqual(res[0].state.int, 0b0)
 
-    @unittest.skipIf(running_python("<=", "3.8.0"), "Test not supported")
+    @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
     def test4_cannot_measure_observable(self):
         """
         Checks if measuring an Observable raises an error
