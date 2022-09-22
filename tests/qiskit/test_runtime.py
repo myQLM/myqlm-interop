@@ -13,6 +13,7 @@ Description: Testing the Qiskit Runtime QPU. This test file will mock the
 
 from dataclasses import dataclass
 
+import unittest
 import pytest
 from qat.core import Batch, Observable
 from qat.lang.AQASM import Program, H, CNOT
