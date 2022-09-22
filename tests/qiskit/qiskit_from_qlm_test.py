@@ -207,7 +207,7 @@ class TestQLM2QiskitConversion(unittest.TestCase):
             self.assertEqual(r_name, e_name)
             self.assertEqual(r_params, e_params)
 
-    @unittest.skipIf(running_python("3.10"), "Test not supported")
+    @unittest.skipIf(running_python(">=", "3.10"), "Test not supported")
     def test1_abstract_gate(self):
         """
         Tests an AbstractGate translation to Qiskit.
