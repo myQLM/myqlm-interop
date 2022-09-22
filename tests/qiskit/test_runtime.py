@@ -145,7 +145,7 @@ def _check_one_result(result):
      pytest.param([_build_sample_job(), _build_sample_job()], 2, id="list of jobs"),
      pytest.param(Batch(jobs=[_build_sample_job(), _build_sample_job()]), 2, id="one batch")]
 )
-@unittest.skip(running_python("3.6"), "Test not supported")
+@unittest.skipIf(running_python("3.6"), "Test not supported")
 def test_sampling_mode(mocker, jobs, number_of_jobs):
     """
     Testing IBM QPU in sampling mode
@@ -196,7 +196,7 @@ def _build_observable_job():
      pytest.param([_build_observable_job(), _build_observable_job()], 2, id="list of jobs"),
      pytest.param(Batch(jobs=[_build_observable_job(), _build_observable_job()]), 2, id="one batch")]
 )
-@unittest.skip(running_python("3.6"), "Test not supported")
+@unittest.skipIf(running_python("3.6"), "Test not supported")
 def test_observable_mode(mocker, jobs, number_of_jobs):
     """
     Testing IBM QPU in observable mode
