@@ -33,7 +33,7 @@ from qat.lang.AQASM.gates import H, X, Y, Z, SWAP, I, S, \
 from qat.core.util import extract_syntax
 from qat.comm.datamodel.ttypes import OpType
 
-from hardware import running_python310
+from hardware import running_python
 
 LOGGER = logging.getLogger()
 # Set level to logging.DEBUG in order to see more information
@@ -109,7 +109,7 @@ class TestQiskit2QLMConversion(unittest.TestCase):
     to a qlm circuit.
     """
 
-    @unittest.skipIf(running_python310(), "Test not supported")
+    @unittest.skipIf(running_python("3.10"), "Test not supported")
     def test0_default_gates_and_qbit_reorder(self):
         """
         Tries out every default gate and check that they match

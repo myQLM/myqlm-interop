@@ -16,7 +16,15 @@ from dataclasses import dataclass
 import pytest
 from qat.core import Batch, Observable
 from qat.lang.AQASM import Program, H, CNOT
-from qat.interop.qiskit.runtime import QiskitRuntimeQPU
+
+# The import will fail on 3.6, let's ignore it here, we use skipIf at the
+# tests level to not run the tests
+try:
+    from qat.interop.qiskit.runtime import QiskitRuntimeQPU
+except ImportError:
+    pass
+
+from hardware import running_python
 
 
 @dataclass
@@ -136,6 +144,7 @@ def _check_one_result(result):
      pytest.param([_build_sample_job(), _build_sample_job()], 2, id="list of jobs"),
      pytest.param(Batch(jobs=[_build_sample_job(), _build_sample_job()]), 2, id="one batch")]
 )
+@unittest.skip(running_python("3.6"), "Test not supported")
 def test_sampling_mode(mocker, jobs, number_of_jobs):
     """
     Testing IBM QPU in sampling mode
@@ -186,6 +195,7 @@ def _build_observable_job():
      pytest.param([_build_observable_job(), _build_observable_job()], 2, id="list of jobs"),
      pytest.param(Batch(jobs=[_build_observable_job(), _build_observable_job()]), 2, id="one batch")]
 )
+@unittest.skip(running_python("3.6"), "Test not supported")
 def test_observable_mode(mocker, jobs, number_of_jobs):
     """
     Testing IBM QPU in observable mode
