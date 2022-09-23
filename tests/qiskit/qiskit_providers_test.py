@@ -33,6 +33,8 @@ from qat.core.wrappers import Batch
 from qat.interop.qiskit import BackendToQPU, AsyncBackendToQPU, \
         QiskitConnector, QPUToBackend
 
+from hardware import running_python
+
 LOGGER = logging.getLogger()
 # Set level to logging.DEBUG in order to see more information
 LOGGER.setLevel(logging.WARNING)
