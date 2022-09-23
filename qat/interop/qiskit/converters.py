@@ -52,8 +52,10 @@ from qat.lang.AQASM import Program, QRoutine
 from qat.lang.AQASM.gates import AbstractGate, H, X, Y, Z, SWAP, I, S, \
     T, RX, RY, RZ
 from qat.core.util import extract_syntax
+from qat.core.assertion import assert_qpu
 from qat.core.variables import Variable, ArithExpression
 from qat.comm.datamodel.ttypes import OpType
+from qat.comm.shared.ttypes import ProcessingType
 
 
 def _get_qindex(circ, name, index):
@@ -741,7 +743,7 @@ def qlm_to_qiskit(qlm_circuit, qubits=None):
     return q_circ
 
 
-def job_to_qiskit_circuit(qlm_job):
+def job_to_qiskit_circuit(qlm_job, only_sampling=False):
     """
     Converts the circuit inside a QLM job into a Qiskit circuit.
     This is only a helper function, parameters such as nbshots should
@@ -749,10 +751,19 @@ def job_to_qiskit_circuit(qlm_job):
 
     Args:
         qlm_job: The QLM job containing the circuit to convert
+        only_sampling (bool, optional): If True, checks if the qlm_job is a SAMPLE job,
+            raise an exception if not
+            Default: False
 
     Returns:
         A QuantumCircuit Qiskit object resulting from the conversion
     """
+    # Check processing type
+    if only_sampling:
+        assert_qpu(qlm_job.type == ProcessingType.SAMPLE,
+                   "Only jobs having a SAMPLE processing type "
+                   "could be translated into Qiskit circuits")
+
     # Convert
     return qlm_to_qiskit(qlm_job.circuit, qlm_job.qubits)
 

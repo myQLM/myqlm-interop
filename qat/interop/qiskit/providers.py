@@ -529,7 +529,7 @@ class BackendToQPU(QPUHandler):
             qlm_batch = Batch(jobs=[qlm_batch])
         qiskit_circuits = []
         for qlm_job in qlm_batch.jobs:
-            qiskit_circuit = job_to_qiskit_circuit(qlm_job)
+            qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
             qiskit_circuits.append(qiskit_circuit)
         qiskit_result = execute(
             qiskit_circuits, self.backend,
@@ -556,7 +556,7 @@ class BackendToQPU(QPUHandler):
         if self.backend is None:
             raise ValueError("Backend cannot be None")
 
-        qiskit_circuit = job_to_qiskit_circuit(qlm_job)
+        qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
         qiskit_result = execute(
             qiskit_circuit, self.backend,
             shots=qlm_job.nbshots or self.backend.configuration().max_shots,
@@ -762,7 +762,7 @@ class AsyncBackendToQPU(QPUHandler):
         if self.backend is None:
             raise ValueError("Backend cannot be None")
 
-        qiskit_circuit = job_to_qiskit_circuit(qlm_job)
+        qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
         async_job = execute(
             qiskit_circuit, self.backend,
             shots=qlm_job.nbshots or self.backend.configuration().max_shots,
@@ -789,7 +789,7 @@ class AsyncBackendToQPU(QPUHandler):
             qlm_batch = Batch(jobs=[qlm_batch])
         qiskit_circuits = []
         for qlm_job in qlm_batch.jobs:
-            qiskit_circuit = job_to_qiskit_circuit(qlm_job)
+            qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
             qiskit_circuits.append(qiskit_circuit)
         async_job = execute(
             qiskit_circuits, self.backend,
