@@ -46,7 +46,7 @@ import numpy as np
 from symengine import Add, Mul, Pow
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit import Parameter, ParameterExpression
-from qiskit.circuit.library import standard_gates
+from qiskit.circuit.library import standard_gates, generalized_gates
 
 from qat.lang.AQASM import Program, QRoutine
 from qat.lang.AQASM.gates import AbstractGate, H, X, Y, Z, SWAP, I, S, \
@@ -187,8 +187,8 @@ def _qiskit_to_qlm_param(prog, variables, param):
 
 def _gen_u(theta, phi, lamda):
     """
-    Generates the U gate matrix.
-    u1/2/3 would be dealt with through setting the appropriate params to 0.
+    Generates the U / U3 gate matrix. The definition of this gate is based on:
+    https://qiskit.org/documentation/stubs/qiskit.circuit.library.U3Gate.html (Sept 08, 2022)
 
     Args:
         theta:
@@ -198,16 +198,19 @@ def _gen_u(theta, phi, lamda):
     Returns:
         numpy.ndarray U gate matrix
     """
-    m11 = (np.e ** (1j * (phi + lamda) / 2)) * np.cos(theta / 2)
-    m12 = (-1) * (np.e ** (1j * (phi - lamda) / 2)) * np.sin(theta / 2)
-    m21 = (np.e ** (1j * (phi - lamda) / 2)) * np.sin(theta / 2)
-    m22 = (np.e ** (1j * (phi + lamda) / 2)) * np.cos(theta / 2)
+    m11 = np.cos(theta / 2)
+    m12 = -np.exp(1j * lamda) * np.sin(theta / 2)
+    m21 = np.exp(1j * phi) * np.sin(theta / 2)
+    m22 = np.exp(1j * (phi + lamda)) * np.cos(theta / 2)
     return np.array([[m11, m12], [m21, m22]], dtype=np.complex128)
 
 
 def _gen_u2(phi, lmbda):
     """
-    Returns the corresponding u2 abstract gate.
+    Generates the U2 gate matrix. The definition of this gate is based on:
+    https://qiskit.org/documentation/stubs/qiskit.circuit.library.U2Gate.html (Sept 08, 2022)
+
+    One can notice: U2(φ, λ) = U3(π/2, φ, λ)  for all (φ, λ)
 
     Args:
         phi:
@@ -216,7 +219,7 @@ def _gen_u2(phi, lmbda):
     Returns:
         numpy.ndarray U2 gate matrix
     """
-    return _gen_u(0, phi, lmbda)
+    return _gen_u(np.pi / 2, phi, lmbda)
 
 
 def _gen_rxx(theta):
@@ -526,7 +529,7 @@ def _get_qiskit_gate_from_name(name):
         'RXX': standard_gates.RXXGate,
         'RZZ': standard_gates.RZZGate,
         'R': standard_gates.RGate,
-        'MS': standard_gates.MSGate
+        'MS': generalized_gates.GMS
     }
     try:
         gate = gates[name]
@@ -740,7 +743,7 @@ def qlm_to_qiskit(qlm_circuit, qubits=None):
     return q_circ
 
 
-def job_to_qiskit_circuit(qlm_job):
+def job_to_qiskit_circuit(qlm_job, only_sampling=False):
     """
     Converts the circuit inside a QLM job into a Qiskit circuit.
     This is only a helper function, parameters such as nbshots should
@@ -748,14 +751,18 @@ def job_to_qiskit_circuit(qlm_job):
 
     Args:
         qlm_job: The QLM job containing the circuit to convert
+        only_sampling (bool, optional): If True, checks if the qlm_job is a SAMPLE job,
+            raise an exception if not
+            Default: False
 
     Returns:
         A QuantumCircuit Qiskit object resulting from the conversion
     """
     # Check processing type
-    assert_qpu(qlm_job.type == ProcessingType.SAMPLE,
-               "Only jobs having a SAMPLE processing type "
-               "could be translated into Qiskit circuits")
+    if only_sampling:
+        assert_qpu(qlm_job.type == ProcessingType.SAMPLE,
+                   "Only jobs having a SAMPLE processing type "
+                   "could be translated into Qiskit circuits")
 
     # Convert
     return qlm_to_qiskit(qlm_job.circuit, qlm_job.qubits)

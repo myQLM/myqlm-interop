@@ -6,9 +6,9 @@
     to you under the Apache License, Version 2.0 (the
     "License"); you may not use this file except in compliance
     with the License.  You may obtain a copy of the License at
-    
+
     http://www.apache.org/licenses/LICENSE-2.0
-    
+
     Unless required by applicable law or agreed to in writing,
     software distributed under the License is distributed on an
     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -17,7 +17,7 @@
     under the License.
 """
 
-import os, sys
+import sys
 from setuptools import setup, find_namespace_packages
 from setuptools.command.test import test as TestCommand
 
@@ -39,21 +39,23 @@ class PyTest(TestCommand):
 
 setup(
     name="myqlm-interop",
-    version="0.0.6",
+    version="1.7.1",
     author="Atos Quantum Lab",
     license="Atos myQLM EULA",
     packages=find_namespace_packages(include=["qat.*"]),
     scripts=["bin/oqasm2circ"],
-    install_requires=["qat-lang>=0.0.6", "numpy", "ply"],
+    install_requires=["qat-lang>=2.2.0", "numpy", "ply"],
     extras_require={
-        "qiskit_binder": ["qiskit==0.30.0", "symengine"],
-        "projectq_binder": ["projectq==0.6.1.post0;python_version<'3.9'", "projectq==0.7.0;python_version>='3.9'"],
-        "cirq_binder": ["cirq==0.11.1;python_version<'3.8'", "cirq==0.12.0;python_version>='3.8'"],
-        "pyquil_binder;python_version>='3.7'": ["pyquil==3.0", "quantum-grove==1.7.0"],
-        "all": ["qiskit==0.30.0", "symengine",
-                "projectq==0.6.1.post0;python_version<'3.9'", "projectq==0.7.0;python_version>='3.9'",
-                "cirq==0.11.1;python_version<'3.8'", "cirq==0.12.0;python_version>='3.8'",
-                "pyquil==3.0.0;python_version>='3.7'", "quantum-grove==1.7.0;python_version>='3.7'"]
+        "qiskit_binder;python_version>='3.8'": ["qiskit>=0.38.0", "qiskit-ibm-runtime>=0.6.2"],
+        "projectq_binder;python_version>='3.8'": ["projectq==0.7.2"],
+        "cirq_binder;python_version>='3.8'": ["cirq>=1.0.0"],
+        "pyquil_binder;python_version>='3.8'": ["pyquil==3.3.0", "quantum-grove==1.7.0"],
+        "all;python_version>='3.8'": [
+            "qiskit>=0.38.0", "qiskit-ibm-runtime>=0.6.2",
+            "projectq==0.7.2",
+            "cirq==1.0.0",
+            "pyquil==3.3.0", "quantum-grove==1.7.0"
+        ]
     },
     tests_require=["pytest"],
     cmdclass={'test': PyTest},

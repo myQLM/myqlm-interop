@@ -104,7 +104,6 @@ from qat.comm.shared.ttypes import Result as QlmRes
 from qat.core.qpu.qpu import QPUHandler, get_registers
 from qat.core.bits import DefaultRegister
 from qat.core import Batch
-from qat.core.wrappers.result import aggregate_data
 from qat.core.wrappers.result import Result as WResult, BatchResult, Sample
 
 
@@ -209,7 +208,7 @@ def _generate_experiment_result(qlm_result, metadata):
         shots=len(qlm_result.raw_data),
         success=True,
         data=data,
-        header=QobjExperimentHeader(metadata=metadata),
+        header=QobjExperimentHeader(**metadata),
     )
 
 
@@ -409,7 +408,6 @@ class QPUToBackend(BackendV1):
         if self._qpu is None:
             raise NoQpuAttached("No qpu attached to the QLM connector.")
         circuits = run_input if isinstance(run_input, list) else [run_input]
-        circuits_metadata = [circuit.metadata for circuit in circuits]
 
         for kwarg in kwargs:
             if not hasattr(self.options, kwarg):
@@ -422,18 +420,21 @@ class QPUToBackend(BackendV1):
         # but also iterating on the parameter sets so provided
 
         qlm_task = Batch(jobs=[])
+        circuits_metadata = []
         for circuit in circuits:
             qlm_circuit = qiskit_to_qlm(circuit)
+            circuits_metadata.append({'n_qubits': qlm_circuit.nbqbits, 'memory_slots': qlm_circuit.nbqbits})
             job = qlm_circuit.to_job(aggregate_data=False)
             job.nbshots = nbshots
             job.qubits = list(range(0, qlm_circuit.nbqbits))
             qlm_task.jobs.append(job)
 
         results = self._qpu.submit(qlm_task)
+        if not isinstance(results, (BatchResult, WResult)):
+            results = results.join()
         for res in results:
             for sample in res.raw_data:
                 sample.intermediate_measures = None
-            res = aggregate_data(res)
 
         # Creating a job that will contain the results
         job = QLMJob(self, str(self.id_counter))
@@ -528,7 +529,7 @@ class BackendToQPU(QPUHandler):
             qlm_batch = Batch(jobs=[qlm_batch])
         qiskit_circuits = []
         for qlm_job in qlm_batch.jobs:
-            qiskit_circuit = job_to_qiskit_circuit(qlm_job)
+            qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
             qiskit_circuits.append(qiskit_circuit)
         qiskit_result = execute(
             qiskit_circuits, self.backend,
@@ -555,7 +556,7 @@ class BackendToQPU(QPUHandler):
         if self.backend is None:
             raise ValueError("Backend cannot be None")
 
-        qiskit_circuit = job_to_qiskit_circuit(qlm_job)
+        qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
         qiskit_result = execute(
             qiskit_circuit, self.backend,
             shots=qlm_job.nbshots or self.backend.configuration().max_shots,
@@ -761,7 +762,7 @@ class AsyncBackendToQPU(QPUHandler):
         if self.backend is None:
             raise ValueError("Backend cannot be None")
 
-        qiskit_circuit = job_to_qiskit_circuit(qlm_job)
+        qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
         async_job = execute(
             qiskit_circuit, self.backend,
             shots=qlm_job.nbshots or self.backend.configuration().max_shots,
@@ -788,7 +789,7 @@ class AsyncBackendToQPU(QPUHandler):
             qlm_batch = Batch(jobs=[qlm_batch])
         qiskit_circuits = []
         for qlm_job in qlm_batch.jobs:
-            qiskit_circuit = job_to_qiskit_circuit(qlm_job)
+            qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
             qiskit_circuits.append(qiskit_circuit)
         async_job = execute(
             qiskit_circuits, self.backend,
