@@ -225,6 +225,8 @@ class TestQiskit2QLMConversion(unittest.TestCase):
         param5 = param0 * param1 * (param2 + 4.54) * param3
         param6 = param5 * param4
         param7 = param4 / (param2 - 7)
+        param8 = param0 / 2
+        param9 = param0 / 5
         circ.rx(param0, 0)
         circ.rx(param1, 0)
         circ.rx(param2, 0)
@@ -233,6 +235,8 @@ class TestQiskit2QLMConversion(unittest.TestCase):
         circ.rx(param5, 0)
         circ.rx(param6, 0)
         circ.rx(param7, 0)
+        circ.rx(param8, 0)
+        circ.rx(param9, 0)
         qlm_circ = qiskit_to_qlm(circ)
         i = 0
         for _, params, _ in qlm_circ.iterate_simple():
@@ -260,6 +264,11 @@ class TestQiskit2QLMConversion(unittest.TestCase):
                     self.assertEqual(param.to_thrift(),
                                      "* + + + * -1.0 param3 param2 param0 param1"
                                      + " ** + -7.0 param2 -1.0")
+                if i == 8:
+                    self.assertEqual(param.to_thrift(), "* 0.5 param0")
+                if i == 9:
+                    self.assertEqual(param.to_thrift(), "* 0.2 param0")
+
             i += 1
 
         prog = Program()
