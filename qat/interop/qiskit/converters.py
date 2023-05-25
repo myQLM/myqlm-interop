@@ -133,30 +133,19 @@ def _sympy_arg_to_arith_expr(prog, variables, param, arg):
                 arith_expr **= arith_sub_expr
         return arith_expr
 
-    # if it is not an expression, but a single value, either abstract or not
-    new_param_name = str(arg)
-    var = False
-    if isinstance(param, Parameter):
-        for x_param in param.expr.parameters:
-            if x_param.name == new_param_name:
-                # gets the variable or creates it
-                var = _qiskit_to_qlm_param(prog, variables, x_param)
-                break
-    elif isinstance(param, ParameterExpression):
-        for x_param in param.parameters:
-            if x_param.name == new_param_name:
-                # gets the variable or creates it
-                var = _qiskit_to_qlm_param(prog, variables, x_param)
-                break
+    # if it is not an expression, but a single value, which is a number
+    if arg.is_Number:
+        return float(arg)
 
-    # if the value is not abstract
-    if not var:
-        try:
-            var = float(new_param_name)
-        except ValueError as err:
-            string = "Unreliable variable expression in Qiskit Parameter"
-            raise KeyError(string) from err
-    return var
+    # if it is not an expression, but a single value, which is abstract
+    new_param_name = str(arg)
+    if isinstance(param, (Parameter, ParameterExpression)):
+        for x_param in (param.expr if isinstance(param, Parameter) else param).parameters:
+            if x_param.name == new_param_name:
+                # gets the variable or creates it
+                return _qiskit_to_qlm_param(prog, variables, x_param)
+
+    raise KeyError(f"Unreliable variable expression in Qiskit Parameter: {arg}")
 
 
 def _qiskit_to_qlm_param(prog, variables, param):
