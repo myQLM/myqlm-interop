@@ -31,6 +31,7 @@ from qat.interop.openqasm.oqasm_routine import Element, Routine, Gate
 
 from qat.lang.AQASM import AbstractGate
 from qat.core.circuit_builder.matrix_util import default_gate_set
+from qat.core.gate_set import UnknownGate
 
 
 class ParsingEOF(Exception):
@@ -434,18 +435,16 @@ class OqasmParser(object):
         Returns:
             GateAST
         """
+        # Get number of parameters of the corresponding AST gate
+        try:
+            ast_gate_nb_params = self.compiler.gate_set[self.standard_gates[name]].nb_args
+        except UnknownGate:
+            ast_gate_nb_params = self.compiler.gate_set[
+                self.standard_gates[name].removeprefix("C").removesuffix("DG")
+            ].nb_args
+
         # If gate is called with the right number of parameters
-        if (
-            self.standard_gates[name] == "SDG"
-            or self.standard_gates[name] == "TDG"
-            or self.standard_gates[name] == "CU1"
-            or self.standard_gates[name] == "CU2"
-            or self.standard_gates[name] == "CU3"
-            or self.standard_gates[name] == "CH"
-            or self.standard_gates[name] == "CRZ"
-            or self.standard_gates[name] == "CSWAP"
-            or len(params) == self.compiler.gate_set[self.standard_gates[name]].nb_args
-        ):
+        if len(params) == ast_gate_nb_params:
             if self.standard_gates[name] == "SDG":
                 ast = GateAST("S", params)
                 return GateAST("DAG", ast)
@@ -476,7 +475,7 @@ class OqasmParser(object):
         # Invalid number of parameters
         raise InvalidParameterNumber(
             self.standard_gates[name],
-            self.compiler.gate_set[self.standard_gates[name]].nb_args,
+            ast_gate_nb_params,
             params,
             self.lineno,
         )
