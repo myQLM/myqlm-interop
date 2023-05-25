@@ -23,10 +23,6 @@
 import ply.lex as lex
 
 
-#CORE_LIBS_PATH = os.path.join(os.path.dirname(__file__), 'libs')
-#CORE_LIBS = os.listdir(CORE_LIBS_PATH)
-
-
 class OqasmLexer(object):
     """OPENQASM Lexer.
 
@@ -100,24 +96,11 @@ class OqasmLexer(object):
         # When we hit eof (the t_eof) rule, we pop.
         next_token = self.lexer.token()
         lineno = next_token.lineno
-        # print('NEXT', next, "next.value", next.value, type(next))
-        #if isinstance(next_token.value, str):
-         #   incfile = next_token.value.strip('"')
-        #else:
-         #   raise SyntaxError("Invalid include: must be a quoted string.")
-
-        #if incfile in CORE_LIBS:
-         #   incfile = os.path.join(CORE_LIBS_PATH, incfile)
-
         next_token = self.lexer.token()
+
         if next_token is None or next_token.value != ';':
             raise SyntaxError('Invalid syntax, missing ";" at line', str(lineno))
 
-        #if not os.path.exists(incfile):
-         #   raise IOError(
-          #      'Include file %s cannot be found, line %s, file %s' %
-           #     (incfile, str(next_token.lineno), self.filename))
-        #self.push(incfile)
         return self.lexer.token()
 
     def t_FORMAT(self, t):

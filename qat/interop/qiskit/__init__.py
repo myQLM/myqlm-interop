@@ -22,10 +22,13 @@
 
 from pkgutil import extend_path
 
-from .converters import qlm_to_qiskit, qiskit_to_qlm, U, U2, U3, \
-        RXX, RZZ, R, MS
-from .providers import QLMJob, QPUToBackend, BackendToQPU, \
-        QiskitJob, AsyncBackendToQPU, QiskitConnector
+from .converters import (
+    qlm_to_qiskit, qiskit_to_qlm, U, U2, U3, RXX, RZZ, R, MS
+)
+
+from .providers import (
+    QLMJob, QPUToBackend, BackendToQPU, QiskitJob, AsyncBackendToQPU, QiskitConnector
+)
 
 # Try to find other QAT packages in other folders
 __path__ = extend_path(__path__, __name__)

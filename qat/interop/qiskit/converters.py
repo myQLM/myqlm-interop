@@ -553,9 +553,11 @@ def _variable_to_parameter(param_list, variable=None, variable_name=""):
     Returns:
         A Qiskit Parameter object
     """
-    if not(variable or variable_name):
-        raise Exception("_variable_to_parameter must either take a variable"
-                        + " or a variable_name argument")
+    if not (variable or variable_name):
+        raise AttributeError(
+            "_variable_to_parameter must either take a variable or a variable_name argument"
+        )
+
     param = None
     if variable_name:
         for x_param in param_list:
