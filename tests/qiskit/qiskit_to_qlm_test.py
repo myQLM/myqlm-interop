@@ -251,19 +251,27 @@ class TestQiskit2QLMConversion(unittest.TestCase):
                 if i == 3:
                     self.assertEqual(param.to_thrift(), "param3")
                 if i == 4:
-                    self.assertEqual(param.to_thrift(),
-                                     "+ + + * -1.0 param3 param2 param0 param1")
+                    # assertIn to accomodate versions of python before and after python 3.11
+                    self.assertIn(
+                        param.to_thrift(),
+                        [f"+ + + * -1.0 param3 param2 param{a} param{b}" for a, b in ((0, 1), (1, 0))]
+                    )
                 if i == 5:
                     self.assertEqual(param.to_thrift(),
                                      "* * * + 4.54 param2 param0 param1 param3")
                 if i == 6:
-                    self.assertEqual(param.to_thrift(),
-                                     "* * * * + + + * -1.0 param3 param2 param0 param1 "
-                                     + "+ 4.54 param2 param0 param1 param3")
+                    self.assertIn(
+                        param.to_thrift(), [
+                            f"* * * * + + + * -1.0 param3 param2 param{a} param{b} + "
+                            "4.54 param2 param0 param1 param3"
+                            for a, b in ((0, 1), (1, 0))
+                    ])
                 if i == 7:
-                    self.assertEqual(param.to_thrift(),
-                                     "* + + + * -1.0 param3 param2 param0 param1"
-                                     + " ** + -7.0 param2 -1.0")
+                    self.assertIn(
+                        param.to_thrift(), [
+                            f"* + + + * -1.0 param3 param2 param{a} param{b} ** + -7.0 param2 -1.0"
+                            for a, b in ((0, 1), (1, 0))
+                    ])
                 if i == 8:
                     self.assertEqual(param.to_thrift(), "* 0.5 param0")
                 if i == 9:
