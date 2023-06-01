@@ -439,9 +439,12 @@ class OqasmParser(object):
         try:
             ast_gate_nb_params = self.compiler.gate_set[self.standard_gates[name]].nb_args
         except UnknownGate:
-            ast_gate_nb_params = self.compiler.gate_set[
-                self.standard_gates[name].removeprefix("C").removesuffix("DG")
-            ].nb_args
+            sub_gate = self.standard_gates[name]
+            if sub_gate.startswith("C"):
+                sub_gate = sub_gate[1:]
+            if sub_gate.endswith("DG"):
+                sub_gate = sub_gate[:-2]
+            ast_gate_nb_params = self.compiler.gate_set[sub_gate].nb_args
 
         # If gate is called with the right number of parameters
         if len(params) == ast_gate_nb_params:
