@@ -411,7 +411,7 @@ class OqasmParser(object):
             # If gate is a myQLM gate -> register gate
             else:
                 self.standard_gates[gate_name] = gate_definition.name
-                self.compiler.add_signature(gate_definition)
+                self.compiler.gate_set.add_signature(gate_definition)
 
     def add_creg(self, elem):
         self.cregs.append(elem)

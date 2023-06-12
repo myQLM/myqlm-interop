@@ -12,6 +12,7 @@ Description: Compiling a OpenQASM circuit composed of custom gates (defined usin
 
 import math
 import pytest
+from qat.lang.AQASM import AbstractGate
 from qat.interop.openqasm import OqasmParser
 
 
@@ -38,7 +39,7 @@ def test_alias():
     assert len(gates) == 2
 
     name, angles, qubits = gates[0]
-    assert name == "PH",
+    assert name == "PH"
     assert len(angles) == 1
     assert angles[0] == pytest.approx(math.pi / 4)
     assert qubits == [0]
