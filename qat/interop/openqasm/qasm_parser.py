@@ -86,10 +86,22 @@ class InvalidParameterNumber(Exception):
 
 
 def gen_U(theta, phi, lamda):
-    m11 = (math.e ** (1j * (phi + lamda) / 2)) * math.cos(theta / 2)
-    m12 = (-1) * (math.e ** (1j * (phi - lamda) / 2)) * math.sin(theta / 2)
-    m21 = (math.e ** (1j * (phi - lamda) / 2)) * math.sin(theta / 2)
-    m22 = (math.e ** (1j * (phi + lamda) / 2)) * math.cos(theta / 2)
+    """
+    Generates the U / U3 gate matrix. The definition of this gate is based on:
+    https://qiskit.org/documentation/stubs/qiskit.circuit.library.U3Gate.html (Sept 08, 2022)
+
+    Args:
+        theta:
+        phi:
+        lamda: lambda parameter
+
+    Returns:
+        numpy.ndarray U gate matrix
+    """
+    m11 = np.cos(theta / 2)
+    m12 = -np.exp(1j * lamda) * np.sin(theta / 2)
+    m21 = np.exp(1j * phi) * np.sin(theta / 2)
+    m22 = np.exp(1j * (phi + lamda)) * np.cos(theta / 2)
     return np.array([[m11, m12], [m21, m22]], dtype=np.complex128)
 
 
