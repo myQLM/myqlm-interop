@@ -86,10 +86,22 @@ class InvalidParameterNumber(Exception):
 
 
 def gen_U(theta, phi, lamda):
-    m11 = (math.e ** (1j * (phi + lamda) / 2)) * math.cos(theta / 2)
-    m12 = (-1) * (math.e ** (1j * (phi - lamda) / 2)) * math.sin(theta / 2)
-    m21 = (math.e ** (1j * (phi - lamda) / 2)) * math.sin(theta / 2)
-    m22 = (math.e ** (1j * (phi + lamda) / 2)) * math.cos(theta / 2)
+    """
+    Generates the U / U3 gate matrix. The definition of this gate is based on:
+    https://qiskit.org/documentation/stubs/qiskit.circuit.library.U3Gate.html (Sept 08, 2022)
+
+    Args:
+        theta:
+        phi:
+        lamda: lambda parameter
+
+    Returns:
+        numpy.ndarray U gate matrix
+    """
+    m11 = np.cos(theta / 2)
+    m12 = -np.exp(1j * lamda) * np.sin(theta / 2)
+    m21 = np.exp(1j * phi) * np.sin(theta / 2)
+    m22 = np.exp(1j * (phi + lamda)) * np.cos(theta / 2)
     return np.array([[m11, m12], [m21, m22]], dtype=np.complex128)
 
 
@@ -246,13 +258,80 @@ OPENQASM parser.
 
 
 class OqasmParser(object):
-    """OPENQASM Parser."""
+    """
+    Parser of OpenQASM 2.0 files. This class provides tools to translate a string object
+    (containing OpenQASM 2.0 source code) into a :class:`~qat.core.Circuit`
 
-    def __init__(self):
+    .. tab-set::
+
+        .. tab-item:: Basic example
+
+            .. run-code:: python
+
+                from qat.interop.openqasm import OqasmParser
+
+                # Define a dummy circuit
+                data = \"\"\"
+                OPENQASM 2.0;
+
+                // Allocate qubits and cbits
+                qreg q[1];
+                creg c[1];
+
+                // Apply gates and measure
+                x q[0];
+                measure q[0] -> c[0];
+                \"\"\"
+
+                # Translate into a myQLM circuit
+                parser = OqasmParser()
+                circuit = parser.compile(data)
+                print("The circuit is composed of gates",
+                      list(circuit.iterate_simple()))
+
+        .. tab-item:: Advanced example
+
+            .. run-code:: python
+
+                from qat.lang.AQASM import AbstractGate
+
+                # Define a circuit using OpenQASM
+                OPENQASM_CODE = \"\"\"
+                OPENQASM 2.0;
+
+                // Allocating registers
+                qreg q[1];
+                creg c[1];
+
+                // Dummy circuit
+                p(pi/4) q[0];
+                my_custom_gate q[0];
+                \"\"\"
+
+                # Register gates (i.e. "p" gate is an alias for "PH" gate, "my_custom_gate" is defined by an abstract gate)
+                custom_gate = AbstractGate("custom_gate", [], arity)
+                parser = OqasmParser(gates={"p": "PH", "my_custom_gate": custom_gate}, include_matrices=False)
+
+                # Compile circuit and display it
+                for gate, angles, qubits in parser.compile(OQASM_CODE).iterate_simple():
+                    if angles:
+                        print(f"Apply {gate}{angles} on qubits {qubits}")
+                    else:
+                        print(f"Apply {gate} on qubits {qubits}")
+
+    Args:
+        gates (dict[str, str or :class:`~qat.lang.AQASM.gates.Gate`], optional): definition of custom gates. These gates
+            are defined using a dictionary, a key corresponding to the OpenQASM gate identifier and the key being:
+             - a str: the name of the equivalent gate in myQLM (e.g. "PH", "X", "U", etc.)
+             - a :class:`~qat.lang.AQASM.gates.Gate`: a custom gate
+        include_matrices (bool, optional): include matrices in the generated circuit (default: True)
+    """
+
+    def __init__(self, gates: dict = None, include_matrices: bool = True):
         self.start = "main"
         self.format_version = False
         self.lineno = 0
-        self.compiler = ASTCircuitBuilder(include_matrices=True)
+        self.compiler = ASTCircuitBuilder(include_matrices=include_matrices)
         U = AbstractGate("U", [float, float, float], arity=1, matrix_generator=gen_U)
         u1 = AbstractGate("U1", [float], arity=1, matrix_generator=gen_u1)
         u2 = AbstractGate("U2", [float, float], arity=1, matrix_generator=gen_u2)
@@ -322,6 +401,17 @@ class OqasmParser(object):
         self.nbqbits = 0
         self.cregs = []
         self.qregs = []
+
+        # Register gate translation
+        for gate_name, gate_definition in (gates or {}).items():
+            # If gate is a string -> register alias
+            if isinstance(gate_definition, str):
+                self.standard_gates[gate_name] = gate_definition
+
+            # If gate is a myQLM gate -> register gate
+            else:
+                self.standard_gates[gate_name] = gate_definition.name
+                self.compiler.gate_set.add_signature(gate_definition)
 
     def add_creg(self, elem):
         self.cregs.append(elem)
