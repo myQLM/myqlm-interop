@@ -266,7 +266,7 @@ class OqasmParser(object):
 
         .. tab-item:: Basic example
 
-            .. run-code:: python
+            .. run-block:: python
 
                 from qat.interop.openqasm import OqasmParser
 
@@ -291,7 +291,7 @@ class OqasmParser(object):
 
         .. tab-item:: Advanced example
 
-            .. run-code:: python
+            .. run-block:: python
 
                 from qat.lang.AQASM import AbstractGate
 
