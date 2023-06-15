@@ -63,10 +63,11 @@ your credentials must be stored on your computer
 # Standard import
 import logging
 from math import sqrt
+from collections import namedtuple
 
 # Qiskit imports
 from qiskit.quantum_info import SparsePauliOp
-from qiskit_ibm_runtime import QiskitRuntimeService, Estimator, Sampler
+from qiskit_ibm_runtime import QiskitRuntimeService, Session, Options, Estimator, Sampler
 
 # myQLM imports
 from qat.core import Result, BatchResult, Observable, Term
@@ -77,6 +78,56 @@ from .converters import job_to_qiskit_circuit
 
 MAX_SHOTS = 8096
 _LOGGER = logging.getLogger("qat.interop.qiskit.runtime")
+
+
+def _filter_sample_jobs(jobs_list: list):
+    """
+    Select SAMPLE and cast the jobs into a Qiksit object. This function returns
+    a tuple like objects composed of:
+     - a list of Qiskit circuit
+     - a list of integer (number of qubits of each circuit)
+     - a list of integer (index of the selected circuit in the original list)
+
+    Args:
+        jobs_list (list): list of myQLM
+
+    Returns:
+        namedtuple(["circuits", "nbqbits", "indices"]): Qiskit circuits and meta-data
+    """
+    qiskit_container = namedtuple("SampleCircuits", ["circuits", "nbqbits", "indices"])
+    qiskit_objects = [(job_to_qiskit_circuit(job), job.circuit.nbqbits, index)
+                      for index, job in enumerate(jobs_list) if job.type == ProcessingType.SAMPLE]
+
+    if qiskit_objects:
+        circuits, nbqbits, indices = zip(*qiskit_objects)
+        return qiskit_container(circuits, nbqbits, indices)
+
+    return qiskit_container(None, None, None)
+
+
+def _filter_observable_jobs(jobs_list: list):
+    """
+    Select OBSERVABLE and cast the jobs into a Qiksit object. This function returns
+    a tuple like objects composed of:
+     - a list of Qiskit circuit
+     - a list of Qiskit observable
+     - a list of integer (index of the selected circuit in the original list)
+
+    Args:
+        jobs_list (list): list of myQLM
+
+    Returns:
+        namedtuple(["circuits", "observables", "indices"]): Qiskit circuits and meta-data
+    """
+    qiskit_container = namedtuple("ObservablesCircuits", ["circuits", "observables", "indices"])
+    qiskit_objects = [(job_to_qiskit_circuit(job), _observable_to_qiskit(job.observable), index)
+                      for index, job in enumerate(jobs_list) if job.type == ProcessingType.OBSERVABLE]
+
+    if qiskit_objects:
+        circuits, observables, indices = zip(*qiskit_objects)
+        return qiskit_container(circuits, observables, indices)
+
+    return qiskit_container(None, None, None)
 
 
 def _parse_qiskit_sampling_result(qiskit_result: dict, list_nbqbits: list):
@@ -103,7 +154,7 @@ def _parse_qiskit_sampling_result(qiskit_result: dict, list_nbqbits: list):
 
         # Add sample
         for state, probability in samples.items():
-            result.add_sample(int(state, 2), probability=probability)
+            result.add_sample(state, probability=probability)
 
         # Yield result
         yield result
@@ -232,50 +283,43 @@ class QiskitRuntimeQPU(QPUHandler):
         nbshots = max((job.nbshots or MAX_SHOTS) for job in jobs_list)
 
         # Get circuits (SAMPLE and OBSERVABLE types are treated separatly) and observables
-        samp_circuits = [(job_to_qiskit_circuit(job), index) for index, job in enumerate(jobs_list)
-                         if job.type == ProcessingType.SAMPLE]
-        nbqbits = [job.circuit.nbqbits for job in jobs_list
-                   if job.type == ProcessingType.SAMPLE]
+        sample_container = _filter_sample_jobs(jobs_list)
+        sample_qiskit_job = None
 
-        obs_circuits = [(job_to_qiskit_circuit(job), index) for index, job in enumerate(jobs_list)
-                        if job.type == ProcessingType.OBSERVABLE]
-        observables = [_observable_to_qiskit(job.observable) for job in jobs_list
-                       if job.type == ProcessingType.OBSERVABLE]
+        observable_container = _filter_observable_jobs(jobs_list)
+        observable_qiskit_job = None
 
         # Create result list
         myqlm_results = [None] * len(jobs_list)
 
-        # Treat SAMPLE jobs
-        if samp_circuits:
-            # Get circuits and indexes
-            circuits, indexes = zip(*samp_circuits)
+        # Create Qiskit runtime session
+        with Session(service=self.service, backend=self.backend) as session:
+            # Execution options
+            options = Options()
+            options.execution.shots = nbshots
+            options.transpilation.skip_transpilation = self.skip_transpilation
 
-            # Create sampler
-            with Sampler(circuits=circuits, skip_transpilation=self.skip_transpilation,
-                         service=self.service, options={"backend": self.backend}) as qpu:
-                # Send request to QPU
-                indices = [idx for idx, _ in enumerate(circuits)]
-                raw_result = qpu(circuit_indices=indices, shots=nbshots)
+            # Submit SAMPLE and OBSERVABLE circuits
+            if sample_container.circuits:
+                qiskit_sampler = Sampler(session=session, options=options)
+                sample_qiskit_job = qiskit_sampler.run(circuits=sample_container.circuits)
 
-            # Put each Qiskit result in the list of myQLM results
-            for index, parsed_result in zip(indexes, _parse_qiskit_sampling_result(raw_result, nbqbits)):
-                myqlm_results[index] = parsed_result
+            if observable_container.circuits:
+                qiskit_estimator = Estimator(session=session, options=options)
+                observable_qiskit_job = qiskit_estimator.run(circuits=observable_container.circuits,
+                                                             observables=observable_container.observables)
 
-        # Treat OBSERVABLE jobs
-        if obs_circuits:
-            # Get circuits and indexes
-            circuits, indexes = zip(*obs_circuits)
+            # Get results
+            if sample_qiskit_job:
+                for index, parsed_result in zip(sample_container.indices, _parse_qiskit_sampling_result(sample_qiskit_job.result(), sample_container.nbqbits)):  # pylint: disable=line-too-long
+                    myqlm_results[index] = parsed_result
 
-            # Create estimator
-            with Estimator(circuits=circuits, observables=observables, skip_transpilation=self.skip_transpilation,
-                           service=self.service, options={"backend": self.backend}) as qpu:
-                # Send request to QPU
-                indices = [idx for idx, _ in enumerate(circuits)]
-                raw_result = qpu(circuit_indices=indices, observable_indices=indices, shots=nbshots)
+            if observable_qiskit_job:
+                for index, parsed_result in zip(observable_container.indices, _parse_qiskit_observable_result(observable_qiskit_job.result())):  # pylint: disable=line-too-long
+                    myqlm_results[index] = parsed_result
 
-            # Put each Qiskit result in the list of myQLM results
-            for index, parsed_result in zip(indexes, _parse_qiskit_observable_result(raw_result)):
-                myqlm_results[index] = parsed_result
+            # Close session
+            session.close()
 
         # Return list of myQLM results
         return myqlm_results

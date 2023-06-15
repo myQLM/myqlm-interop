@@ -11,6 +11,7 @@ Description: Testing the Qiskit Runtime QPU. This test file will mock the
              Estimator and Sampler services
 """
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import pytest
@@ -47,24 +48,74 @@ class FakeQiskitResult:
     metadata: list = None
 
 
-class AbstractPrimitive:
+class FakeAsyncResult:
     """
-    Class describing an abstract primitive. A primitive is defined
-    by a constructor and can by used as a context manager
+    Fake Qiskit Async result.
+    This class takes a fake qiskit result and returns it using the `result()`
+    method
+    """
+    def __init__(self, result):
+        self._result = result
+
+    def result(self):
+        """
+        Join the result
+        """
+        return self._result
+
+
+class FakeSession:
+    """
+    Fake Qiskit session. A session is a contextable object used to manage a
+    connection
     """
     def __init__(self, *args, **kwargs):
         pass
 
+    def close(self):
+        """
+        Close session, session can't be used anymore
+        """
+
     def __enter__(self):
         """
-        Entering context
+        Entering session
         """
         return self
 
     def __exit__(self, *args, **kwargs):
         """
-        Exiting context
+        Exiting session
         """
+
+
+class AbstractPrimitive(ABC):
+    """
+    Class describing an abstract primitive. A primitive is defined
+    by a constructor and can by used as a context manager
+    """
+    def __init__(self, session, options):
+        self.nbshots = options.execution.shots
+
+    @abstractmethod
+    def _compute_result(self, circuits, observables):
+        """
+        Computes a result. This result will be wrapped into
+        a FakeAsyncResult
+
+        Args:
+            circuits (list[circuit]): list of Qiskit circuit
+            observables (list[observable]): list of Qiskit obserables
+
+        Returns:
+            FakeQiskitResult
+        """
+
+    def run(self, circuits: list, observables: list = None):
+        """
+        Execute a list of circuit
+        """
+        return FakeAsyncResult(self._compute_result(circuits, observables))
 
 
 class FakeSampler(AbstractPrimitive):
@@ -72,13 +123,15 @@ class FakeSampler(AbstractPrimitive):
     Class mocking the QiskitRuntime samples. This class will always return
     the same output
     """
-    def __call__(self, circuit_indices: list, shots: int):
+    def _compute_result(self, circuits, observables):
         """
         Execute a list of circuits
         """
+        assert observables is None
+
         return FakeQiskitResult(
-            quasi_dists=[{"00": 0.5, "11": 0.5} for _ in circuit_indices],
-            metadata=[{"shots": shots} for _ in circuit_indices]
+            quasi_dists=[{0b00: 0.5, 0b11: 0.5} for _ in circuits],
+            metadata=[{"shots": self.nbshots} for _ in circuits]
         )
 
 
@@ -87,17 +140,17 @@ class FakeEstimator(AbstractPrimitive):
     Class mocking the QiskitRuntime estimator. This class will always return the
     same output
     """
-    def __call__(self, circuit_indices, observable_indices, shots):
+    def _compute_result(self, circuits, observables):
         """
         Execute a list of circuits
         """
         # Check arguments
-        assert len(circuit_indices) == len(observable_indices)
+        assert len(circuits) == len(observables)
 
         # Return result
         return FakeQiskitResult(
-            values=[1. for _ in circuit_indices],
-            metadata=[{"variance": 0} for _ in circuit_indices]
+            values=[1. for _ in circuits],
+            metadata=[{"variance": 0} for _ in circuits]
         )
 
 
@@ -151,6 +204,7 @@ def test_sampling_mode(mocker, jobs, number_of_jobs):
     This test submit a Bell Pair and checks the result
     """
     # Mock sampler
+    mocker.patch("qat.interop.qiskit.runtime.Session", FakeSession)
     mocker.patch("qat.interop.qiskit.runtime.Sampler", FakeSampler)
 
     # Submit job
@@ -203,6 +257,7 @@ def test_observable_mode(mocker, jobs, number_of_jobs):
     observable
     """
     # Mock sampler
+    mocker.patch("qat.interop.qiskit.runtime.Session", FakeSession)
     mocker.patch("qat.interop.qiskit.runtime.Estimator", FakeEstimator)
 
     # Submit job
