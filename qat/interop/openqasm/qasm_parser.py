@@ -31,6 +31,7 @@ from qat.interop.openqasm.oqasm_routine import Element, Routine, Gate
 
 from qat.lang.AQASM import AbstractGate
 from qat.core.circuit_builder.matrix_util import default_gate_set
+from qat.core.gate_set import UnknownGate
 
 
 class ParsingEOF(Exception):
@@ -85,10 +86,22 @@ class InvalidParameterNumber(Exception):
 
 
 def gen_U(theta, phi, lamda):
-    m11 = (math.e ** (1j * (phi + lamda) / 2)) * math.cos(theta / 2)
-    m12 = (-1) * (math.e ** (1j * (phi - lamda) / 2)) * math.sin(theta / 2)
-    m21 = (math.e ** (1j * (phi - lamda) / 2)) * math.sin(theta / 2)
-    m22 = (math.e ** (1j * (phi + lamda) / 2)) * math.cos(theta / 2)
+    """
+    Generates the U / U3 gate matrix. The definition of this gate is based on:
+    https://qiskit.org/documentation/stubs/qiskit.circuit.library.U3Gate.html (Sept 08, 2022)
+
+    Args:
+        theta:
+        phi:
+        lamda: lambda parameter
+
+    Returns:
+        numpy.ndarray U gate matrix
+    """
+    m11 = np.cos(theta / 2)
+    m12 = -np.exp(1j * lamda) * np.sin(theta / 2)
+    m21 = np.exp(1j * phi) * np.sin(theta / 2)
+    m22 = np.exp(1j * (phi + lamda)) * np.cos(theta / 2)
     return np.array([[m11, m12], [m21, m22]], dtype=np.complex128)
 
 
@@ -245,13 +258,80 @@ OPENQASM parser.
 
 
 class OqasmParser(object):
-    """OPENQASM Parser."""
+    """
+    Parser of OpenQASM 2.0 files. This class provides tools to translate a string object
+    (containing OpenQASM 2.0 source code) into a :class:`~qat.core.Circuit`
 
-    def __init__(self):
+    .. tab-set::
+
+        .. tab-item:: Basic example
+
+            .. run-block:: python
+
+                from qat.interop.openqasm import OqasmParser
+
+                # Define a dummy circuit
+                data = \"\"\"
+                OPENQASM 2.0;
+
+                // Allocate qubits and cbits
+                qreg q[1];
+                creg c[1];
+
+                // Apply gates and measure
+                x q[0];
+                measure q[0] -> c[0];
+                \"\"\"
+
+                # Translate into a myQLM circuit
+                parser = OqasmParser()
+                circuit = parser.compile(data)
+                print("The circuit is composed of gates",
+                      list(circuit.iterate_simple()))
+
+        .. tab-item:: Advanced example
+
+            .. run-block:: python
+
+                from qat.lang.AQASM import AbstractGate
+
+                # Define a circuit using OpenQASM
+                OPENQASM_CODE = \"\"\"
+                OPENQASM 2.0;
+
+                // Allocating registers
+                qreg q[1];
+                creg c[1];
+
+                // Dummy circuit
+                p(pi/4) q[0];
+                my_custom_gate q[0];
+                \"\"\"
+
+                # Register gates (i.e. "p" gate is an alias for "PH" gate, "my_custom_gate" is defined by an abstract gate)
+                custom_gate = AbstractGate("custom_gate", [], arity)
+                parser = OqasmParser(gates={"p": "PH", "my_custom_gate": custom_gate}, include_matrices=False)
+
+                # Compile circuit and display it
+                for gate, angles, qubits in parser.compile(OQASM_CODE).iterate_simple():
+                    if angles:
+                        print(f"Apply {gate}{angles} on qubits {qubits}")
+                    else:
+                        print(f"Apply {gate} on qubits {qubits}")
+
+    Args:
+        gates (dict[str, str or :class:`~qat.lang.AQASM.gates.Gate`], optional): definition of custom gates. These gates
+            are defined using a dictionary, a key corresponding to the OpenQASM gate identifier and the key being:
+             - a str: the name of the equivalent gate in myQLM (e.g. "PH", "X", "U", etc.)
+             - a :class:`~qat.lang.AQASM.gates.Gate`: a custom gate
+        include_matrices (bool, optional): include matrices in the generated circuit (default: True)
+    """
+
+    def __init__(self, gates: dict = None, include_matrices: bool = True):
         self.start = "main"
         self.format_version = False
         self.lineno = 0
-        self.compiler = ASTCircuitBuilder(include_matrices=True)
+        self.compiler = ASTCircuitBuilder(include_matrices=include_matrices)
         U = AbstractGate("U", [float, float, float], arity=1, matrix_generator=gen_U)
         u1 = AbstractGate("U1", [float], arity=1, matrix_generator=gen_u1)
         u2 = AbstractGate("U2", [float, float], arity=1, matrix_generator=gen_u2)
@@ -321,6 +401,17 @@ class OqasmParser(object):
         self.nbqbits = 0
         self.cregs = []
         self.qregs = []
+
+        # Register gate translation
+        for gate_name, gate_definition in (gates or {}).items():
+            # If gate is a string -> register alias
+            if isinstance(gate_definition, str):
+                self.standard_gates[gate_name] = gate_definition
+
+            # If gate is a myQLM gate -> register gate
+            else:
+                self.standard_gates[gate_name] = gate_definition.name
+                self.compiler.gate_set.add_signature(gate_definition)
 
     def add_creg(self, elem):
         self.cregs.append(elem)
@@ -423,6 +514,65 @@ class OqasmParser(object):
                 return True
         return False
 
+    def build_gate(self, name, params):
+        """
+        Build a quantum gate using a name and a set of parameters
+
+        Args:
+            name (str): gate name
+            params
+
+        Returns:
+            GateAST
+        """
+        # Get number of parameters of the corresponding AST gate
+        try:
+            ast_gate_nb_params = self.compiler.gate_set[self.standard_gates[name]].nb_args
+        except UnknownGate:
+            sub_gate = self.standard_gates[name]
+            if sub_gate.startswith("C"):
+                sub_gate = sub_gate[1:]
+            if sub_gate.endswith("DG"):
+                sub_gate = sub_gate[:-2]
+            ast_gate_nb_params = self.compiler.gate_set[sub_gate].nb_args
+
+        # If gate is called with the right number of parameters
+        if len(params) == ast_gate_nb_params:
+            if self.standard_gates[name] == "SDG":
+                ast = GateAST("S", params)
+                return GateAST("DAG", ast)
+            if self.standard_gates[name] == "TDG":
+                ast = GateAST("T", params)
+                return GateAST("DAG", ast)
+            if self.standard_gates[name] == "CU1":
+                ast = GateAST("U1", params)
+                return GateAST("CTRL", ast)
+            if self.standard_gates[name] == "CU2":
+                ast = GateAST("U2", params)
+                return GateAST("CTRL", ast)
+            if self.standard_gates[name] == "CU3":
+                ast = GateAST("U3", params)
+                return GateAST("CTRL", ast)
+            if self.standard_gates[name] == "CRZ":
+                ast = GateAST("RZ", params)
+                return GateAST("CTRL", ast)
+            if self.standard_gates[name] == "CH":
+                ast = GateAST("H", params)
+                return GateAST("CTRL", ast)
+            if self.standard_gates[name] == "CSWAP":
+                ast = GateAST("SWAP", params)
+                return GateAST("CTRL", ast)
+
+            return GateAST(self.standard_gates[name], params)
+
+        # Invalid number of parameters
+        raise InvalidParameterNumber(
+            self.standard_gates[name],
+            ast_gate_nb_params,
+            params,
+            self.lineno,
+        )
+
     def build_routine(self, routine_name, args, params):
         """
             Apply routine on function call
@@ -481,57 +631,32 @@ class OqasmParser(object):
                     self.compiler.build_reset(args_index[0], args_index[0])
                 )
             else:
-                if (
-                    self.standard_gates[instr.name] == "SDG"
-                    or self.standard_gates[instr.name] == "TDG"
-                    or self.standard_gates[instr.name] == "CU1"
-                    or self.standard_gates[instr.name] == "CU2"
-                    or self.standard_gates[instr.name] == "CU3"
-                    or self.standard_gates[instr.name] == "CH"
-                    or self.standard_gates[instr.name] == "CRZ"
-                    or self.standard_gates[instr.name] == "CSWAP"
-                    or len(params_index)
-                    == self.compiler.gate_set[self.standard_gates[instr.name]].nb_args
-                ):
-                    if self.standard_gates[instr.name] == "SDG":
-                        ast = GateAST("S", params_index)
-                        ast = GateAST("DAG", ast)
-                    elif self.standard_gates[instr.name] == "TDG":
-                        ast = GateAST("T", params_index)
-                        ast = GateAST("DAG", ast)
-                    elif self.standard_gates[instr.name] == "CU1":
-                        ast = GateAST("U1", params_index)
-                        ast = GateAST("CTRL", ast)
-                    elif self.standard_gates[instr.name] == "CU2":
-                        ast = GateAST("U2", params_index)
-                        ast = GateAST("CTRL", ast)
-                    elif self.standard_gates[instr.name] == "CU3":
-                        ast = GateAST("U3", params_index)
-                        ast = GateAST("CTRL", ast)
-                    elif self.standard_gates[instr.name] == "CRZ":
-                        ast = GateAST("RZ", params_index)
-                        ast = GateAST("CTRL", ast)
-                    elif self.standard_gates[instr.name] == "CH":
-                        ast = GateAST("H", params_index)
-                        ast = GateAST("CTRL", ast)
-                    elif self.standard_gates[instr.name] == "CSWAP":
-                        ast = GateAST("SWAP", params_index)
-                        ast = GateAST("CTRL", ast)
-                    else:
-                        ast = GateAST(self.standard_gates[instr.name], params_index)
-                    # We have mapped the corresponding value
-                    # for each qubit in the params_index array
-                    res_routines.append(self.compiler.build_op_by_ast(ast, args_index))
-                else:
-                    raise InvalidParameterNumber(
-                        self.standard_gates[instr.name],
-                        self.compiler.gate_set[self.standard_gates[instr.name]].nb_args,
-                        params_index,
-                        self.lineno,
-                    )
-        # print("building ")
-        # print(res_routines)
+                ast = self.build_gate(instr.name, params_index)
+                res_routines.append(self.compiler.build_op_by_ast(ast, args_index))
+
         return res_routines
+
+    def build_gate_or_routine(self, name, qbit_list, params) -> list:
+        """
+        Build a gate or a routine based on a name, a list of qubits and a set of
+        parameters
+
+        Args:
+            name (str): gate or routine name
+            qbit_list (list): list of qubits
+            params (list): list of parameters
+
+        Returns:
+            list: list of gates
+        """
+        if name in self.standard_gates:
+            ast = self.build_gate(name, params)
+            return [self.compiler.build_op_by_ast(ast, qbit_list)]
+
+        if self.is_routine(name, len(qbit_list), len(params)):
+            return self.build_routine(name, qbit_list, params)
+
+        raise NameError(f"No such gate or routine {name!r} (or wrong number of arguments)")
 
     # ---- Begin the PLY parser ----
 
@@ -1091,7 +1216,7 @@ class OqasmParser(object):
         t[0] = Gate()
         try:
             self.standard_gates[t[1]]
-        except:
+        except KeyError:
             if t[1] not in self.tokens:
                 # not recognized by name_gate
                 if not self.is_routine(
@@ -1240,8 +1365,6 @@ class OqasmParser(object):
             | IF '(' ID MATCHES NNINTEGER error
             | IF error
         """
-        new_op = None  # For cythonization errors
-        new_ops = None
         if len(t) == 3:
             raise SyntaxError("Ill-formed IF statement. Perhaps a" + " missing '('?")
         if len(t) == 5:
@@ -1296,80 +1419,14 @@ class OqasmParser(object):
                     raise ImplementationError("Conditional measures are not supported")
                 elif op.name == "reset":
                     raise ImplementationError("Conditional resets are not supported")
-                elif op.name in self.standard_gates:
-                    # print("gate standard "+ self.standard_gates[op.name])
-                    if (
-                        self.standard_gates[op.name] == "SDG"
-                        or self.standard_gates[op.name] == "TDG"
-                        or self.standard_gates[op.name] == "CU1"
-                        or self.standard_gates[op.name] == "CU2"
-                        or self.standard_gates[op.name] == "CU3"
-                        or self.standard_gates[op.name] == "CH"
-                        or self.standard_gates[op.name] == "CRZ"
-                        or self.standard_gates[op.name] == "CSWAP"
-                        or len(op.params)
-                        == self.compiler.gate_set[self.standard_gates[op.name]].nb_args
-                    ):
-                        if self.standard_gates[op.name] == "SDG":
-                            ast = GateAST("S", op.params)
-                            ast = GateAST("DAG", ast)
-                        elif self.standard_gates[op.name] == "TDG":
-                            ast = GateAST("T", op.params)
-                            ast = GateAST("DAG", ast)
-                        elif self.standard_gates[op.name] == "CU1":
-                            ast = GateAST("U1", op.params)
-                            ast = GateAST("CTRL", ast)
-                        elif self.standard_gates[op.name] == "CU2":
-                            ast = GateAST("U2", op.params)
-                            ast = GateAST("CTRL", ast)
-                        elif self.standard_gates[op.name] == "CU3":
-                            ast = GateAST("U3", op.params)
-                            ast = GateAST("CTRL", ast)
-                        elif self.standard_gates[op.name] == "CH":
-                            ast = GateAST("H", op.params)
-                            ast = GateAST("CTRL", ast)
-                        elif self.standard_gates[op.name] == "CRZ":
-                            ast = GateAST("RZ", op.params)
-                            ast = GateAST("CTRL", ast)
-                        elif self.standard_gates[op.name] == "CSWAP":
-                            ast = GateAST("SWAP", op.params)
-                            ast = GateAST("CTRL", ast)
-                        else:
-                            ast = GateAST(self.standard_gates[op.name], op.params)
-                        new_op = self.compiler.build_op_by_ast(ast, op.qblist)
-                    else:
-                        raise InvalidParameterNumber(
-                            self.standard_gates[op.name],
-                            self.compiler.gate_set[
-                                self.standard_gates[op.name]
-                            ].nb_args,
-                            op.params,
-                            self.lineno,
-                        )
                 else:
-                    # print(">>>>>>>>We got a gate called "+op.name)
-                    # print("is it true though ? "+str(self.is_routine(op.name)))
-                    if self.is_routine(op.name, len(op.qblist), len(op.params)):
-                        new_ops = self.build_routine(op.name, op.qblist, op.params)
-                    else:
-                        raise NameError(
-                            "No such gate or routine, '"
-                            + op.name
-                            + "' or wrong number of arguments or "
-                            "parameters\nSupported Clifford gates"
-                            + " are :\nh, cx, ccx, x, y, z, s, "
-                            + "swap, cz'"
-                        )
-                if new_ops is not None:
+                    new_ops = self.build_gate_or_routine(op.name, op.qblist, op.params)
+
                     # print("IF routine gives " + str(len(new_ops)))
-                    for o in new_ops:
-                        o.type = OpType.CLASSICCTRL
-                        o.formula = formula
-                        self.compiler.ops.append(o)
-                else:
-                    new_op.type = OpType.CLASSICCTRL
-                    new_op.formula = formula
-                    self.compiler.ops.append(new_op)
+                    for op in new_ops:
+                        op.type = OpType.CLASSICCTRL
+                        op.formula = formula
+                        self.compiler.ops.append(op)
 
     # ----------------------------------------
     # These are all the things you can have outside of a gate declaration
@@ -1400,73 +1457,9 @@ class OqasmParser(object):
             elif gat.name == "reset":
                 op = self.compiler.build_reset([gat.qblist[0]], [gat.qblist[0]])
                 t[0].append(op)
-            elif gat.name in self.standard_gates:
-                if (
-                    self.standard_gates[gat.name] == "SDG"
-                    or self.standard_gates[gat.name] == "TDG"
-                    or self.standard_gates[gat.name] == "CU1"
-                    or self.standard_gates[gat.name] == "CU2"
-                    or self.standard_gates[gat.name] == "CU3"
-                    or self.standard_gates[gat.name] == "CH"
-                    or self.standard_gates[gat.name] == "CRZ"
-                    or self.standard_gates[gat.name] == "CSWAP"
-                    or len(gat.params)
-                    == self.compiler.gate_set[self.standard_gates[gat.name]].nb_args
-                ):
-                    if self.standard_gates[gat.name] == "SDG":
-                        ast = GateAST("S", gat.params)
-                        ast = GateAST("DAG", ast)
-                    elif self.standard_gates[gat.name] == "TDG":
-                        ast = GateAST("T", gat.params)
-                        ast = GateAST("DAG", ast)
-                    elif self.standard_gates[gat.name] == "CU1":
-                        ast = GateAST("U1", gat.params)
-                        ast = GateAST("CTRL", ast)
-                    elif self.standard_gates[gat.name] == "CU2":
-                        ast = GateAST("U2", gat.params)
-                        ast = GateAST("CTRL", ast)
-                    elif self.standard_gates[gat.name] == "CU3":
-                        ast = GateAST("U3", gat.params)
-                        ast = GateAST("CTRL", ast)
-                    elif self.standard_gates[gat.name] == "CH":
-                        ast = GateAST("H", gat.params)
-                        ast = GateAST("CTRL", ast)
-                    elif self.standard_gates[gat.name] == "CRZ":
-                        ast = GateAST("RZ", gat.params)
-                        ast = GateAST("CTRL", ast)
-                    elif self.standard_gates[gat.name] == "CSWAP":
-                        ast = GateAST("SWAP", gat.params)
-                        ast = GateAST("CTRL", ast)
-                    else:
-                        ast = GateAST(self.standard_gates[gat.name], gat.params)
-                    op = self.compiler.build_op_by_ast(ast, gat.qblist)
-                    t[0].append(op)
-                else:
-                    raise InvalidParameterNumber(
-                        self.standard_gates[gat.name],
-                        self.compiler.gate_set[self.standard_gates[gat.name]].nb_args,
-                        gat.params,
-                        self.lineno,
-                    )
             else:
-                # print(">>>>>>>>We got a gate called "+gat.name)
-                # print("is it true though ? "+str(self.is_routine(gat.name)))
-                if self.is_routine(gat.name, len(gat.qblist), len(gat.params)):
-                    ops = self.build_routine(gat.name, gat.qblist, gat.params)
-                    # print("routine yields " + str(len(ops)) + " ops")
-                    t[0].extend(ops)
-                else:
-                    raise NameError(
-                        "No such gate or routine, '"
-                        + gat.name
-                        + "' or wrong number of arguments or "
-                        "parameters\nSupported Clifford gates"
-                        + " are :\nh, cx, ccx, x, y, z, s, "
-                        + "swap, cz'"
-                    )
-            # print("Quantum op has ")
-            # for o in t[0]:
-            # print(o)
+                ops = self.build_gate_or_routine(gat.name, gat.qblist, gat.params)
+                t[0].extend(ops)
 
     # ----------------------------------------
     # unary : NNINTEGER

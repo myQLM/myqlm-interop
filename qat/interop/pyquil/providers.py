@@ -69,8 +69,8 @@ def generate_qlm_result(pyquil_result):
 
     # Build a list of states
 
-    #FIXME only works with PyquilQPU generated results right now!
-    #FIXME should work with native pyquil results also
+    # FIXME only works with PyquilQPU generated results right now!
+    # FIXME should work with native pyquil results also
     for register_result in pyquil_result.readout_data.values():
         nbshots = len(register_result)
         measurements = [
@@ -79,7 +79,7 @@ def generate_qlm_result(pyquil_result):
 
         counts = Counter(measurements)
         qlm_result = QlmRes()
-        #FIXME check that err is correct
+        # FIXME check that err is correct
         qlm_result.raw_data = [
             Sample(state=state,
                    probability=freq / nbshots,

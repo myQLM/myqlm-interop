@@ -360,7 +360,7 @@ class QPUToBackend(BackendV1):
     Basic connector implementing a Qiskit Backend, plugable on a QLM QPU.
 
     Parameters:
-        qpu: :class:`~qat.core.qpu.QPUHandler` object
+        qpu: :class:`~qat.qpus.QPUHandler` object
         configuration: BackendConfiguration object, leave default value for
                 standard uses
         provider: Provider responsible for this backend
@@ -374,7 +374,7 @@ class QPUToBackend(BackendV1):
     def __init__(self, qpu=None, configuration=_QLM_BACKEND, provider=None):
         """
         Args:
-            qpu: :class:`~qat.core.qpu.QPUHandler` object
+            qpu: :class:`~qat.qpus.QPUHandler` object
             configuration: BackendConfiguration object, leave default value for
                     standard uses
             provider: Provider responsible for this backend

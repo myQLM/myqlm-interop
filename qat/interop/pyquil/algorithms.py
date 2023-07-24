@@ -176,7 +176,7 @@ def _init_attr(bit_map):
 def _construct_deutsch_jozsa_circuit(
     qubits, computational_qubits, ancillas, unitary_matrix
 ):
-    """ Builds the Deutsch-Jozsa circuit. Which can determine
+    r""" Builds the Deutsch-Jozsa circuit. Which can determine
         whether a function f mapping
         `\{0,1\}^n \to \{0,1\}` is constant or balanced,
         provided that it is one of them.
