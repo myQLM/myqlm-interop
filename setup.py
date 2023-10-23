@@ -37,24 +37,39 @@ class PyTest(TestCommand):
         errno = pytest.main([".", "-v"])
         sys.exit(errno)
 
+
+def get_description():
+    """
+    Returns the long description of the current
+    package
+
+    Returns:
+        str
+    """
+    with open("README.md", "r") as readme:
+        return readme.read()
+
+
 setup(
     name="myqlm-interop",
     version="1.7.1",
     author="Atos Quantum Lab",
     license="Atos myQLM EULA",
+    description="myQLM-interop package",
+    long_description=get_description(),
     packages=find_namespace_packages(include=["qat.*"]),
     scripts=["bin/oqasm2circ"],
     install_requires=["qat-lang>=2.2.0", "numpy", "ply"],
     extras_require={
-        "qiskit_binder;python_version>='3.8'": ["qiskit>=0.38.0", "qiskit-ibm-runtime>=0.6.2"],
-        "projectq_binder;python_version>='3.8'": ["projectq==0.7.2"],
-        "cirq_binder;python_version>='3.8'": ["cirq>=1.0.0"],
-        "pyquil_binder;python_version>='3.8'": ["pyquil==3.3.0", "quantum-grove==1.7.0"],
-        "all;python_version>='3.8'": [
-            "qiskit>=0.38.0", "qiskit-ibm-runtime>=0.6.2",
-            "projectq==0.7.2",
-            "cirq==1.0.0",
-            "pyquil==3.3.0", "quantum-grove==1.7.0"
+        "qiskit_binder": ["qiskit>=0.38.0;python_version>='3.8'", "qiskit-ibm-runtime>=0.6.2;python_version>='3.8'"],
+        "projectq_binder": ["projectq==0.7.2;python_version>='3.8'"],
+        "cirq_binder": ["cirq>=1.0.0;python_version>='3.8'"],
+        "pyquil_binder": ["pyquil==3.3.0;python_version>='3.8'", "quantum-grove==1.7.0;python_version>='3.8'"],
+        "all": [
+            "qiskit>=0.38.0;python_version>='3.8'", "qiskit-ibm-runtime>=0.6.2;python_version>='3.8'",
+            "projectq==0.7.2;python_version>='3.8'",
+            "cirq==1.0.0;python_version>='3.8'",
+            "pyquil==3.3.0;python_version>='3.8'", "quantum-grove==1.7.0;python_version>='3.8'"
         ]
     },
     tests_require=["pytest"],
