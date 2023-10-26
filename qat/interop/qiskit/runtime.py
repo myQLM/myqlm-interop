@@ -239,7 +239,7 @@ class QiskitRuntimeQPU(QPUHandler):
         - a list of qubits (i.e. sampling mode)
         - an observable (i.e. observable mode)
 
-    .. warnings::
+    .. warning::
 
         If a batch is composed of both sampling jobs and observable jobs,
         two requests will be done to the Runtime server

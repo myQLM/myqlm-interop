@@ -322,8 +322,8 @@ class OqasmParser(object):
     Args:
         gates (dict[str, str or :class:`~qat.lang.AQASM.gates.Gate`], optional): definition of custom gates. These gates
             are defined using a dictionary, a key corresponding to the OpenQASM gate identifier and the key being:
-             - a str: the name of the equivalent gate in myQLM (e.g. "PH", "X", "U", etc.)
-             - a :class:`~qat.lang.AQASM.gates.Gate`: a custom gate
+            - a str: the name of the equivalent gate in myQLM (e.g. "PH", "X", "U", etc.)
+            - a :class:`~qat.lang.AQASM.gates.Gate`: a custom gate
         include_matrices (bool, optional): include matrices in the generated circuit (default: True)
     """
 
