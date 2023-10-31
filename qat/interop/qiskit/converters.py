@@ -543,38 +543,19 @@ def _variable_to_parameter(param_list, variable=None, variable_name=""):
         A Qiskit Parameter object
     """
     if not (variable or variable_name):
-        raise AttributeError(
-            "_variable_to_parameter must either take a variable or a variable_name argument"
-        )
+        raise AttributeError("_variable_to_parameter must either take a variable or a variable_name argument")
 
-    param = None
-    if variable_name:
-        for x_param in param_list:
-            if x_param.name == variable_name:
-                return x_param
-        param = Parameter(variable_name)
-        param_list.append(param)
+    # Get variable string
+    variable_str = variable_name or variable.name
 
-    # look if the parameter has already been defined
+    # Check if variable string correspond to an existing qiskit parameter
     for x_param in param_list:
-        if variable is not None and x_param.name == variable.name:
-            param = x_param
-            # look if the expression of the parameter has already been defined
-            if hasattr(param, "expr"):
-                return param
+        if x_param.name == variable_str:
+            return x_param
 
-    if param is None:
-        param = Parameter(variable.name)
-        param_list.append(param)
-
-    # looks if the variable has an expression that should be translated
-    if variable:
-        if isinstance(variable, ParameterExpression):
-            arith_expr_list = variable.to_thrift().split()
-            param.expr = _arith_expr_list_to_parameter_expression(
-                param_list, arith_expr_list, variable)
-        else:
-            param.expr = variable
+    # Define qiskit Parameter
+    param = Parameter(variable_str)
+    param_list.append(param)
     return param
 
 
