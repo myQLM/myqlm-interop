@@ -255,7 +255,7 @@ class TestQiskit2QLMConversion(unittest.TestCase):
                     # assertIn to accomodate versions of python before and after python 3.11
                     self.assertIn(
                         param.to_thrift(),
-                        [f"+ + + * -1.0 param3 param{a} param{b} param{c}" for a, b, c in itertools.permutations((0, 1, 2), 3)]
+                        [f"+ + + * -1.0 param3 param{a} param{b} param{c}" for a, b, c in itertools.permutations(range(3))]
                     )
                 if i == 5:
                     self.assertEqual(param.to_thrift(),
@@ -263,16 +263,18 @@ class TestQiskit2QLMConversion(unittest.TestCase):
                 if i == 6:
                     self.assertIn(
                         param.to_thrift(), [
-                            f"* * * * + + + * -1.0 param3 param2 param{a} param{b} + "
+                            f"* * * * + + + * -1.0 param3 param{a} param{b} param{c} + "
                             "4.54 param2 param0 param1 param3"
-                            for a, b in ((0, 1), (1, 0))
-                    ])
+                            for a, b, c in itertools.permutations(range(3))
+                        ]
+                    )
                 if i == 7:
                     self.assertIn(
                         param.to_thrift(), [
-                            f"* + + + * -1.0 param3 param2 param{a} param{b} ** + -7.0 param2 -1.0"
-                            for a, b in ((0, 1), (1, 0))
-                    ])
+                            f"* + + + * -1.0 param3 param{a} param{b} param{c} ** + -7.0 param2 -1.0"
+                            for a, b, c in itertools.permutations(range(3))
+                        ]
+                    )
                 if i == 8:
                     self.assertEqual(param.to_thrift(), "* 0.5 param0")
                 if i == 9:
