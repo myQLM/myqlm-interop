@@ -20,6 +20,7 @@
     under the License.
 """
 
+import itertools
 import unittest
 import logging
 from qiskit import QuantumRegister, QuantumCircuit, ClassicalRegister
@@ -254,7 +255,7 @@ class TestQiskit2QLMConversion(unittest.TestCase):
                     # assertIn to accomodate versions of python before and after python 3.11
                     self.assertIn(
                         param.to_thrift(),
-                        [f"+ + + * -1.0 param3 param2 param{a} param{b}" for a, b in ((0, 1), (1, 0))]
+                        [f"+ + + * -1.0 param3 param{a} param{b} param{c}" for a, b, c in itertools.permutations((0, 1, 2), 3)]
                     )
                 if i == 5:
                     self.assertEqual(param.to_thrift(),
