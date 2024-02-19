@@ -45,8 +45,11 @@ import pyquil.quilatom
 import pyquil.gates as pg
 from pyquil import Program
 from pyquil.quilbase import Measurement, Declare, Gate
+
 import qat.lang.AQASM.gates as aq
 from qat.lang.AQASM import Program as QlmProgram
+from qat.comm.gate_set.ttypes import ParamType
+
 try:
     from qat.core.util import extract_syntax
 except ImportError:
@@ -71,6 +74,24 @@ QLM_GATE_DIC = {
     "PH": aq.PH,
     "ISWAP": aq.ISWAP,
 }
+
+
+def _get_parameter(param):
+    """
+    Extract the float number wrapped in the gate parameter.
+    Only non-abstract float number can be extracted, otherwise, a TypeError is raised
+
+    Args:
+        param: parameter
+
+    Returns:
+        float: number
+    """
+    if param.type != ParamType.DOUBLE or param.is_abstract:
+        raise TypeError("Could not translate the QLM circuit to PyQuil, the circuit is composed of gate parametrized "
+                        "with untranslatable arguments (i.e., non-floating arguments or abstract variables)")
+
+    return param.double_p
 
 
 def build_qbits(qbits):
@@ -115,7 +136,7 @@ def build_gate(dic, ident, qubits):
         # base gate
         try:
             params = [
-                param.double_p for param in dic[qlm_gate.subgate].syntax.parameters
+                _get_parameter(param) for param in dic[qlm_gate.subgate].syntax.parameters
             ]
         except AttributeError:
             params = []
@@ -129,11 +150,11 @@ def build_gate(dic, ident, qubits):
         return quil_gate
 
     if dag:
-        params = [param.double_p for param in qlm_gate.syntax.parameters]
+        params = [_get_parameter(param) for param in qlm_gate.syntax.parameters]
         # if it's a pair numbr of times, then it goes back to normal
         return pyquil.quilbase.Gate(basename, params, qubits).dagger()
 
-    params = [param.double_p for param in qlm_gate.syntax.parameters]
+    params = [_get_parameter(param) for param in qlm_gate.syntax.parameters]
     if None in params:
         raise TypeError("Unsupported parameter type")
     return pyquil.quilbase.Gate(basename, params, qubits)
@@ -141,6 +162,11 @@ def build_gate(dic, ident, qubits):
 
 def qlm_to_pyquil(qlm_circuit, program_pragma=None):
     """ Converts a QLM circuit to a pyquil circuit
+
+    .. warning::
+
+        Only circuit parametrized with float numbers can be translated to PyQuil.
+        Thus, variational circuits cannot be translated to PyQuil
 
     Args:
         qlm_circuit: QLM circuit to convert
