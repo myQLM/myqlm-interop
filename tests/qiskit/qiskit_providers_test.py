@@ -369,7 +369,7 @@ class Test2QPUToBackend(unittest.TestCase):
         qiskit_circuit.measure(qreg, creg)
 
         backend = QiskitConnector() | PyLinalg()
-        result = backend.run(qiskit_circuit).result()
+        result = backend.run(qiskit_circuit, shots=10).result()
 
         LOGGER.debug("\nQPUToBackend test with a QLM job sent into a QLM qpu:")
         LOGGER.debug(result.results)
@@ -398,7 +398,7 @@ class Test2QPUToBackend(unittest.TestCase):
         qiskit_circuits.append(qiskit_circuit_1)
         qiskit_circuits.append(qiskit_circuit_2)
 
-        result = backend.run(qiskit_circuits).result()
+        result = backend.run(qiskit_circuits, shots=10).result()
 
         LOGGER.debug(
             "\nQPUToBackend test with a list of QLM jobs sent into a QLM qpu:")
