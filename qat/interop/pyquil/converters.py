@@ -210,6 +210,12 @@ def build_cregs(prog, pyquil_prog):
     return (prog.calloc(creg_size), pq_cregs)
 
 
+def _sanitize_param(param):
+    if isinstance(param, complex) and param.imag == 0:
+        return param.real
+    return param
+
+
 def pyquil_to_qlm(pyquil_prog, sep_measures=False, **kwargs):
     """ Converts a pyquil circuit into a qlm circuit
 
@@ -254,9 +260,9 @@ def pyquil_to_qlm(pyquil_prog, sep_measures=False, **kwargs):
                     gate = aq.PH(*op.params)
                     ctrls += 1
                 elif op.name in QLM_GATE_DIC:
-                    gate = QLM_GATE_DIC[op.name](*op.params)
+                    gate = QLM_GATE_DIC[op.name](*map(_sanitize_param, op.params))
                 elif op.name.replace("C", "") in QLM_GATE_DIC:
-                    gate = QLM_GATE_DIC[op.name.replace("C", "")](*op.params)
+                    gate = QLM_GATE_DIC[op.name.replace("C", "")](*map(_sanitize_param, op.params))
                     ctrls += len(op.name) - len(op.name.replace("C", ""))
                 else:
                     raise ValueError(f"Gate {op.name} is not supported")
