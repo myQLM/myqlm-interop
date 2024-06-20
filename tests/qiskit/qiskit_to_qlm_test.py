@@ -220,8 +220,6 @@ class TestQiskit2QLMConversion(unittest.TestCase):
         param1 = Parameter("param1")
         param2 = Parameter("param2")
         param3 = Parameter("param3")
-        param0.expr = 1
-        param1.expr = 3.14
         param4 = param0 + param1 + param2 - param3
         param5 = param0 * param1 * (param2 + 4.54) * param3
         param6 = param5 * param4
@@ -238,6 +236,8 @@ class TestQiskit2QLMConversion(unittest.TestCase):
         circ.rx(param7, 0)
         circ.rx(param8, 0)
         circ.rx(param9, 0)
+        circ.assign_parameters({param0: 1})
+        circ.assign_parameters({param1: 3.14})
         qlm_circ = qiskit_to_qlm(circ)
         i = 0
         for _, params, _ in qlm_circ.iterate_simple():
