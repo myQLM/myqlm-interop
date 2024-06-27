@@ -94,7 +94,7 @@ from qiskit.providers.models.backendconfiguration import BackendConfiguration
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 from qiskit.qobj import QobjExperimentHeader
-from qiskit import execute, Aer, IBMQ
+from qiskit import transpile, Aer, IBMQ
 
 # QLM imports
 from qat.interop.qiskit.converters import qiskit_to_qlm
@@ -557,10 +557,11 @@ class BackendToQPU(QPUHandler):
             raise ValueError("Backend cannot be None")
 
         qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
-        qiskit_result = execute(
+        new_circuit = transpile(
             qiskit_circuit, self.backend,
             shots=qlm_job.nbshots or self.backend.configuration().max_shots,
-            coupling_map=None).result()
+            coupling_map=None)
+        qiskit_result = self.backend.run(new_circuit)
         result = generate_qlm_result(qiskit_result)
         return result
 
