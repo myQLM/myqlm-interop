@@ -94,7 +94,10 @@ from qiskit.providers.models.backendconfiguration import BackendConfiguration
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 from qiskit.qobj import QobjExperimentHeader
-from qiskit import transpile, Aer, IBMQ
+from qiskit import transpile
+
+from qiskit_aer import Aer
+from qiskit_ibm_provider import IBMProvider
 
 # QLM imports
 from qat.interop.qiskit.converters import qiskit_to_qlm
@@ -501,11 +504,11 @@ class BackendToQPU(QPUHandler):
             if token is None:
                 token = os.getenv("QISKIT_TOKEN")
             if token is not None:
-                if 'token' not in IBMQ.stored_account().keys() or \
-                        IBMQ.stored_account()['token'] != token:
-                    IBMQ.save_account(token, overwrite=True)
+                if 'token' not in IBMProvider.saved_accounts().keys() or \
+                        IBMProvider.saved_accounts()['token'] != token:
+                    IBMProvider.save_account(token, overwrite=True)
 
-                provider = IBMQ.load_account()
+                provider = IBMProvider()
                 self.backend = provider.get_backend(ibmq_backend)
             else:
                 self.backend = Aer.get_backend("aer_simulator")
@@ -555,12 +558,12 @@ class BackendToQPU(QPUHandler):
         """
         if self.backend is None:
             raise ValueError("Backend cannot be None")
-
+        
         qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
         new_circuit = transpile(
             qiskit_circuit, self.backend,
             shots=qlm_job.nbshots or self.backend.configuration().max_shots,
-            coupling_map=None)
+            coupling_map=None).result()
         qiskit_result = self.backend.run(new_circuit)
         result = generate_qlm_result(qiskit_result)
         return result
@@ -736,11 +739,11 @@ class AsyncBackendToQPU(QPUHandler):
             if token is None:
                 token = os.getenv("QISKIT_TOKEN")
             if token is not None:
-                if 'token' not in IBMQ.stored_account().keys() or \
-                        IBMQ.stored_account()['token'] != token:
-                    IBMQ.save_account(token, overwrite=True)
+                if 'token' not in IBMProvider.saved_accounts().keys() or \
+                        IBMProvider.saved_accounts()['token'] != token:
+                    IBMProvider.save_account(token, overwrite=True)
 
-                provider = IBMQ.load_account()
+                provider = IBMProvider()
                 self.backend = provider.get_backend(ibmq_backend)
             else:
                 self.backend = Aer.get_backend("aer_simulator")
