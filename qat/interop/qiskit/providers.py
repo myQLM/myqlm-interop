@@ -94,7 +94,10 @@ from qiskit.providers.models.backendconfiguration import BackendConfiguration
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 from qiskit.qobj import QobjExperimentHeader
-from qiskit import execute, Aer, IBMQ
+# from qiskit import execute
+
+from qiskit_aer import Aer
+from qiskit_ibm_provider import IBMProvider
 
 # QLM imports
 from qat.interop.qiskit.converters import qiskit_to_qlm
@@ -463,7 +466,7 @@ class BackendToQPU(QPUHandler):
         backend: The Backend Qiskit object that is supposed to execute
             the circuit.
         plugins (list): linked plugins
-        token (str): Qiskit IBMQ login token. If not supplied, loaded from the environment
+        token (str): IBMProvider login token. If not supplied, loaded from the environment
             variable :code:`QISKIT_TOKEN`
         ibmq_backend (str, optional): name of the backend. Defaults to 'ibmq_qasm_simulator'.
         optimization_level (int, optional). Level of optimization: 0: No optimization (Default).
@@ -475,7 +478,7 @@ class BackendToQPU(QPUHandler):
         Args:
             backend: The Backend Qiskit object to be wrapped
             plugins: Any plugins to be added (c.f qat.core documentation)
-            token: Qiskit IBMQ login token. If not supplied, loaded from env
+            token: IBMProvider login token. If not supplied, loaded from env
                     variable QISKIT_TOKEN. Only used if backend is None.
             ibmq_backend: Name of the IBM Quantum Experience backend, default
                     value is 'ibmq_qasm_simulator', which goes up to 32qubits
@@ -497,20 +500,28 @@ class BackendToQPU(QPUHandler):
             ibmq_backend: Name of the IBM Quantum Experience backend, default
                     value is 'ibmq_qasm_simulator', which goes up to 32qubits
         """
-        if backend is None:
-            if token is None:
-                token = os.getenv("QISKIT_TOKEN")
-            if token is not None:
-                if 'token' not in IBMQ.stored_account().keys() or \
-                        IBMQ.stored_account()['token'] != token:
-                    IBMQ.save_account(token, overwrite=True)
-
-                provider = IBMQ.load_account()
-                self.backend = provider.get_backend(ibmq_backend)
-            else:
-                self.backend = Aer.get_backend("aer_simulator")
-        else:
+        # Set backend is passed as argument
+        if backend is not None:
             self.backend = backend
+            return
+
+        # Load token from environment
+        if token is None:
+            token = os.getenv("QISKIT_TOKEN")
+
+        # If token is defined
+        if token is not None:
+            provider = IBMProvider(token=token)
+            self.backend = provider.get_backend(ibmq_backend)
+            return
+
+        # If an account is already saved
+        if IBMProvider.saved_accounts():
+            provider = IBMProvider()
+            self.backend = provider.get_backend(ibmq_backend)
+            return
+
+        self.backend = Aer.get_backend("aer_simulator")
 
     def _submit_batch(self, qlm_batch):
         """
