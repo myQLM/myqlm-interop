@@ -73,14 +73,15 @@ three main classes:
 
        from qat.qpus import PyLinalg
        from qat.interop.qiskit import QPUToBackend
-       from qiskit import execute
+       from qiskit import transpile
 
        # Creates a Qiskit Backend
        qpu = PyLinalg()
        backend = QPUToBackend(qpu)
 
        # Returns a qiskit result
-       qiskit_result = execute(qiskit_circuit, backend, shots=15).result()
+       new_circuit = transpile(qiskit_circuit, backend, shots=15)
+       qiskit_result = self.backend.run(new_circuit)
 """
 
 import os
@@ -95,6 +96,7 @@ from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 from qiskit.qobj import QobjExperimentHeader
 from qiskit import transpile
+from qiskit.primitives import BackendSamplerV2
 
 from qiskit_aer import Aer
 from qiskit_ibm_provider import IBMProvider
@@ -534,12 +536,13 @@ class BackendToQPU(QPUHandler):
         for qlm_job in qlm_batch.jobs:
             qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
             qiskit_circuits.append(qiskit_circuit)
-        qiskit_result = execute(
+
+        new_circuits = transpile(
             qiskit_circuits, self.backend,
-            shots=qlm_batch.jobs[0].nbshots or self.backend.configuration().max_shots,
+            shots=qlm_job.nbshots or self.backend.configuration().max_shots,
             coupling_map=None,
-            optimization_level=self.optimization_level
-        ).result()
+            optimization_level=self.optimization_level)
+        qiskit_result = self.backend.run(new_circuits)
         results = generate_qlm_list_results(qiskit_result)
         new_results = []
         for result in results:
@@ -563,7 +566,8 @@ class BackendToQPU(QPUHandler):
         new_circuit = transpile(
             qiskit_circuit, self.backend,
             shots=qlm_job.nbshots or self.backend.configuration().max_shots,
-            coupling_map=None).result()
+            coupling_map=None,
+            optimization_level=self.optimization_level)
         qiskit_result = self.backend.run(new_circuit)
         result = generate_qlm_result(qiskit_result)
         return result
@@ -766,11 +770,13 @@ class AsyncBackendToQPU(QPUHandler):
         if self.backend is None:
             raise ValueError("Backend cannot be None")
 
-        qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
-        async_job = execute(
+        qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)        
+        new_circuit = transpile(
             qiskit_circuit, self.backend,
             shots=qlm_job.nbshots or self.backend.configuration().max_shots,
             coupling_map=None)
+        sampler = BackendSamplerV2(self.backend)
+        async_job = sampler.run(new_circuit)
         return QiskitJob(qlm_job, async_job, self.backend.configuration().max_shots)
 
     def submit(self, qlm_batch):
@@ -795,10 +801,13 @@ class AsyncBackendToQPU(QPUHandler):
         for qlm_job in qlm_batch.jobs:
             qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
             qiskit_circuits.append(qiskit_circuit)
-        async_job = execute(
+        new_circuits = transpile(
             qiskit_circuits, self.backend,
             shots=qlm_batch.jobs[0].nbshots or self.backend.configuration().max_shots,
             coupling_map=None)
+        sampler = BackendSamplerV2(self.backend)
+        async_job = sampler.run(new_circuits)
+
         return QiskitJob(qlm_batch, async_job, self.backend.configuration().max_shots)
 
     def retrieve_job(self, file_name):
