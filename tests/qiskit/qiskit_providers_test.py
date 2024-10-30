@@ -26,9 +26,10 @@ import unittest
 import logging
 import os
 from qiskit import QuantumRegister, QuantumCircuit
-from qiskit import ClassicalRegister, execute, Aer
+from qiskit import ClassicalRegister
+from qiskit_aer import Aer
 from qat.lang.AQASM import Program, H, CNOT
-from qat.pylinalg import PyLinalg
+from qat.qpus import LinAlg
 from qat.core.wrappers import Batch
 from qat.interop.qiskit import BackendToQPU, AsyncBackendToQPU, \
         QiskitConnector, QPUToBackend
@@ -301,7 +302,7 @@ class Test1AsyncBackendToQPU(unittest.TestCase):
 class Test2QPUToBackend(unittest.TestCase):
     """
     Creates a Qiskit circuit and uses a QPUToBackend in order to
-    simulate it with another simulator (PyLinalg) inside
+    simulate it with another simulator (LinAlg) inside
     Qiskit's ecosystem.
     Also tests the run() function of Backend.
     Only checks if the results' size is correct.
@@ -322,7 +323,7 @@ class Test2QPUToBackend(unittest.TestCase):
         qiskit_circuit.cx(qreg[0], qreg[1])
         qiskit_circuit.measure(qreg, creg)
 
-        qpu = PyLinalg()
+        qpu = LinAlg()
         backend = QPUToBackend(qpu)
 
         result = execute(qiskit_circuit, backend, shots=15).result()
@@ -346,7 +347,7 @@ class Test2QPUToBackend(unittest.TestCase):
         qiskit_circuit.cx(qreg[0], qreg[1])
         qiskit_circuit.measure(qreg, creg)
 
-        backend = QiskitConnector() | PyLinalg()
+        backend = QiskitConnector() | LinAlg()
 
         result = execute(qiskit_circuit, backend, shots=15).result()
 
@@ -368,7 +369,7 @@ class Test2QPUToBackend(unittest.TestCase):
         qiskit_circuit.cx(qreg[0], qreg[1])
         qiskit_circuit.measure(qreg, creg)
 
-        backend = QiskitConnector() | PyLinalg()
+        backend = QiskitConnector() | LinAlg()
         result = backend.run(qiskit_circuit, shots=10).result()
 
         LOGGER.debug("\nQPUToBackend test with a QLM job sent into a QLM qpu:")
@@ -393,7 +394,7 @@ class Test2QPUToBackend(unittest.TestCase):
         qiskit_circuit_2.h(qreg[1])
         qiskit_circuit_2.measure(qreg, creg)
 
-        backend = QiskitConnector() | PyLinalg()
+        backend = QiskitConnector() | LinAlg()
         qiskit_circuits = []
         qiskit_circuits.append(qiskit_circuit_1)
         qiskit_circuits.append(qiskit_circuit_2)
