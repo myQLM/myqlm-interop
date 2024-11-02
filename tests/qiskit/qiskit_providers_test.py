@@ -25,16 +25,15 @@ import time
 import unittest
 import logging
 import os
-from qiskit import QuantumRegister, QuantumCircuit
-from qiskit import ClassicalRegister
+from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, transpile
 from qiskit_aer import Aer
 from qat.lang.AQASM import Program, H, CNOT
-from qat.qpus import LinAlg
+from qat.qpus import PyLinalg
 from qat.core.wrappers import Batch
 from qat.interop.qiskit import BackendToQPU, AsyncBackendToQPU, \
         QiskitConnector, QPUToBackend
 
-from hardware import running_python
+# from hardware import running_python
 
 LOGGER = logging.getLogger()
 # Set level to logging.DEBUG in order to see more information
@@ -54,7 +53,7 @@ class Test0BackendToQPU(unittest.TestCase):
     Runs a QLM circuit and checks for relevent results.
     """
 
-    @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
+    # @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
     def test0_qiskit_qpu_2states(self):
         """
         In the case of a H and a CNOT gate, 2 states are expected in output.
@@ -93,7 +92,7 @@ class Test0BackendToQPU(unittest.TestCase):
             self.assertTrue("|11>" in
                             [str(result.raw_data[i].state) for i in range(2)])
 
-    @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
+    # @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
     def test1_qiskit_qpu_4states(self):
         """
         In the case of two H gates, 4 states are expected in output.
@@ -134,7 +133,7 @@ class Test1AsyncBackendToQPU(unittest.TestCase):
     Runs a QLM circuit and checks for relevent results.
     """
 
-    @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
+    # @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
     def test0_asyncqiskit_qpu_2states(self):
         """
         In the case of a H and a CNOT gate, 2 states are expected in output.
@@ -185,7 +184,7 @@ class Test1AsyncBackendToQPU(unittest.TestCase):
                 self.assertTrue("|11>" in [str(result.raw_data[i].state)
                                            for i in range(2)])
 
-    @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
+    # @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
     def test1_asyncqiskit_qpu_4states(self):
         """
         In the case of two H gates, 4 states are expected in output.
@@ -236,7 +235,7 @@ class Test1AsyncBackendToQPU(unittest.TestCase):
 
         self.assertEqual(4, len(result.raw_data))
 
-    @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
+    # @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
     def test2_asyncqiskit_qpu_ibmq_experience(self):
         """
         Same as test0 of the same class, but using ibmq token if it is
@@ -302,7 +301,7 @@ class Test1AsyncBackendToQPU(unittest.TestCase):
 class Test2QPUToBackend(unittest.TestCase):
     """
     Creates a Qiskit circuit and uses a QPUToBackend in order to
-    simulate it with another simulator (LinAlg) inside
+    simulate it with another simulator (PyLinalg) inside
     Qiskit's ecosystem.
     Also tests the run() function of Backend.
     Only checks if the results' size is correct.
@@ -323,10 +322,12 @@ class Test2QPUToBackend(unittest.TestCase):
         qiskit_circuit.cx(qreg[0], qreg[1])
         qiskit_circuit.measure(qreg, creg)
 
-        qpu = LinAlg()
+        qpu = PyLinalg()
         backend = QPUToBackend(qpu)
 
-        result = execute(qiskit_circuit, backend, shots=15).result()
+        # result = execute(qiskit_circuit, backend, shots=15).result()
+        new_circuits = transpile(qiskit_circuit, backend)
+        result = backend.run(new_circuits).result()
 
         LOGGER.debug("\nQPUToBackend test:")
         LOGGER.debug(result.results)
@@ -347,9 +348,11 @@ class Test2QPUToBackend(unittest.TestCase):
         qiskit_circuit.cx(qreg[0], qreg[1])
         qiskit_circuit.measure(qreg, creg)
 
-        backend = QiskitConnector() | LinAlg()
+        backend = QiskitConnector() | PyLinalg()
 
-        result = execute(qiskit_circuit, backend, shots=15).result()
+        # result = execute(qiskit_circuit, backend, shots=15).result()
+        new_circuits = transpile(qiskit_circuit, backend)
+        result = backend.run(new_circuits).result()
 
         LOGGER.debug("\nQPUToBackend test via QiskitConnector:")
         LOGGER.debug(result.results)
@@ -369,7 +372,7 @@ class Test2QPUToBackend(unittest.TestCase):
         qiskit_circuit.cx(qreg[0], qreg[1])
         qiskit_circuit.measure(qreg, creg)
 
-        backend = QiskitConnector() | LinAlg()
+        backend = QiskitConnector() | PyLinalg()
         result = backend.run(qiskit_circuit, shots=10).result()
 
         LOGGER.debug("\nQPUToBackend test with a QLM job sent into a QLM qpu:")
@@ -394,7 +397,7 @@ class Test2QPUToBackend(unittest.TestCase):
         qiskit_circuit_2.h(qreg[1])
         qiskit_circuit_2.measure(qreg, creg)
 
-        backend = QiskitConnector() | LinAlg()
+        backend = QiskitConnector() | PyLinalg()
         qiskit_circuits = []
         qiskit_circuits.append(qiskit_circuit_1)
         qiskit_circuits.append(qiskit_circuit_2)

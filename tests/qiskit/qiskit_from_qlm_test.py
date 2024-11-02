@@ -28,10 +28,11 @@ from qat.lang.AQASM.gates import H, X, Y, Z, SWAP, I, S, \
         T, RX, RY, RZ, CNOT, CCNOT
 from qat.interop.qiskit import qlm_to_qiskit, U2, U3, RXX, RZZ, R, MS, \
                                BackendToQPU
-from qiskit import QuantumRegister, QuantumCircuit, ClassicalRegister, Aer
+from qiskit import QuantumRegister, QuantumCircuit, ClassicalRegister
+from qiskit_aer import Aer
 from qiskit.circuit import Parameter
 
-from hardware import running_python
+# from hardware import running_python
 
 
 LOGGER = logging.getLogger()
@@ -207,7 +208,7 @@ class TestQLM2QiskitConversion(unittest.TestCase):
             self.assertEqual(r_name, e_name)
             self.assertEqual(r_params, e_params)
 
-    @unittest.skipIf(running_python(">=", "3.10.0"), "Test not supported")
+    # @unittest.skipIf(running_python(">=", "3.10.0"), "Test not supported")
     def test1_abstract_gate(self):
         """
         Tests an AbstractGate translation to Qiskit.
@@ -315,7 +316,7 @@ class TestQLM2QiskitConversion(unittest.TestCase):
             self.assertEqual(str(gotten[0]._params[0]),
                              str(expected[0]._params[0]))
 
-    @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
+    # @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
     def test3_subset_of_qubits(self):
         """
         Checks if measuring a subset of qubits is working
@@ -335,7 +336,7 @@ class TestQLM2QiskitConversion(unittest.TestCase):
         res = qpu.submit(circ.to_job(nbshots=1, qubits=[1]))
         self.assertEqual(res[0].state.int, 0b0)
 
-    @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
+    # @unittest.skipIf(running_python("<", "3.8.0"), "Test not supported")
     def test4_cannot_measure_observable(self):
         """
         Checks if measuring an Observable raises an error
