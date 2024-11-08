@@ -48,7 +48,7 @@ Or
 import warnings
 from math import pi
 from typing import cast
-from numpy import array, complex128, cos, sin, diag, ufunc
+from numpy import array, complex128, cos, sin, diag, ufunc, isclose
 import sympy
 
 import cirq
@@ -178,9 +178,9 @@ def process_XX(exp):
         Gate
     """
     # pylint: disable=invalid-name
-    if exp == 1.0:
+    if isinstance(exp, (int, float)) and isclose(exp, 1.0):
         return XX()
-    if exp == -1.0:
+    if isinstance(exp, (int, float)) and isclose(exp, -1.0):
         return XX().dag()
     return RXX(exp)
 
@@ -197,9 +197,9 @@ def process_YY(exp):
         Gate
     """
     # pylint: disable=invalid-name
-    if exp == 1.0:
+    if isinstance(exp, (int, float)) and isclose(exp, 1.0):
         return YY()
-    if exp == -1.0:
+    if isinstance(exp, (int, float)) and isclose(exp, -1.0):
         return YY().dag()
     return RYY(exp)
 
@@ -216,9 +216,9 @@ def process_ZZ(exp):
         Gate
     """
     # pylint: disable=invalid-name
-    if exp == 1.0:
+    if isinstance(exp, (int, float)) and isclose(exp, 1.0):
         return ZZ()
-    if exp == -1.0:
+    if isinstance(exp, (int, float)) and isclose(exp, -1.0):
         return ZZ().dag()
     return RZZ(exp)
 
@@ -235,7 +235,7 @@ def process_H(exp):
         Gate
     """
     # pylint: disable=invalid-name
-    if isinstance(exp, (int, float)) and abs(exp) == 1.0:
+    if isinstance(exp, (int, float)) and isclose(abs(exp), 1.0):
         return H
     if exp != int(exp):
         raise ValueError(
@@ -259,7 +259,7 @@ def process_X(exp):
         Gate
     """
     # pylint: disable=invalid-name
-    if isinstance(exp, (int, float)) and abs(exp) == 1.0:
+    if isinstance(exp, (int, float)) and isclose(abs(exp), 1.0):
         return X
     return RX(pi * exp)
 
@@ -276,9 +276,9 @@ def process_Y(exp):
         Gate
     """
     # pylint: disable=invalid-name
-    if exp == 1.0:
+    if isinstance(exp, (int, float)) and isclose(exp, 1.0):
         return Y
-    if exp == -1.0:
+    if isinstance(exp, (int, float)) and isclose(exp, -1.0):
         return Y.dag()
     return RY(pi * exp)
 
@@ -295,11 +295,11 @@ def process_Z(exp):
         Gate
     """
     # pylint: disable=invalid-name
-    if isinstance(exp, (int, float)) and abs(exp) == 1.0:
+    if isinstance(exp, (int, float)) and isclose(abs(exp), 1.0):
         return Z
-    if isinstance(exp, (int, float)) and abs(exp) == 0.5:
+    if isinstance(exp, (int, float)) and isclose(abs(exp), 0.5):
         return process_S(exp * 2)
-    if isinstance(exp, (int, float)) and abs(exp) == 0.25:
+    if isinstance(exp, (int, float)) and isclose(abs(exp), 0.25):
         return process_T(exp * 4)
     return RZ(pi * exp)
 
@@ -316,9 +316,9 @@ def process_S(exp):
         Gate
     """
     # pylint: disable=invalid-name
-    if exp == 1.0:
+    if isinstance(exp, (int, float)) and isclose(exp, 1.0):
         return S
-    if exp == -1.0:
+    if isinstance(exp, (int, float)) and isclose(exp, -1.0):
         return S.dag()
     return RZ(pi * exp / 2)
 
@@ -335,9 +335,9 @@ def process_T(exp):
         Gate
     """
     # pylint: disable=invalid-name
-    if exp == 1.0:
+    if isinstance(exp, (int, float)) and isclose(exp, 1.0):
         return T
-    if exp == -1.0:
+    if isinstance(exp, (int, float)) and isclose(exp, -1.0):
         return T.dag()
     return RZ(pi * exp / 4)
 
@@ -399,9 +399,9 @@ def process_SWAP(exp):
         Gate
     """
     # pylint: disable=invalid-name
-    if isinstance(exp, (int, float)) and abs(exp) == 1.0:
+    if isinstance(exp, (int, float)) and isclose(abs(exp), 1.0):
         return SWAP
-    if isinstance(exp, (int, float)) and abs(exp) == 0.5:
+    if isinstance(exp, (int, float)) and isclose(abs(exp), 0.5):
         return SQRTSWAP
     if exp == int(exp):
         if exp % 2:
