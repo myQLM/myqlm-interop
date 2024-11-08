@@ -573,7 +573,7 @@ def _get_gate(gate):
         if controlled_gate.ControlledGate == type(gate):
             return _get_gate(gate.sub_gate).ctrl()
 
-        if gate.exponent == 0.0:
+        if isinstance(gate.exponent, (int, float)) and isclose(gate.exponent, 0.0):
             return "none"
 
         return gate_dic[type(gate)](gate.exponent)
