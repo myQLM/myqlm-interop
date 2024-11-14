@@ -513,13 +513,13 @@ class BackendToQPU(QPUHandler):
         # If token is defined
         if token is not None:
             provider = IBMProvider(token=token)
-            self.backend = provider.get_backend(ibmq_backend)
+            self.backend = provider.get_backend(ibm_backend)
             return
 
         # If an account is already saved
         if IBMProvider.saved_accounts():
             provider = IBMProvider()
-            self.backend = provider.get_backend(ibmq_backend)
+            self.backend = provider.get_backend(ibm_backend)
             return
 
         self.backend = Aer.get_backend("aer_simulator")
@@ -567,7 +567,7 @@ class BackendToQPU(QPUHandler):
         """
         if self.backend is None:
             raise ValueError("Backend cannot be None")
-        
+
         qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
         new_circuit = transpile(
             qiskit_circuit, self.backend,
@@ -756,13 +756,13 @@ class AsyncBackendToQPU(QPUHandler):
         # If token is defined
         if token is not None:
             provider = IBMProvider(token=token)
-            self.backend = provider.get_backend(ibmq_backend)
+            self.backend = provider.get_backend(ibm_backend)
             return
 
         # If an account is already saved
         if IBMProvider.saved_accounts():
             provider = IBMProvider()
-            self.backend = provider.get_backend(ibmq_backend)
+            self.backend = provider.get_backend(ibm_backend)
             return
 
         self.backend = Aer.get_backend("aer_simulator")
@@ -783,7 +783,7 @@ class AsyncBackendToQPU(QPUHandler):
         if self.backend is None:
             raise ValueError("Backend cannot be None")
 
-        qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)        
+        qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
         new_circuit = transpile(qiskit_circuit, self.backend, coupling_map=None)
         async_job = self.backend.run(new_circuit)
         return QiskitJob(qlm_job, async_job, self.backend.configuration().max_shots)
