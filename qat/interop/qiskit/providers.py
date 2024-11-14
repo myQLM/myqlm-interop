@@ -501,20 +501,28 @@ class BackendToQPU(QPUHandler):
             ibm_backend: Name of the IBM Quantum Platform backend, default
                     value is 'ibm_brisbane', which goes up to 127 qubits
         """
-        if backend is None:
-            if token is None:
-                token = os.getenv("QISKIT_TOKEN")
-            if token is not None:
-                if 'token' not in IBMProvider.saved_accounts().keys() or \
-                        IBMProvider.saved_accounts()['token'] != token:
-                    IBMProvider.save_account(token, overwrite=True)
-
-                provider = IBMProvider()
-                self.backend = provider.get_backend(ibm_backend)
-            else:
-                self.backend = Aer.get_backend("aer_simulator")
-        else:
+        # Set backend is passed as argument
+        if backend is not None:
             self.backend = backend
+            return
+
+        # Load token from environment
+        if token is None:
+            token = os.getenv("QISKIT_TOKEN")
+
+        # If token is defined
+        if token is not None:
+            provider = IBMProvider(token=token)
+            self.backend = provider.get_backend(ibmq_backend)
+            return
+
+        # If an account is already saved
+        if IBMProvider.saved_accounts():
+            provider = IBMProvider()
+            self.backend = provider.get_backend(ibmq_backend)
+            return
+
+        self.backend = Aer.get_backend("aer_simulator")
 
     def _submit_batch(self, qlm_batch):
         """
@@ -736,20 +744,28 @@ class AsyncBackendToQPU(QPUHandler):
             ibm_backend: Name of the IBM Quantum Platform backend, default
                     value is 'ibm_brisbane', which goes up to 127 qubits
         """
-        if backend is None:
-            if token is None:
-                token = os.getenv("QISKIT_TOKEN")
-            if token is not None:
-                if 'token' not in IBMProvider.saved_accounts().keys() or \
-                        IBMProvider.saved_accounts()['token'] != token:
-                    IBMProvider.save_account(token, overwrite=True)
-
-                provider = IBMProvider()
-                self.backend = provider.get_backend(ibm_backend)
-            else:
-                self.backend = Aer.get_backend("aer_simulator")
-        else:
+        # Set backend is passed as argument
+        if backend is not None:
             self.backend = backend
+            return
+
+        # Load token from environment
+        if token is None:
+            token = os.getenv("QISKIT_TOKEN")
+
+        # If token is defined
+        if token is not None:
+            provider = IBMProvider(token=token)
+            self.backend = provider.get_backend(ibmq_backend)
+            return
+
+        # If an account is already saved
+        if IBMProvider.saved_accounts():
+            provider = IBMProvider()
+            self.backend = provider.get_backend(ibmq_backend)
+            return
+
+        self.backend = Aer.get_backend("aer_simulator")
 
     def submit_job(self, qlm_job):
         """
