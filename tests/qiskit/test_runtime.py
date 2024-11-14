@@ -95,7 +95,7 @@ class AbstractPrimitive(ABC):
     by a constructor and can by used as a context manager
     """
     def __init__(self, session, options):
-        self.nbshots = options.execution.shots
+        self.nbshots = 10 # options.execution.shots
 
     @abstractmethod
     def _compute_result(self, circuits, observables):

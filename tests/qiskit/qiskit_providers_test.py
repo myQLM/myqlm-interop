@@ -327,7 +327,7 @@ class Test2QPUToBackend(unittest.TestCase):
 
         # result = execute(qiskit_circuit, backend, shots=15).result()
         new_circuits = transpile(qiskit_circuit, backend)
-        result = backend.run(new_circuits).result()
+        result = backend.run(new_circuits, shots=15).result()
 
         LOGGER.debug("\nQPUToBackend test:")
         LOGGER.debug(result.results)
@@ -352,7 +352,7 @@ class Test2QPUToBackend(unittest.TestCase):
 
         # result = execute(qiskit_circuit, backend, shots=15).result()
         new_circuits = transpile(qiskit_circuit, backend)
-        result = backend.run(new_circuits).result()
+        result = backend.run(new_circuits, shots=15).result()
 
         LOGGER.debug("\nQPUToBackend test via QiskitConnector:")
         LOGGER.debug(result.results)
