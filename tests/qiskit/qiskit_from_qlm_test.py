@@ -28,7 +28,8 @@ from qat.lang.AQASM.gates import H, X, Y, Z, SWAP, I, S, \
         T, RX, RY, RZ, CNOT, CCNOT
 from qat.interop.qiskit import qlm_to_qiskit, U2, U3, RXX, RZZ, R, MS, \
                                BackendToQPU
-from qiskit import QuantumRegister, QuantumCircuit, ClassicalRegister, Aer
+from qiskit import QuantumRegister, QuantumCircuit, ClassicalRegister
+from qiskit_aer import Aer
 from qiskit.circuit import Parameter
 
 from hardware import running_python

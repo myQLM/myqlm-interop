@@ -36,9 +36,9 @@ three main classes:
        MY_IBM_TOKEN = "..."
 
        # Wrap a Qiskit backend in a QPU
-       qpu = BackendToQPU(token=MY_IBM_TOKEN, ibmq_backend="ibmq_armonk")
+       qpu = BackendToQPU(token=MY_IBM_TOKEN, ibm_backend="ibm_brisbane")
 
-       # Submit a job to IBMQ
+       # Submit a job to IBM
        result = qpu.submit(job)
 
  - :class:`~qat.interop.qiskit.AsyncBackendToQPU`: Asynchronous QPU,
@@ -54,9 +54,9 @@ three main classes:
        MY_IBM_TOKEN = "..."
 
        # Wrap a Qiskit backend in a QPU
-       async_qpu = AsyncBackendToQPU(token=MY_IBM_TOKEN, ibmq_backend="ibmq_armonk")
+       async_qpu = AsyncBackendToQPU(token=MY_IBM_TOKEN, ibm_backend="ibm_brisbane")
 
-       # Submit a job to IBMQ
+       # Submit a job to IBM
        async_result = async_qpu.submit(job)
 
        # Wait for the result
@@ -73,14 +73,15 @@ three main classes:
 
        from qat.qpus import PyLinalg
        from qat.interop.qiskit import QPUToBackend
-       from qiskit import execute
+       from qiskit import transpile
 
        # Creates a Qiskit Backend
        qpu = PyLinalg()
        backend = QPUToBackend(qpu)
 
        # Returns a qiskit result
-       qiskit_result = execute(qiskit_circuit, backend, shots=15).result()
+       new_circuit = transpile(qiskit_circuit, backend)
+       qiskit_result = self.backend.run(new_circuit, shots=15)
 """
 
 import os
@@ -94,7 +95,10 @@ from qiskit.providers.models.backendconfiguration import BackendConfiguration
 from qiskit.result import Result
 from qiskit.result.models import ExperimentResult, ExperimentResultData
 from qiskit.qobj import QobjExperimentHeader
-from qiskit import execute, Aer, IBMQ
+
+from qiskit import transpile
+from qiskit_aer import Aer
+from qiskit_ibm_provider import IBMProvider
 
 # QLM imports
 from qat.interop.qiskit.converters import qiskit_to_qlm
@@ -455,58 +459,58 @@ class BackendToQPU(QPUHandler):
 
      - a Qiskit backend: please use the keyword argument :code:`backend`
      - an IBM token and the name of the backend: please the keyword arguments
-       :code:`token` and :code:`ibmq_backend` (the default backend is
-       :code:`"ibmq_qasm_simulator"`)
+       :code:`token` and :code:`ibm_backend` (the default backend is
+       :code:`"ibm_brisbane"`)
      - *no argument*: the :code:`"aer_simulator"` is used if no argment is specified
 
     Args:
         backend: The Backend Qiskit object that is supposed to execute
             the circuit.
         plugins (list): linked plugins
-        token (str): Qiskit IBMQ login token. If not supplied, loaded from the environment
+        token (str): Qiskit ibm login token. If not supplied, loaded from the environment
             variable :code:`QISKIT_TOKEN`
-        ibmq_backend (str, optional): name of the backend. Defaults to 'ibmq_qasm_simulator'.
+        ibm_backend (str, optional): name of the backend. Defaults to 'ibm_brisbane'.
         optimization_level (int, optional). Level of optimization: 0: No optimization (Default).
             1: Light optimization. 2: Heavy optimization. 3: Highest optimization.
     """
     def __init__(self, backend=None, plugins=None, token=None,
-                 ibmq_backend='ibmq_qasm_simulator', optimization_level=0):
+                 ibm_backend='ibm_brisbane', optimization_level=0):
         """
         Args:
             backend: The Backend Qiskit object to be wrapped
             plugins: Any plugins to be added (c.f qat.core documentation)
-            token: Qiskit IBMQ login token. If not supplied, loaded from env
+            token: Qiskit ibm login token. If not supplied, loaded from env
                     variable QISKIT_TOKEN. Only used if backend is None.
-            ibmq_backend: Name of the IBM Quantum Experience backend, default
-                    value is 'ibmq_qasm_simulator', which goes up to 32qubits
+            ibm_backend: Name of the IBM Quantum Platform backend, default
+                    value is 'ibm_brisbane', which goes up to 127 qubits
         """
         super().__init__(plugins)
-        self.set_backend(backend, token, ibmq_backend)
+        self.set_backend(backend, token, ibm_backend)
         self.optimization_level = optimization_level
 
     def set_backend(self, backend=None, token=None,
-                    ibmq_backend='ibmq_qasm_simulator'):
+                    ibm_backend='ibm_brisbane'):
         """
         Sets the backend that will execute circuits.
 
         Args:
             backend: The Backend Qiskit object to be wrapped
             plugins: Any plugins to be added (c.f qat.core documentation)
-            token: Qiskit IBMQ login token. If not supplied, loaded from env
+            token: Qiskit ibm login token. If not supplied, loaded from env
                     variable QISKIT_TOKEN. Only used if backend is None.
-            ibmq_backend: Name of the IBM Quantum Experience backend, default
-                    value is 'ibmq_qasm_simulator', which goes up to 32qubits
+            ibm_backend: Name of the IBM Quantum Platform backend, default
+                    value is 'ibm_brisbane', which goes up to 127 qubits
         """
         if backend is None:
             if token is None:
                 token = os.getenv("QISKIT_TOKEN")
             if token is not None:
-                if 'token' not in IBMQ.stored_account().keys() or \
-                        IBMQ.stored_account()['token'] != token:
-                    IBMQ.save_account(token, overwrite=True)
+                if 'token' not in IBMProvider.saved_accounts().keys() or \
+                        IBMProvider.saved_accounts()['token'] != token:
+                    IBMProvider.save_account(token, overwrite=True)
 
-                provider = IBMQ.load_account()
-                self.backend = provider.get_backend(ibmq_backend)
+                provider = IBMProvider()
+                self.backend = provider.get_backend(ibm_backend)
             else:
                 self.backend = Aer.get_backend("aer_simulator")
         else:
@@ -531,12 +535,12 @@ class BackendToQPU(QPUHandler):
         for qlm_job in qlm_batch.jobs:
             qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
             qiskit_circuits.append(qiskit_circuit)
-        qiskit_result = execute(
+
+        new_circuits = transpile(
             qiskit_circuits, self.backend,
-            shots=qlm_batch.jobs[0].nbshots or self.backend.configuration().max_shots,
             coupling_map=None,
-            optimization_level=self.optimization_level
-        ).result()
+            optimization_level=self.optimization_level)
+        qiskit_result = self.backend.run(new_circuits, shots=qlm_job.nbshots or self.backend.configuration().max_shots).result()
         results = generate_qlm_list_results(qiskit_result)
         new_results = []
         for result in results:
@@ -555,12 +559,13 @@ class BackendToQPU(QPUHandler):
         """
         if self.backend is None:
             raise ValueError("Backend cannot be None")
-
+        
         qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
-        qiskit_result = execute(
+        new_circuit = transpile(
             qiskit_circuit, self.backend,
-            shots=qlm_job.nbshots or self.backend.configuration().max_shots,
-            coupling_map=None).result()
+            coupling_map=None,
+            optimization_level=self.optimization_level)
+        qiskit_result = self.backend.run(new_circuit, shots=qlm_job.nbshots or self.backend.configuration().max_shots).result()
         result = generate_qlm_result(qiskit_result)
         return result
 
@@ -689,8 +694,8 @@ class AsyncBackendToQPU(QPUHandler):
 
      - a Qiskit backend: please use the keyword argument :code:`backend`
      - an IBM token and the name of the backend: please the keyword arguments
-       :code:`token` and :code:`ibmq_backend` (the default backend is
-       :code:`"ibmq_qasm_simulator"`)
+       :code:`token` and :code:`ibm_backend` (the default backend is
+       :code:`"ibm_brisbane"`)
      - *no argument*: the :code:`"aer_simulator"` is used if no argment is specified
 
     .. warning::
@@ -700,25 +705,25 @@ class AsyncBackendToQPU(QPUHandler):
     Args:
         backend: The Backend Qiskit object that is supposed to execute
             the circuit.
-        token (str): Qiskit IBMQ login token. If not supplied, loaded from the environment
+        token (str): Qiskit ibm login token. If not supplied, loaded from the environment
             variable :code:`QISKIT_TOKEN`
-        ibmq_backend (str): name of the backend. Defaults to 'ibmq_qasm_simulator'.
+        ibm_backend (str): name of the backend. Defaults to 'ibm_brisbane'.
     """
     def __init__(self, backend=None, token=None,
-                 ibmq_backend='ibmq_qasm_simulator'):
+                 ibm_backend='ibm_brisbane'):
         """
         Args:
             backend: The Backend Qiskit object to be wrapped
-            token: Qiskit IBMQ login token. If not supplied, loaded from env
+            token: Qiskit ibm login token. If not supplied, loaded from env
                     variable QISKIT_TOKEN. Only used if backend is None
-            ibmq_backend: Name of the IBM Quantum Experience backend, default
-                    value is 'ibmq_qasm_simulator', which goes up to 32qubits
+            ibm_backend: Name of the IBM Quantum Platform backend, default
+                    value is 'ibm_brisbane', which goes up to 127 qubits
         """
         super().__init__()
-        self.set_backend(backend, token, ibmq_backend)
+        self.set_backend(backend, token, ibm_backend)
 
     def set_backend(self, backend=None, token=None,
-                    ibmq_backend='ibmq_qasm_simulator'):
+                    ibm_backend='ibm_brisbane'):
         """
         Sets the backend that will execute circuits.
         If no backend and no token are specified, the backend  will be
@@ -726,21 +731,21 @@ class AsyncBackendToQPU(QPUHandler):
 
         Args:
             backend: The Backend Qiskit object to be wrapped
-            token: Qiskit IBMQ login token. If not supplied, loaded from env
+            token: Qiskit ibm login token. If not supplied, loaded from env
                     variable QISKIT_TOKEN. Only used if backend is None
-            ibmq_backend: Name of the IBM Quantum Experience backend, default
-                    value is 'ibmq_qasm_simulator', which goes up to 32qubits
+            ibm_backend: Name of the IBM Quantum Platform backend, default
+                    value is 'ibm_brisbane', which goes up to 127 qubits
         """
         if backend is None:
             if token is None:
                 token = os.getenv("QISKIT_TOKEN")
             if token is not None:
-                if 'token' not in IBMQ.stored_account().keys() or \
-                        IBMQ.stored_account()['token'] != token:
-                    IBMQ.save_account(token, overwrite=True)
+                if 'token' not in IBMProvider.saved_accounts().keys() or \
+                        IBMProvider.saved_accounts()['token'] != token:
+                    IBMProvider.save_account(token, overwrite=True)
 
-                provider = IBMQ.load_account()
-                self.backend = provider.get_backend(ibmq_backend)
+                provider = IBMProvider()
+                self.backend = provider.get_backend(ibm_backend)
             else:
                 self.backend = Aer.get_backend("aer_simulator")
         else:
@@ -762,11 +767,9 @@ class AsyncBackendToQPU(QPUHandler):
         if self.backend is None:
             raise ValueError("Backend cannot be None")
 
-        qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
-        async_job = execute(
-            qiskit_circuit, self.backend,
-            shots=qlm_job.nbshots or self.backend.configuration().max_shots,
-            coupling_map=None)
+        qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)        
+        new_circuit = transpile(qiskit_circuit, self.backend, coupling_map=None)
+        async_job = self.backend.run(new_circuit)
         return QiskitJob(qlm_job, async_job, self.backend.configuration().max_shots)
 
     def submit(self, qlm_batch):
@@ -791,10 +794,8 @@ class AsyncBackendToQPU(QPUHandler):
         for qlm_job in qlm_batch.jobs:
             qiskit_circuit = job_to_qiskit_circuit(qlm_job, only_sampling=True)
             qiskit_circuits.append(qiskit_circuit)
-        async_job = execute(
-            qiskit_circuits, self.backend,
-            shots=qlm_batch.jobs[0].nbshots or self.backend.configuration().max_shots,
-            coupling_map=None)
+        new_circuits = transpile(qiskit_circuits, self.backend, coupling_map=None)
+        async_job = self.backend.run(new_circuits)
         return QiskitJob(qlm_batch, async_job, self.backend.configuration().max_shots)
 
     def retrieve_job(self, file_name):
@@ -861,16 +862,16 @@ class QiskitQPU(BackendToQPU):
     Deprecated, use BackendToQPU.
     """
     def __init__(self, backend=None, plugins=None, token=None, url=None,
-                 ibmq_backend='ibmq_qasm_simulator'):
+                 ibm_backend='ibm_brisbane'):
         warnings.warn(
             "QiskitQPU(backend=None, plugins=None, token=None, url=None) "
             + "is deprecated, please use BackendToQPU(backend=None, "
-            + "plugins=None, token=None, ibmq_backend='ibmq_qasm_simulator')",
+            + "plugins=None, token=None, ibm_backend='ibm_brisbane')",
             FutureWarning,
         )
         del url
         super().__init__(backend=backend, plugins=plugins,
-                         token=token, ibmq_backend=ibmq_backend)
+                         token=token, ibm_backend=ibm_backend)
 
 
 class AsyncQiskitQPU(AsyncBackendToQPU):
@@ -878,16 +879,16 @@ class AsyncQiskitQPU(AsyncBackendToQPU):
     Deprecated, use AsyncBackendToQPU.
     """
     def __init__(self, backend=None, plugins=None, token=None, url=None,
-                 ibmq_backend='ibmq_qasm_simulator'):
+                 ibm_backend='ibm_brisbane'):
         warnings.warn(
             "AsyncQiskitQPU(backend=None, plugins=None, token=None, url=None) "
             + "is deprecated, please use AsyncBackendToQPU(backend=None, "
-            + "token=None, ibmq_backend='ibmq_qasm_simulator')",
+            + "token=None, ibm_backend='ibm_brisbane')",
             FutureWarning,
         )
         del plugins, url
         super().__init__(backend=backend, token=token,
-                         ibmq_backend=ibmq_backend)
+                         ibm_backend=ibm_backend)
 
 
 class QLMConnector(QiskitConnector):
