@@ -389,15 +389,16 @@ def qiskit_to_qlm(qiskit_circuit, sep_measures=False, **kwargs):
         qbit_args = []
         cbit_args = []
         prms = []  # gate parameters
+
         # Get qbit arguments
         for qarg in gate_op[1]:
             qbit_args.append(
-                _get_qindex(qiskit_circuit, qarg.register.name, qarg.index))
+                _get_qindex(qiskit_circuit, qarg._register.name, qarg._index))
 
         # Get cbit arguments
         for carg in gate_op[2]:
             cbit_args.append(
-                _get_cindex(qiskit_circuit, carg.register.name, carg.index))
+                _get_cindex(qiskit_circuit, carg._register.name, carg._index))
 
         # Get parameters
         for param in gate_op[0].params:

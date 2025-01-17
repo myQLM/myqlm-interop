@@ -28,7 +28,7 @@ import numpy as np
 
 from qiskit import QuantumRegister, QuantumCircuit, ClassicalRegister
 from qiskit.quantum_info import Pauli
-from qiskit import Aer
+from qiskit_aer import Aer
 from qiskit.aqua.operators import WeightedPauliOperator
 from qiskit.aqua.algorithms import Shor, Grover, QAOA
 from qiskit.aqua.components.oracles import LogicalExpressionOracle as SAT

@@ -279,7 +279,6 @@ class TestQiskit2QLMConversion(unittest.TestCase):
                     self.assertEqual(param.to_thrift(), "* 0.5 param0")
                 if i == 9:
                     self.assertEqual(param.to_thrift(), "* 0.2 param0")
-
             i += 1
 
         prog = Program()

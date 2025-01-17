@@ -25,10 +25,10 @@ import time
 import unittest
 import logging
 import os
-from qiskit import QuantumRegister, QuantumCircuit
-from qiskit import ClassicalRegister, execute, Aer
+from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, transpile
+from qiskit_aer import Aer
 from qat.lang.AQASM import Program, H, CNOT
-from qat.pylinalg import PyLinalg
+from qat.qpus import PyLinalg
 from qat.core.wrappers import Batch
 from qat.interop.qiskit import BackendToQPU, AsyncBackendToQPU, \
         QiskitConnector, QPUToBackend
@@ -325,7 +325,9 @@ class Test2QPUToBackend(unittest.TestCase):
         qpu = PyLinalg()
         backend = QPUToBackend(qpu)
 
-        result = execute(qiskit_circuit, backend, shots=15).result()
+        # result = execute(qiskit_circuit, backend, shots=15).result()
+        new_circuits = transpile(qiskit_circuit, backend)
+        result = backend.run(new_circuits, shots=15).result()
 
         LOGGER.debug("\nQPUToBackend test:")
         LOGGER.debug(result.results)
@@ -348,7 +350,9 @@ class Test2QPUToBackend(unittest.TestCase):
 
         backend = QiskitConnector() | PyLinalg()
 
-        result = execute(qiskit_circuit, backend, shots=15).result()
+        # result = execute(qiskit_circuit, backend, shots=15).result()
+        new_circuits = transpile(qiskit_circuit, backend)
+        result = backend.run(new_circuits, shots=15).result()
 
         LOGGER.debug("\nQPUToBackend test via QiskitConnector:")
         LOGGER.debug(result.results)

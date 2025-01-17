@@ -296,8 +296,8 @@ class QiskitRuntimeQPU(QPUHandler):
         with Session(service=self.service, backend=self.backend) as session:
             # Execution options
             options = Options()
-            options.execution.shots = nbshots
-            options.transpilation.skip_transpilation = self.skip_transpilation
+            # options.execution.shots = nbshots
+            # options.transpilation.skip_transpilation = self.skip_transpilation
 
             # Submit SAMPLE and OBSERVABLE circuits
             if sample_container.circuits:
