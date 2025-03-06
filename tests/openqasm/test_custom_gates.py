@@ -2,10 +2,6 @@
 
 """
 @authors    Arnaud GAZDA <arnaud.gazda@atos.net>
-@copyright  2023 Bull S.A.S. - All rights reserved
-            This is not Free or Open Source software.
-            Please contact Bull SAS for details about its license.
-            Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
 
 Description: Compiling a OpenQASM circuit composed of custom gates (defined using myQLM)
 """
@@ -79,4 +75,3 @@ def test_custom_gate():
     assert name == "my_custom"
     assert angles == []
     assert qubits == [0]
-    

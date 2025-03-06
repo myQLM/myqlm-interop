@@ -2,10 +2,6 @@
 
 """
 @authors    Arnaud Gazda <arnaud.gazda@atos.net>
-@copyright  2022 Bull S.A.S. - All rights reserved
-            This is not Free or Open Source software.
-            Please contact Bull SAS for details about its license.
-            Bull - Rue Jean Jaurès - B.P. 68 - 78340 Les Clayes-sous-Bois
 
 Description: Testing the Qiskit Runtime QPU. This test file will mock the
              Estimator and Sampler services
