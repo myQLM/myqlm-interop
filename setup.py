@@ -59,7 +59,7 @@ setup(
     long_description=get_description(),
     packages=find_namespace_packages(include=["qat.*"]),
     scripts=["bin/oqasm2circ"],
-    install_requires=["qat-lang>=2.2.0", "numpy", "ply"],
+    install_requires=["qat-lang>=2.2.0", "numpy>=2.0.0", "ply"],
     extras_require={
         "qiskit_binder": ["qiskit>=1.0.0;python_version>='3.8'", "qiskit-ibm-runtime>=0.11.1;python_version>='3.8'"],
         "projectq_binder": ["projectq>=0.8.0;python_version>='3.8'"],
