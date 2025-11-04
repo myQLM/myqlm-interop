@@ -22,6 +22,13 @@ from setuptools import setup, find_namespace_packages
 from setuptools.command.test import test as TestCommand
 
 
+# Define dependencies
+_QISKIT_DEPS = ["qiskit>=1.0.0;python_version>='3.8'", "qiskit-ibm-runtime>=0.11.1;python_version>='3.8'"]
+_PROJECTQ_DEPS = ["projectq>=0.8.0;python_version>='3.8'"]
+_CIRQ_DEPS = ["cirq>=1.1.0;python_version>='3.8'"]
+_PYQUIL_DEPS = ["pyquil>=3.5.0;python_version>='3.8'", "quantum-grove>=1.7.0;python_version>='3.8'"]
+
+
 class PyTest(TestCommand):
     def initialize_options(self):
         TestCommand.initialize_options(self)
@@ -61,15 +68,15 @@ setup(
     scripts=["bin/oqasm2circ"],
     install_requires=["qat-lang>=2.2.0", "numpy>=2.0.0", "ply"],
     extras_require={
-        "qiskit_binder": ["qiskit>=1.0.0;python_version>='3.8'", "qiskit-ibm-runtime>=0.11.1;python_version>='3.8'"],
-        "projectq_binder": ["projectq>=0.8.0;python_version>='3.8'"],
-        "cirq_binder": ["cirq>=1.1.0;python_version>='3.8'"],
-        "pyquil_binder": ["pyquil>=3.5.0;python_version>='3.8'", "quantum-grove>=1.7.0;python_version>='3.8'"],
+        "qiskit_binder": _QISKIT_DEPS,
+        "projectq_binder": _PROJECTQ_DEPS,
+        "cirq_binder": _CIRQ_DEPS,
+        "pyquil_binder": _PYQUIL_DEPS,
         "all": [
-            "qiskit>=1.0.0;python_version>='3.8'", "qiskit-ibm-runtime>=0.11.1;python_version>='3.8'",
-            "projectq>=0.8.0;python_version>='3.8'",
-            "cirq>=1.1.0;python_version>='3.8'",
-            "pyquil>=3.5.0;python_version>='3.8'", "quantum-grove>=1.7.0;python_version>='3.8'"
+            *_QISKIT_DEPS,
+            *_PROJECTQ_DEPS,
+            *_CIRQ_DEPS,
+            *_PYQUIL_DEPS
         ]
     },
     tests_require=["pytest"],
