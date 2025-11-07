@@ -70,9 +70,17 @@ setup(
     install_requires=["qat-lang>=2.2.0", "numpy>=2.0.0", "ply"],
     extras_require={
         "qiskit_binder": _QISKIT_DEPS,
+        "qiskit-binder": _QISKIT_DEPS,
+
         "projectq_binder": _PROJECTQ_DEPS,
+        "projectq-binder": _PROJECTQ_DEPS,
+
         "cirq_binder": _CIRQ_DEPS,
+        "cirq-binder": _CIRQ_DEPS,
+
         "pyquil_binder": _PYQUIL_DEPS,
+        "pyquil-binder": _PYQUIL_DEPS,
+
         "all": [
             *_QISKIT_DEPS,
             *_PROJECTQ_DEPS,
