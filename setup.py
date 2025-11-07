@@ -23,7 +23,8 @@ from setuptools.command.test import test as TestCommand
 
 
 # Define dependencies
-_QISKIT_DEPS = ["qiskit>=1.0.0;python_version>='3.8'", "qiskit-ibm-runtime>=0.11.1;python_version>='3.8'"]
+_QISKIT_DEPS = ["qiskit~=1.0;python_version>='3.8'", "qiskit-aer;python_version>='3.8'",
+                "qiskit-ibm-runtime>=0.11.1;python_version>='3.8'"]
 _PROJECTQ_DEPS = ["projectq>=0.8.0;python_version>='3.8'"]
 _CIRQ_DEPS = ["cirq>=1.1.0;python_version>='3.8'"]
 _PYQUIL_DEPS = ["pyquil>=3.5.0;python_version>='3.8'", "quantum-grove>=1.7.0;python_version>='3.8'"]
