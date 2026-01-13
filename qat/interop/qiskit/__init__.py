@@ -21,7 +21,9 @@
 """
 
 from pkgutil import extend_path
+from warnings import warn
 
+# Expose objects
 from .converters import (
     qlm_to_qiskit, qiskit_to_qlm, U, U2, U3, RXX, RZZ, R, MS
 )
@@ -30,5 +32,13 @@ from .providers import (
     QLMJob, QPUToBackend, BackendToQPU, QiskitJob, AsyncBackendToQPU, QiskitConnector
 )
 
+
 # Try to find other QAT packages in other folders
 __path__ = extend_path(__path__, __name__)
+
+# Deprecation warning
+warn("qat.interop.qiskit is deprecated and will soon be replaced by qat.qiskit (compatible with Qiskit 2.0)",
+     DeprecationWarning)
+
+__all__ = ["qlm_to_qiskit", "qiskit_to_qlm", "U", "U2", "U3", "RXX", "RZZ", "R", "MS",
+           "QLMJob", "QPUToBackend", "BackendToQPU", "QiskitJob", "AsyncBackendToQPU", "QiskitConnector"]
