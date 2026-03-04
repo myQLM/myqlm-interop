@@ -26,12 +26,3 @@
 from pkgutil import extend_path
 # Try to find other QAT packages in other folders
 __path__ = extend_path(__path__, __name__)
-
-
-from pkg_resources import parse_version
-from qat.core.version import VERSION
-
-if parse_version(VERSION) < parse_version('0.0.6'):
-    import warnings
-    warnings.warn("Qiskit and Pyquil providers and algorithms are not "
-                  "compatible with version 0.0.5 and below")
