@@ -1,4 +1,4 @@
-QLM interoperability module
+myQLM interoperability module
 ===========================
 
 This Python package contains some simple binders with other:
@@ -6,7 +6,7 @@ Python-based quantum programming frameworks:
 
 * IBM Qiskit
 
-* Google Circ
+* Google Cirq
 
 * Microsoft ProjectQ
 
