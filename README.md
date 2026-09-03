@@ -1,4 +1,4 @@
-QLM interoperability module
+myQLM interoperability module
 ===========================
 
 This Python package contains some simple binders with other:
@@ -6,11 +6,13 @@ Python-based quantum programming frameworks:
 
 * IBM Qiskit
 
-* Google Circ
+* Google Cirq
 
 * Microsoft ProjectQ
 
 * Rigetti Pyquil
+
+* OpenQasm
 
 
 Installation
@@ -23,6 +25,7 @@ pip install myqlm-interop[qiskit_binder]
 pip install myqlm-interop[projectq_binder]
 pip install myqlm-interop[cirq_binder]
 pip install myqlm-interop[pyquil_binder]
+pip install myqlm-interop[openqasm]
 ```
 
 or install them all at the same time:
