@@ -12,6 +12,8 @@ Python-based quantum programming frameworks:
 
 * Rigetti Pyquil
 
+* OpenQasm
+
 
 Installation
 ------------
@@ -23,6 +25,7 @@ pip install myqlm-interop[qiskit_binder]
 pip install myqlm-interop[projectq_binder]
 pip install myqlm-interop[cirq_binder]
 pip install myqlm-interop[pyquil_binder]
+pip install myqlm-interop[openqasm]
 ```
 
 or install them all at the same time:
