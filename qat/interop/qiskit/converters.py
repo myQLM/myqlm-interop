@@ -50,7 +50,7 @@ from qiskit.circuit.library import standard_gates, generalized_gates
 
 from qat.lang.AQASM import Program, QRoutine
 from qat.lang.AQASM.gates import AbstractGate, H, X, Y, Z, SWAP, I, S, \
-    T, RX, RY, RZ
+    T, RX, RY, RZ, PH
 from qat.core.util import extract_syntax
 from qat.core.assertion import assert_qpu
 from qat.core.variables import Variable, ArithExpression
@@ -301,7 +301,7 @@ GATE_DIC = {
     "rz": RZ,
     "rxx": RXX,
     "rzz": RZZ,
-    "p": RZ,
+    "p": PH,
     "r": R,
     "ms": MS,
     "u": U3,
@@ -310,7 +310,7 @@ GATE_DIC = {
     "U": U,
     "xbase": X,
     "iden": I,
-    "u1": RZ,
+    "u1": PH,
     "u2": U2,
     "u3": U3,
 }
@@ -474,7 +474,7 @@ def _gen_qiskit_gateset(q_circ):
         'U3': q_circ.u,
         'U1': q_circ.p,
         'U0': q_circ.id,
-        'PH': q_circ.rz,
+        'PH': q_circ.p,
         'RXX': q_circ.rxx,
         'RZZ': q_circ.rzz,
         'R': q_circ.r,
@@ -515,7 +515,7 @@ def _get_qiskit_gate_from_name(name):
         'U2': standard_gates.U2Gate,
         'U1': standard_gates.U1Gate,
         'U0': standard_gates.IGate,
-        'PH': standard_gates.RZGate,
+        'PH': standard_gates.PhaseGate,
         'RXX': standard_gates.RXXGate,
         'RZZ': standard_gates.RZZGate,
         'R': standard_gates.RGate,
